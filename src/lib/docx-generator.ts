@@ -21,8 +21,24 @@ export async function generateDOCX(paper: GeneratedPaper) {
   const isHindiSubject = 
     paper.subject.includes("हिन्दी") || 
     paper.subject.toLowerCase().includes("hindi");
+
+  // Check if any paper content contains Hindi/Devanagari characters
+  const hasDevanagari = 
+    /[\u0900-\u097F]/.test(paper.schoolName || "") ||
+    /[\u0900-\u097F]/.test(paper.examName || "") ||
+    /[\u0900-\u097F]/.test(paper.subject || "") ||
+    paper.instructions.some(ins => /[\u0900-\u097F]/.test(ins)) ||
+    paper.sections.some(sec => 
+      /[\u0900-\u097F]/.test(sec.name || "") ||
+      /[\u0900-\u097F]/.test(sec.description || "") ||
+      sec.questions.some(q => 
+        /[\u0900-\u097F]/.test(q.text || "") ||
+        /[\u0900-\u097F]/.test(q.orQuestion || "") ||
+        (q.choices && q.choices.some(choice => /[\u0900-\u097F]/.test(choice)))
+      )
+    );
   
-  const docFont = isHindiSubject ? "Mangal" : "Calibri";
+  const docFont = hasDevanagari ? "Noto Sans Devanagari" : "Calibri";
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const children: any[] = [];
@@ -236,80 +252,24 @@ export async function generateDOCX(paper: GeneratedPaper) {
         })
       );
 
-      // Choices if MCQ: formatted inside a borderless table to guarantee perfect 2-column alignment
+      // Choices if MCQ: formatted as standard paragraphs for excellent Android compatibility
       if (q.choices && q.choices.length > 0) {
-        const choices = q.choices;
-        const rows: TableRow[] = [];
-        
-        for (let i = 0; i < choices.length; i += 2) {
-          const choiceA = `(${String.fromCharCode(97 + i)}) ${choices[i]}`;
-          const choiceB = i + 1 < choices.length ? `(${String.fromCharCode(97 + i + 1)}) ${choices[i + 1]}` : "";
-          
-          rows.push(
-            new TableRow({
+        q.choices.forEach((choice, i) => {
+          const optionLabel = `(${String.fromCharCode(97 + i)})`;
+          children.push(
+            new Paragraph({
+              spacing: { before: 40, after: 40 },
+              indent: { left: 900 }, // clean indent for options
               children: [
-                new TableCell({
-                  width: { size: 4500, type: WidthType.DXA },
-                  borders: {
-                    top: { style: BorderStyle.NONE },
-                    bottom: { style: BorderStyle.NONE },
-                    left: { style: BorderStyle.NONE },
-                    right: { style: BorderStyle.NONE },
-                  },
-                  children: [
-                    new Paragraph({
-                      spacing: { after: 40 },
-                      children: [
-                        new TextRun({
-                          text: choiceA,
-                          size: 18,
-                          font: docFont,
-                        }),
-                      ],
-                    }),
-                  ],
-                }),
-                new TableCell({
-                  width: { size: 4500, type: WidthType.DXA },
-                  borders: {
-                    top: { style: BorderStyle.NONE },
-                    bottom: { style: BorderStyle.NONE },
-                    left: { style: BorderStyle.NONE },
-                    right: { style: BorderStyle.NONE },
-                  },
-                  children: [
-                    new Paragraph({
-                      spacing: { after: 40 },
-                      children: [
-                        new TextRun({
-                          text: choiceB,
-                          size: 18,
-                          font: docFont,
-                        }),
-                      ],
-                    }),
-                  ],
+                new TextRun({
+                  text: `${optionLabel} ${choice}`,
+                  size: 18,
+                  font: docFont,
                 }),
               ],
             })
           );
-        }
-        
-        children.push(
-          new Table({
-            width: { size: 9000, type: WidthType.DXA },
-            indent: { size: 540, type: WidthType.DXA }, // align with question text margin
-            borders: {
-              top: { style: BorderStyle.NONE },
-              bottom: { style: BorderStyle.NONE },
-              left: { style: BorderStyle.NONE },
-              right: { style: BorderStyle.NONE },
-              insideHorizontal: { style: BorderStyle.NONE },
-              insideVertical: { style: BorderStyle.NONE },
-            },
-            rows: rows,
-          })
-        );
+        });
       }
 
       // OR options (formatted with indentation and left border line to match website preview)
