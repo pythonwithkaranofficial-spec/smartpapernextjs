@@ -7,11 +7,7 @@ import {
   HeadingLevel, 
   TabStopType,
   TabStopPosition,
-  BorderStyle,
-  Table,
-  TableRow,
-  TableCell,
-  WidthType
+  BorderStyle
 } from "docx";
 import { saveAs } from "file-saver";
 import { GeneratedPaper } from "@/types";
@@ -138,7 +134,7 @@ export async function generateDOCX(paper: GeneratedPaper) {
 
   // 5. General Instructions Container Box (replicates web preview's bg-slate-50 box)
   if (paper.instructions.length > 0) {
-    const cellChildren: Paragraph[] = [
+    const instructionParagraphs: Paragraph[] = [
       new Paragraph({
         spacing: { before: 40, after: 80 },
         children: [
@@ -153,7 +149,7 @@ export async function generateDOCX(paper: GeneratedPaper) {
     ];
 
     paper.instructions.forEach((ins, idx) => {
-      cellChildren.push(
+      instructionParagraphs.push(
         new Paragraph({
           spacing: { before: 30, after: 30 },
           indent: { left: 360, hanging: 360 },
@@ -168,33 +164,7 @@ export async function generateDOCX(paper: GeneratedPaper) {
       );
     });
 
-    children.push(
-      new Table({
-        width: { size: 100, type: WidthType.PERCENTAGE },
-        borders: {
-          top: { color: "B0B0B0", space: 8, style: BorderStyle.SINGLE, size: 4 },
-          bottom: { color: "B0B0B0", space: 8, style: BorderStyle.SINGLE, size: 4 },
-          left: { color: "B0B0B0", space: 8, style: BorderStyle.SINGLE, size: 4 },
-          right: { color: "B0B0B0", space: 8, style: BorderStyle.SINGLE, size: 4 },
-        },
-        rows: [
-          new TableRow({
-            children: [
-              new TableCell({
-                shading: { fill: "F8FAFC" }, // bg-slate-50
-                margins: {
-                  top: 140,
-                  bottom: 140,
-                  left: 200,
-                  right: 200,
-                },
-                children: cellChildren,
-              }),
-            ],
-          }),
-        ],
-      })
-    );
+    children.push(...instructionParagraphs);
     
     addSpacing(150);
   }
