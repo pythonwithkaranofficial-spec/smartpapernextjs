@@ -4,6 +4,7 @@ import { useState } from "react";
 import { PaperConfig } from "@/types";
 import { clientRateLimiter } from "@/lib/rate-limiter";
 import { AuthService } from "@/lib/firebase/auth-service";
+import { isSuperAdminEmail } from "@/lib/auth/helpers";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -13,10 +14,14 @@ export function useGeneratePaper() {
   const router = useRouter();
 
   const generatePaper = async (config: PaperConfig) => {
-    // 1. Client-side rate limiting check
-    if (!clientRateLimiter.canGenerate()) {
+    const user = AuthService.getCurrentUser();
+    const userEmail = user?.email || null;
+    const isSuperAdmin = isSuperAdminEmail(userEmail);
+
+    // 1. Client-side per-user rate limiting check
+    if (!isSuperAdmin && !clientRateLimiter.canGenerate(userEmail, isSuperAdmin)) {
       const resetTime = clientRateLimiter.getResetTime();
-      toast.error(`Daily limit reached. You can generate more papers in ${resetTime}.`);
+      toast.error(`Daily limit reached (5 papers/day). You can generate more papers in ${resetTime}.`);
       setError("Daily limit reached");
       return;
     }
@@ -46,8 +51,8 @@ export function useGeneratePaper() {
       // Save configuration used
       sessionStorage.setItem("last_paper_config", JSON.stringify(config));
 
-      // Record count in client rate limiter
-      clientRateLimiter.recordGeneration();
+      // Record count in client rate limiter for this specific user
+      clientRateLimiter.recordGeneration(userEmail, isSuperAdmin);
 
       // If user is authenticated, save paper to Turso DB history and increment usage count
       const firebaseToken = await AuthService.getFirebaseToken();

@@ -1,27 +1,35 @@
 "use client";
 
+import { isSuperAdminEmail } from "./auth/helpers";
+
 const LIMIT = 5;
 
-function getTodayKey() {
+function getTodayUserKey(email?: string | null) {
   const d = new Date();
   const year = d.getFullYear();
   const month = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
-  return `paper_gen_${year}-${month}-${day}`;
+  const userIdentifier = email ? email.toLowerCase().trim() : 'anonymous';
+  return `paper_gen_${userIdentifier}_${year}-${month}-${day}`;
 }
 
 export const clientRateLimiter = {
-  canGenerate(): boolean {
+  canGenerate(userEmail?: string | null, isAdmin = false): boolean {
+    // Admins and Super-Admins ALWAYS have unlimited generation access
+    if (isAdmin || isSuperAdminEmail(userEmail)) {
+      return true;
+    }
+
     if (typeof window === "undefined") return true;
-    const key = getTodayKey();
+    const key = getTodayUserKey(userEmail);
     const countStr = localStorage.getItem(key);
     if (!countStr) return true;
     return parseInt(countStr, 10) < LIMIT;
   },
 
-  recordGeneration(): void {
-    if (typeof window === "undefined") return;
-    const key = getTodayKey();
+  recordGeneration(userEmail?: string | null, isAdmin = false): void {
+    if (typeof window === "undefined" || isAdmin || isSuperAdminEmail(userEmail)) return;
+    const key = getTodayUserKey(userEmail);
     const countStr = localStorage.getItem(key);
     const count = countStr ? parseInt(countStr, 10) : 0;
     localStorage.setItem(key, String(count + 1));
@@ -39,9 +47,13 @@ export const clientRateLimiter = {
     }
   },
 
-  getRemainingCount(): number {
+  getRemainingCount(userEmail?: string | null, isAdmin = false): number {
+    if (isAdmin || isSuperAdminEmail(userEmail)) {
+      return 999999;
+    }
+
     if (typeof window === "undefined") return LIMIT;
-    const key = getTodayKey();
+    const key = getTodayUserKey(userEmail);
     const countStr = localStorage.getItem(key);
     if (!countStr) return LIMIT;
     const count = parseInt(countStr, 10);

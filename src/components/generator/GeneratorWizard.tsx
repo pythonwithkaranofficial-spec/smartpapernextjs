@@ -16,6 +16,7 @@ import { AuthService } from "@/lib/firebase/auth-service";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight, Sparkles } from "lucide-react";
 import { clientRateLimiter } from "@/lib/rate-limiter";
+import { isSuperAdminEmail } from "@/lib/auth/helpers";
 import { toast } from "sonner";
 import { GeneratingOverlay } from "../preview/GeneratingOverlay";
 import { DailyLimitModal } from "../auth/DailyLimitModal";
@@ -67,6 +68,20 @@ export function GeneratorWizard() {
   // Load usage details from API or local fallback
   useEffect(() => {
     async function checkUsage() {
+      const user = AuthService.getCurrentUser();
+      const userEmail = user?.email || null;
+      const isSuperAdmin = isSuperAdminEmail(userEmail);
+
+      if (isSuperAdmin) {
+        setUsageInfo({
+          usedToday: 0,
+          dailyLimit: 999999,
+          remainingToday: 999999,
+          isAdmin: true,
+        });
+        return;
+      }
+
       try {
         const token = await AuthService.getFirebaseToken();
         if (token) {
@@ -83,10 +98,11 @@ export function GeneratorWizard() {
         console.error("Failed to fetch user usage:", e);
       }
 
+      const remaining = clientRateLimiter.getRemainingCount(userEmail, false);
       setUsageInfo({
-        usedToday: 5 - clientRateLimiter.getRemainingCount(),
+        usedToday: Math.max(0, 5 - remaining),
         dailyLimit: 5,
-        remainingToday: clientRateLimiter.getRemainingCount(),
+        remainingToday: remaining,
         isAdmin: false,
       });
     }
