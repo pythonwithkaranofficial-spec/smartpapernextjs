@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAuthToken } from '@/lib/auth/middleware';
-import { getCurrentDailyUsage, getRemainingDailyPapers, getCurrentPlan } from '@/lib/auth/helpers';
+import { getCurrentDailyUsage, getRemainingDailyPapers, getCurrentUser } from '@/lib/auth/helpers';
 import { handleApiError } from '@/lib/errors';
 
 export async function GET(req: NextRequest) {
   try {
     const authContext = await verifyAuthToken(req);
-    const plan = await getCurrentPlan(authContext.uid);
+    const user = await getCurrentUser(authContext.uid);
+    const plan = user?.plan || 'FREE';
     const currentUsage = await getCurrentDailyUsage(authContext.uid);
     const remainingInfo = await getRemainingDailyPapers(authContext.uid);
 
@@ -18,6 +19,8 @@ export async function GET(req: NextRequest) {
         usedToday: currentUsage,
         remainingToday: remainingInfo.remainingToday,
         isAdmin: remainingInfo.isAdmin,
+        updatedAt: user?.updated_at || new Date().toISOString(),
+        createdAt: user?.created_at || new Date().toISOString(),
       },
     });
   } catch (error) {

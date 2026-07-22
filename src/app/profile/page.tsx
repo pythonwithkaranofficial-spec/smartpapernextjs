@@ -31,6 +31,7 @@ import {
   Building2,
   Wallet,
   Smartphone,
+  Clock,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -161,6 +162,15 @@ const PLANS: PlanCardData[] = [
   },
 ];
 
+interface UsageData {
+  usedToday: number;
+  dailyLimit: number;
+  remainingToday: number;
+  isAdmin?: boolean;
+  updatedAt?: string;
+  createdAt?: string;
+}
+
 export default function ProfilePage() {
   const { firebaseUser, dbUser, isEmailVerified, sendVerificationEmail, syncUserWithTurso } = useAuth();
 
@@ -171,9 +181,11 @@ export default function ProfilePage() {
   const [sendingVerification, setSendingVerification] = useState(false);
   const [hoveredPlan, setHoveredPlan] = useState<UserPlan | null>(null);
 
-  const [usageInfo, setUsageInfo] = useState<{ usedToday: number; dailyLimit: number; remainingToday: number } | null>(null);
+  const [usageInfo, setUsageInfo] = useState<UsageData | null>(null);
+  const [countdownText, setCountdownText] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Real-Time Quota Listener & Automatic Refetching
   useEffect(() => {
     async function loadUsage() {
       try {
@@ -193,7 +205,83 @@ export default function ProfilePage() {
     }
 
     loadUsage();
+
+    const handlePaperGenerated = () => {
+      loadUsage();
+    };
+
+    if (typeof window !== "undefined") {
+      window.addEventListener("paper_generated", handlePaperGenerated);
+      window.addEventListener("focus", loadUsage);
+      window.addEventListener("storage", loadUsage);
+    }
+
+    return () => {
+      if (typeof window !== "undefined") {
+        window.removeEventListener("paper_generated", handlePaperGenerated);
+        window.removeEventListener("focus", loadUsage);
+        window.removeEventListener("storage", loadUsage);
+      }
+    };
   }, [dbUser?.plan]);
+
+  // Real-Time Subscription Expiration & Midnight Quota Countdown Ticker (Updates every 1s)
+  useEffect(() => {
+    const updateCountdown = () => {
+      const now = new Date().getTime();
+
+      if (dbUser?.role === "ADMIN" || usageInfo?.isAdmin) {
+        setCountdownText("👑 Permanent Admin Access (Unlimited Papers)");
+        return;
+      }
+
+      const activePlan = dbUser?.plan || "FREE";
+
+      if (activePlan === "PRO") {
+        // 1-Day Pass (24 hours from plan update time)
+        const activationTime = new Date(usageInfo?.updatedAt || dbUser?.updated_at || Date.now()).getTime();
+        const expirationTime = activationTime + 24 * 60 * 60 * 1000;
+        const diffMs = expirationTime - now;
+
+        if (diffMs <= 0) {
+          setCountdownText("⚠️ 24-Hour Pass Expired (Resets to Free Plan)");
+        } else {
+          const hrs = Math.floor(diffMs / (1000 * 60 * 60));
+          const mins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+          const secs = Math.floor((diffMs % (1000 * 60)) / 1000);
+          setCountdownText(`⚡ 1-Day Pass Active: ${hrs}h ${mins}m ${secs}s remaining`);
+        }
+      } else if (activePlan === "PREMIUM") {
+        // 1-Year Educator Plan (365 days from plan update time)
+        const activationTime = new Date(usageInfo?.updatedAt || dbUser?.updated_at || Date.now()).getTime();
+        const expirationTime = activationTime + 365 * 24 * 60 * 60 * 1000;
+        const diffMs = expirationTime - now;
+
+        if (diffMs <= 0) {
+          setCountdownText("⚠️ 1-Year Plan Expired");
+        } else {
+          const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+          const hrs = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+          const mins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+          setCountdownText(`📅 1-Year Pass Active: ${days} Days ${hrs}h ${mins}m remaining`);
+        }
+      } else {
+        // FREE Plan - Resets at midnight
+        const midnight = new Date();
+        midnight.setHours(24, 0, 0, 0);
+        const diffMs = midnight.getTime() - now;
+
+        const hrs = Math.floor(diffMs / (1000 * 60 * 60));
+        const mins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+        const secs = Math.floor((diffMs % (1000 * 60)) / 1000);
+        setCountdownText(`⏳ Free Quota resets in ${hrs}h ${mins}m ${secs}s`);
+      }
+    };
+
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 1000);
+    return () => clearInterval(interval);
+  }, [dbUser?.plan, dbUser?.role, dbUser?.updated_at, usageInfo]);
 
   const handleNameUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -355,6 +443,9 @@ export default function ProfilePage() {
               toast.dismiss();
               toast.success(`🎉 Payment verified! Account upgraded to ${newPlan} plan instantly!`);
               await syncUserWithTurso();
+              if (typeof window !== "undefined") {
+                window.dispatchEvent(new CustomEvent("paper_generated"));
+              }
             } else {
               toast.dismiss();
               toast.error(verifyJson.error?.message || "Payment verification failed.");
@@ -537,8 +628,8 @@ export default function ProfilePage() {
                   </Button>
                 </form>
 
-                {/* Daily Quota Counter */}
-                <div className="pt-4 border-t border-border/40 space-y-3">
+                {/* Real-time Daily Quota Counter & Live Subscription Countdown Ticker */}
+                <div className="pt-4 border-t border-border/40 space-y-4">
                   <div className="flex items-center justify-between text-xs font-bold font-heading">
                     <span className="flex items-center gap-1.5 text-foreground">
                       <Sparkles className="w-4 h-4 text-amber-400" />
@@ -556,9 +647,16 @@ export default function ProfilePage() {
                     />
                   </div>
 
-                  <p className="text-[11px] text-muted-foreground text-center">
-                    Quotas reset every midnight. Upgrade to 1-Day Pass (₹21) for unlimited papers or 1-Year Pass (₹399) for 50 papers/day!
-                  </p>
+                  {/* Real-time Ticking Countdown Tracker */}
+                  <div className="p-3.5 rounded-2xl bg-background/70 border border-blue-500/30 text-center space-y-1.5 shadow-md">
+                    <div className="text-[11px] font-extrabold text-blue-400 flex items-center justify-center gap-1.5 uppercase tracking-wider">
+                      <Clock className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
+                      <span>Live Subscription & Quota Tracker</span>
+                    </div>
+                    <div className="text-xs font-black font-heading text-foreground">
+                      {countdownText || "Calculating remaining time..."}
+                    </div>
+                  </div>
                 </div>
               </GlassCard>
 

@@ -54,6 +54,11 @@ export function useGeneratePaper() {
       // Record count in client rate limiter for this specific user
       clientRateLimiter.recordGeneration(userEmail, isSuperAdmin);
 
+      // Dispatch custom event for real-time profile & UI updates
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("paper_generated"));
+      }
+
       // If user is authenticated, save paper to Turso DB history and increment usage count
       const firebaseToken = await AuthService.getFirebaseToken();
       if (firebaseToken) {
@@ -80,7 +85,13 @@ export function useGeneratePaper() {
           headers: {
             Authorization: `Bearer ${firebaseToken}`,
           },
-        }).catch((err) => console.error("[Usage Increment Error]:", err));
+        })
+          .then(() => {
+            if (typeof window !== "undefined") {
+              window.dispatchEvent(new CustomEvent("paper_generated"));
+            }
+          })
+          .catch((err) => console.error("[Usage Increment Error]:", err));
       }
 
       toast.success("Question paper generated successfully!", { id: toastId });
