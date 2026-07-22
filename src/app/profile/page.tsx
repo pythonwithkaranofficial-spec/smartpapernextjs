@@ -31,7 +31,7 @@ import {
 import { toast } from "sonner";
 
 interface RazorpayResponse {
-  razorpay_order_id: string;
+  razorpay_order_id?: string;
   razorpay_payment_id: string;
   razorpay_signature?: string;
 }
@@ -268,40 +268,32 @@ export default function ProfilePage() {
       return;
     }
 
-    // Razorpay Online Payment Flow for PRO (₹21) or PREMIUM (₹399)
+    // Direct Instant Razorpay Checkout Flow for PRO (₹21) or PREMIUM (₹399)
     setUpdatingPlan(newPlan);
     try {
       const token = await AuthService.getFirebaseToken();
       if (!token) {
         toast.error("Please log in to upgrade your subscription.");
+        setUpdatingPlan(null);
         return;
       }
 
-      // 1. Create Razorpay Order
-      const checkoutRes = await fetch("/api/payment/checkout", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ plan: newPlan }),
-      });
-
-      const checkoutJson = await safeParseJsonResponse(checkoutRes);
-      if (!checkoutJson.success || !checkoutJson.data) {
-        throw new Error(checkoutJson.error?.message || "Failed to create Razorpay order.");
+      if (typeof window === "undefined" || !window.Razorpay) {
+        toast.error("Razorpay SDK is loading. Please try again in a moment.");
+        setUpdatingPlan(null);
+        return;
       }
 
-      const { orderId, amount, currency, keyId } = checkoutJson.data;
+      const keyId = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_live_TGd0ItjJBk6QgH";
+      const amountInPaise = newPlan === "PRO" ? 2100 : 39900;
+      const planTitle = newPlan === "PRO" ? "₹21 1-Day Pass (Unlimited)" : "₹399 1-Year Educator Plan (50/day)";
 
-      // 2. Open Razorpay Checkout Popup Modal
       const options: RazorpayOptions = {
-        key: keyId || "rzp_live_TGd0ItjJBk6QgH",
-        amount: amount || (newPlan === "PRO" ? 2100 : 39900),
-        currency: currency || "INR",
+        key: keyId,
+        amount: amountInPaise,
+        currency: "INR",
         name: "Smart Paper AI",
-        description: `Upgrade to ${newPlan === "PRO" ? "₹21 1-Day Pass" : "₹399 1-Year Educator Plan"}`,
-        order_id: orderId,
+        description: `Upgrade to ${planTitle}`,
         prefill: {
           name: displayName || firebaseUser?.displayName || "",
           email: firebaseUser?.email || "",
@@ -310,7 +302,7 @@ export default function ProfilePage() {
           color: newPlan === "PRO" ? "#f59e0b" : "#3b82f6",
         },
         handler: async (response: RazorpayResponse) => {
-          toast.loading("Verifying payment...");
+          toast.loading("Verifying payment transaction...");
           try {
             const verifyRes = await fetch("/api/payment/verify", {
               method: "POST",
@@ -319,7 +311,7 @@ export default function ProfilePage() {
                 Authorization: `Bearer ${token}`,
               },
               body: JSON.stringify({
-                razorpay_order_id: response.razorpay_order_id || orderId,
+                razorpay_order_id: response.razorpay_order_id || `ord_${Date.now()}`,
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature: response.razorpay_signature || "",
                 plan: newPlan,
@@ -345,12 +337,15 @@ export default function ProfilePage() {
         },
       };
 
-      if (window.Razorpay) {
-        const rzp = new window.Razorpay(options);
-        rzp.open();
-      } else {
-        toast.error("Razorpay SDK failed to load. Please refresh and try again.");
-      }
+      const rzp = new window.Razorpay(options);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      rzp.on("payment.failed", function (response: any) {
+        console.error("Razorpay payment failed:", response.error);
+        toast.error(`Payment failed: ${response.error?.description || "Transaction cancelled"}`);
+        setUpdatingPlan(null);
+      });
+
+      rzp.open();
     } catch (err) {
       console.error("Razorpay Checkout Error:", err);
       toast.error(err instanceof Error ? err.message : "Payment initialization failed.");
