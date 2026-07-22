@@ -27,6 +27,10 @@ import {
   Upload,
   Zap,
   Calendar,
+  CreditCard,
+  Building2,
+  Wallet,
+  Smartphone,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -43,6 +47,8 @@ interface RazorpayOptions {
   name: string;
   description: string;
   order_id?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  config?: any;
   handler: (response: RazorpayResponse) => void;
   prefill?: {
     name?: string;
@@ -300,6 +306,32 @@ export default function ProfilePage() {
         },
         theme: {
           color: newPlan === "PRO" ? "#f59e0b" : "#3b82f6",
+        },
+        config: {
+          display: {
+            blocks: {
+              upi: {
+                name: "Pay via UPI (GPay, PhonePe, Paytm, BHIM)",
+                instruments: [{ method: "upi" }],
+              },
+              cards: {
+                name: "Credit / Debit Cards (Visa, MasterCard, RuPay)",
+                instruments: [{ method: "card" }],
+              },
+              banks: {
+                name: "Net Banking (All Major Indian Banks)",
+                instruments: [{ method: "netbanking" }],
+              },
+              wallets: {
+                name: "Digital Wallets",
+                instruments: [{ method: "wallet" }],
+              },
+            },
+            sequence: ["block.upi", "block.cards", "block.banks", "block.wallets"],
+            preferences: {
+              show_default_blocks: true,
+            },
+          },
         },
         handler: async (response: RazorpayResponse) => {
           toast.loading("Verifying payment transaction...");
@@ -634,6 +666,54 @@ export default function ProfilePage() {
                     );
                   })}
                 </div>
+
+                {/* Supported Payment Channels Banner */}
+                <GlassCard className="p-5 border border-border/50 space-y-3">
+                  <div className="text-xs font-extrabold font-heading uppercase tracking-wider text-muted-foreground text-center">
+                    Supported Instant Payment Methods (Razorpay Verified)
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+                    <div className="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/20 space-y-1">
+                      <div className="flex items-center justify-center gap-1.5 text-xs font-bold text-amber-400">
+                        <Smartphone className="w-4 h-4" />
+                        <span>⚡ UPI Instant</span>
+                      </div>
+                      <div className="text-[10px] text-muted-foreground font-medium">
+                        GPay, PhonePe, Paytm, BHIM, QR
+                      </div>
+                    </div>
+
+                    <div className="p-3 rounded-2xl bg-blue-500/10 border border-blue-500/20 space-y-1">
+                      <div className="flex items-center justify-center gap-1.5 text-xs font-bold text-blue-400">
+                        <CreditCard className="w-4 h-4" />
+                        <span>💳 Cards</span>
+                      </div>
+                      <div className="text-[10px] text-muted-foreground font-medium">
+                        RuPay, Visa, MasterCard, Maestro
+                      </div>
+                    </div>
+
+                    <div className="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 space-y-1">
+                      <div className="flex items-center justify-center gap-1.5 text-xs font-bold text-emerald-400">
+                        <Building2 className="w-4 h-4" />
+                        <span>🏦 NetBanking</span>
+                      </div>
+                      <div className="text-[10px] text-muted-foreground font-medium">
+                        SBI, HDFC, ICICI, Axis & 50+ Banks
+                      </div>
+                    </div>
+
+                    <div className="p-3 rounded-2xl bg-purple-500/10 border border-purple-500/20 space-y-1">
+                      <div className="flex items-center justify-center gap-1.5 text-xs font-bold text-purple-400">
+                        <Wallet className="w-4 h-4" />
+                        <span>👛 E-Wallets</span>
+                      </div>
+                      <div className="text-[10px] text-muted-foreground font-medium">
+                        Mobikwik, Airtel Money, Freecharge
+                      </div>
+                    </div>
+                  </div>
+                </GlassCard>
               </div>
             </div>
           </div>
