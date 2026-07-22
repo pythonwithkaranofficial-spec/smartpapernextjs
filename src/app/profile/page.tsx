@@ -33,7 +33,7 @@ import { toast } from "sonner";
 interface RazorpayResponse {
   razorpay_order_id: string;
   razorpay_payment_id: string;
-  razorpay_signature: string;
+  razorpay_signature?: string;
 }
 
 interface RazorpayOptions {
@@ -42,7 +42,7 @@ interface RazorpayOptions {
   currency: string;
   name: string;
   description: string;
-  order_id: string;
+  order_id?: string;
   handler: (response: RazorpayResponse) => void;
   prefill?: {
     name?: string;
@@ -62,12 +62,26 @@ declare global {
 
 async function safeParseJsonResponse(res: Response) {
   const contentType = res.headers.get("content-type") || "";
-  if (!contentType.includes("application/json")) {
-    const rawText = await res.text();
-    console.error("API returned non-JSON response:", rawText);
-    throw new Error(`Server returned status ${res.status}. Please check your connection or try again.`);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let json: any = null;
+  if (contentType.includes("application/json")) {
+    try {
+      json = await res.json();
+    } catch (e) {
+      console.error("Failed to parse JSON response", e);
+    }
   }
-  return await res.json();
+
+  if (!res.ok) {
+    const errorMsg = json?.error?.message || json?.message || `Server request failed (${res.status})`;
+    throw new Error(errorMsg);
+  }
+
+  if (!json) {
+    throw new Error("Invalid or empty response received from server.");
+  }
+
+  return json;
 }
 
 interface PlanCardData {
@@ -282,9 +296,9 @@ export default function ProfilePage() {
 
       // 2. Open Razorpay Checkout Popup Modal
       const options: RazorpayOptions = {
-        key: keyId,
-        amount,
-        currency,
+        key: keyId || "rzp_live_TGd0ItjJBk6QgH",
+        amount: amount || (newPlan === "PRO" ? 2100 : 39900),
+        currency: currency || "INR",
         name: "Smart Paper AI",
         description: `Upgrade to ${newPlan === "PRO" ? "₹21 1-Day Pass" : "₹399 1-Year Educator Plan"}`,
         order_id: orderId,
@@ -296,7 +310,7 @@ export default function ProfilePage() {
           color: newPlan === "PRO" ? "#f59e0b" : "#3b82f6",
         },
         handler: async (response: RazorpayResponse) => {
-          toast.loading("Verifying Razorpay payment...");
+          toast.loading("Verifying payment...");
           try {
             const verifyRes = await fetch("/api/payment/verify", {
               method: "POST",
@@ -305,9 +319,9 @@ export default function ProfilePage() {
                 Authorization: `Bearer ${token}`,
               },
               body: JSON.stringify({
-                razorpay_order_id: response.razorpay_order_id,
+                razorpay_order_id: response.razorpay_order_id || orderId,
                 razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature: response.razorpay_signature,
+                razorpay_signature: response.razorpay_signature || "",
                 plan: newPlan,
               }),
             });
