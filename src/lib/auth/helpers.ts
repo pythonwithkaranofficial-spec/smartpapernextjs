@@ -2,6 +2,17 @@ import { UserRepository } from '../db/user-repository';
 import { DatabaseUser } from '@/types/db';
 import { UserRole, UserPlan } from '@/types/auth';
 
+export const SUPER_ADMIN_EMAILS = [
+  'tpaofficial1999@gmail.com',
+  'officialworldwithtechnology@gmail.com',
+  'pythonwithkaran.official@gmail.com',
+];
+
+export function isSuperAdminEmail(email?: string | null): boolean {
+  if (!email) return false;
+  return SUPER_ADMIN_EMAILS.includes(email.toLowerCase().trim());
+}
+
 export const DAILY_PAPER_LIMITS: Record<UserPlan, number> = {
   FREE: 5,
   PRO: 999999, // 1-Day Pass: Unlimited papers per day until quota resets
@@ -29,6 +40,9 @@ export async function getCurrentPlan(firebaseUid: string): Promise<UserPlan> {
  */
 export async function getCurrentRole(firebaseUid: string): Promise<UserRole> {
   const user = await getCurrentUser(firebaseUid);
+  if (user && isSuperAdminEmail(user.email)) {
+    return 'ADMIN';
+  }
   return user?.role || 'USER';
 }
 
@@ -42,7 +56,7 @@ export async function getCurrentDailyUsage(firebaseUid: string, date?: string): 
 
 /**
  * Calculate remaining daily paper generations allowed for user.
- * Developers and Admins (role === 'ADMIN') automatically bypass all limits with Unlimited quota.
+ * Super-Admins and Admins (role === 'ADMIN') automatically bypass all limits with Unlimited quota.
  */
 export async function getRemainingDailyPapers(firebaseUid: string): Promise<{
   plan: UserPlan;
@@ -52,11 +66,11 @@ export async function getRemainingDailyPapers(firebaseUid: string): Promise<{
   isAdmin: boolean;
 }> {
   const user = await getCurrentUser(firebaseUid);
-  const role = user?.role || 'USER';
+  const role = (user && isSuperAdminEmail(user.email)) ? 'ADMIN' : (user?.role || 'USER');
   const plan = user?.plan || 'FREE';
   const usedToday = await getCurrentDailyUsage(firebaseUid);
 
-  // ADMIN / DEVELOPER BYPASS: Unlimited daily quota
+  // ADMIN / SUPER-ADMIN BYPASS: Unlimited daily quota
   if (role === 'ADMIN') {
     return {
       plan,
@@ -84,7 +98,7 @@ export async function getRemainingDailyPapers(firebaseUid: string): Promise<{
  */
 export async function isPremium(firebaseUid: string): Promise<boolean> {
   const user = await getCurrentUser(firebaseUid);
-  if (user?.role === 'ADMIN') return true;
+  if (user && (user.role === 'ADMIN' || isSuperAdminEmail(user.email))) return true;
   return (user?.plan || 'FREE') !== 'FREE';
 }
 
@@ -92,6 +106,8 @@ export async function isPremium(firebaseUid: string): Promise<boolean> {
  * Check if user has administrator privileges
  */
 export async function isAdmin(firebaseUid: string): Promise<boolean> {
+  const user = await getCurrentUser(firebaseUid);
+  if (user && isSuperAdminEmail(user.email)) return true;
   const role = await getCurrentRole(firebaseUid);
   return role === 'ADMIN';
 }

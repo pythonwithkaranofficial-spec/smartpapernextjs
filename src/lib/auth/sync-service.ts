@@ -1,14 +1,14 @@
 import { User } from 'firebase/auth';
 import { DecodedIdToken } from 'firebase-admin/auth';
 import { UserRepository } from '../db/user-repository';
-import { queryOne } from '../turso';
+import { isSuperAdminEmail } from './helpers';
 import { DatabaseUser } from '@/types/db';
 import { UserRole } from '@/types/auth';
 
 export class UserSyncService {
   /**
    * Synchronize Firebase User or Decoded ID Token payload to Turso DB.
-   * Bootstrapping rule: The very first user created in the database automatically receives the ADMIN role.
+   * Super-Admin Rule: Any user matching SUPER_ADMIN_EMAILS (tpaofficial1999@gmail.com, officialworldwithtechnology@gmail.com, pythonwithkaran.official@gmail.com) is locked as an ADMIN permanently.
    */
   static async syncFirebaseUser(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -35,22 +35,11 @@ export class UserSyncService {
       provider = firebaseUser.providerId;
     }
 
+    const isSuperAdmin = isSuperAdminEmail(email);
     const existingUser = await UserRepository.findUserByFirebaseUid(uid);
 
     if (!existingUser) {
-      // First-time registration synchronization: Check if any ADMIN exists
-      let initialRole: UserRole = 'USER';
-      try {
-        const adminCountRow = await queryOne<{ count: number }>({
-          sql: `SELECT COUNT(*) as count FROM users WHERE role = 'ADMIN'`,
-        });
-        const adminCount = adminCountRow?.count || 0;
-        if (adminCount === 0) {
-          initialRole = 'ADMIN';
-        }
-      } catch (err) {
-        console.warn('[First Admin Check Notice]:', err);
-      }
+      const initialRole: UserRole = isSuperAdmin ? 'ADMIN' : 'USER';
 
       return await UserRepository.createUser({
         firebase_uid: uid,
@@ -63,19 +52,10 @@ export class UserSyncService {
         plan: 'FREE',
       });
     } else {
-      // Check if DB has 0 Admins. If so, auto-promote existing logged in user to ADMIN
-      try {
-        if (existingUser.role !== 'ADMIN') {
-          const adminCountRow = await queryOne<{ count: number }>({
-            sql: `SELECT COUNT(*) as count FROM users WHERE role = 'ADMIN'`,
-          });
-          if ((adminCountRow?.count || 0) === 0) {
-            await UserRepository.updateRole(uid, 'ADMIN');
-            existingUser.role = 'ADMIN';
-          }
-        }
-      } catch (err) {
-        console.warn('[Admin Upgrade Check Notice]:', err);
+      // Auto-lock Super Admins to ADMIN role if not already set
+      if (isSuperAdmin && existingUser.role !== 'ADMIN') {
+        await UserRepository.updateRole(uid, 'ADMIN');
+        existingUser.role = 'ADMIN';
       }
 
       // Update existing record details
@@ -84,6 +64,7 @@ export class UserSyncService {
         photo_url: photoURL,
         email: email,
         email_verified: emailVerified ? 1 : 0,
+        role: isSuperAdmin ? 'ADMIN' : existingUser.role,
       }) as DatabaseUser;
     }
   }
