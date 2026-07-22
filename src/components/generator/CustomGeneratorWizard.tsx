@@ -70,7 +70,7 @@ export function CustomGeneratorWizard() {
   const [chaptersText, setChaptersText] = useState("");
   
   const { generatePaper, loading: generating } = useGeneratePaper();
-  const [usageInfo, setUsageInfo] = useState<{ usedToday: number; dailyLimit: number; remainingToday: number } | null>(null);
+  const [usageInfo, setUsageInfo] = useState<{ usedToday: number; dailyLimit: number; remainingToday: number; isAdmin?: boolean } | null>(null);
   const [showLimitModal, setShowLimitModal] = useState(false);
 
   // Load usage details from API or local fallback
@@ -96,6 +96,7 @@ export function CustomGeneratorWizard() {
         usedToday: 5 - clientRateLimiter.getRemainingCount(),
         dailyLimit: 5,
         remainingToday: clientRateLimiter.getRemainingCount(),
+        isAdmin: false,
       });
     }
 
@@ -193,7 +194,7 @@ export function CustomGeneratorWizard() {
   };
 
   const handleGenerate = () => {
-    if (usageInfo && usageInfo.remainingToday <= 0) {
+    if (usageInfo && !usageInfo.isAdmin && usageInfo.remainingToday <= 0) {
       setShowLimitModal(true);
       return;
     }

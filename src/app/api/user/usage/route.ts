@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAuthToken } from '@/lib/auth/middleware';
-import { getCurrentDailyUsage, getRemainingDailyPapers, getCurrentPlan, DAILY_PAPER_LIMITS } from '@/lib/auth/helpers';
+import { getCurrentDailyUsage, getRemainingDailyPapers, getCurrentPlan } from '@/lib/auth/helpers';
 import { handleApiError } from '@/lib/errors';
 
 export async function GET(req: NextRequest) {
@@ -8,16 +8,16 @@ export async function GET(req: NextRequest) {
     const authContext = await verifyAuthToken(req);
     const plan = await getCurrentPlan(authContext.uid);
     const currentUsage = await getCurrentDailyUsage(authContext.uid);
-    const remaining = await getRemainingDailyPapers(authContext.uid);
-    const dailyLimit = DAILY_PAPER_LIMITS[plan] ?? DAILY_PAPER_LIMITS.FREE;
+    const remainingInfo = await getRemainingDailyPapers(authContext.uid);
 
     return NextResponse.json({
       success: true,
       data: {
         plan,
-        dailyLimit,
+        dailyLimit: remainingInfo.dailyLimit,
         usedToday: currentUsage,
-        remainingToday: remaining,
+        remainingToday: remainingInfo.remainingToday,
+        isAdmin: remainingInfo.isAdmin,
       },
     });
   } catch (error) {

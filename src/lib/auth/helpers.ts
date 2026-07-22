@@ -41,16 +41,31 @@ export async function getCurrentDailyUsage(firebaseUid: string, date?: string): 
 }
 
 /**
- * Calculate remaining daily paper generations allowed for user
+ * Calculate remaining daily paper generations allowed for user.
+ * Developers and Admins (role === 'ADMIN') automatically bypass all limits with Unlimited quota.
  */
 export async function getRemainingDailyPapers(firebaseUid: string): Promise<{
   plan: UserPlan;
   dailyLimit: number;
   usedToday: number;
   remainingToday: number;
+  isAdmin: boolean;
 }> {
-  const plan = await getCurrentPlan(firebaseUid);
+  const user = await getCurrentUser(firebaseUid);
+  const role = user?.role || 'USER';
+  const plan = user?.plan || 'FREE';
   const usedToday = await getCurrentDailyUsage(firebaseUid);
+
+  // ADMIN / DEVELOPER BYPASS: Unlimited daily quota
+  if (role === 'ADMIN') {
+    return {
+      plan,
+      dailyLimit: 999999,
+      usedToday,
+      remainingToday: 999999,
+      isAdmin: true,
+    };
+  }
 
   const dailyLimit = DAILY_PAPER_LIMITS[plan] || 5;
   const remainingToday = Math.max(0, dailyLimit - usedToday);
@@ -60,15 +75,17 @@ export async function getRemainingDailyPapers(firebaseUid: string): Promise<{
     dailyLimit,
     usedToday,
     remainingToday,
+    isAdmin: false,
   };
 }
 
 /**
- * Check if user is a paid subscriber (PRO, PREMIUM, or ENTERPRISE)
+ * Check if user is a paid subscriber (PRO, PREMIUM, or ENTERPRISE) or ADMIN
  */
 export async function isPremium(firebaseUid: string): Promise<boolean> {
-  const plan = await getCurrentPlan(firebaseUid);
-  return plan !== 'FREE';
+  const user = await getCurrentUser(firebaseUid);
+  if (user?.role === 'ADMIN') return true;
+  return (user?.plan || 'FREE') !== 'FREE';
 }
 
 /**

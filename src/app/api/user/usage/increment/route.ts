@@ -9,7 +9,8 @@ export async function POST(req: NextRequest) {
     const authContext = await verifyAuthToken(req);
     const remainingInfo = await getRemainingDailyPapers(authContext.uid);
 
-    if (remainingInfo.remainingToday <= 0) {
+    // If user is not an Admin and has 0 remaining papers today, block generation
+    if (!remainingInfo.isAdmin && remainingInfo.remainingToday <= 0) {
       throw new ValidationError('Daily paper generation limit reached for your current plan', 403, 'LIMIT_EXCEEDED');
     }
 
@@ -19,7 +20,8 @@ export async function POST(req: NextRequest) {
       success: true,
       data: {
         usedToday: updatedCount,
-        remainingToday: Math.max(0, remainingInfo.remainingToday - 1),
+        remainingToday: remainingInfo.isAdmin ? 999999 : Math.max(0, remainingInfo.remainingToday - 1),
+        isAdmin: remainingInfo.isAdmin,
       },
     });
   } catch (error) {

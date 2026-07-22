@@ -61,7 +61,7 @@ export function GeneratorWizard() {
   const [config, setConfig] = useState<PaperConfig>(initialConfig);
   const { generatePaper, loading } = useGeneratePaper();
 
-  const [usageInfo, setUsageInfo] = useState<{ usedToday: number; dailyLimit: number; remainingToday: number } | null>(null);
+  const [usageInfo, setUsageInfo] = useState<{ usedToday: number; dailyLimit: number; remainingToday: number; isAdmin?: boolean } | null>(null);
   const [showLimitModal, setShowLimitModal] = useState(false);
 
   // Load usage details from API or local fallback
@@ -87,11 +87,13 @@ export function GeneratorWizard() {
         usedToday: 5 - clientRateLimiter.getRemainingCount(),
         dailyLimit: 5,
         remainingToday: clientRateLimiter.getRemainingCount(),
+        isAdmin: false,
       });
     }
 
     checkUsage();
   }, []);
+
 
   // Load from localStorage on mount (Auto-save)
   useEffect(() => {
@@ -170,7 +172,7 @@ export function GeneratorWizard() {
   };
 
   const handleGenerate = () => {
-    if (usageInfo && usageInfo.remainingToday <= 0) {
+    if (usageInfo && !usageInfo.isAdmin && usageInfo.remainingToday <= 0) {
       setShowLimitModal(true);
       return;
     }
