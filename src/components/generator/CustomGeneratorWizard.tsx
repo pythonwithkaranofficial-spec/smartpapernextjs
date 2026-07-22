@@ -15,7 +15,7 @@ import { StepPaperOptions } from "./StepPaperOptions";
 import { PaperConfig } from "@/types";
 import { useGeneratePaper } from "@/hooks/useGeneratePaper";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ArrowRight, Sparkles, Loader2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Sparkles } from "lucide-react";
 import { clientRateLimiter } from "@/lib/rate-limiter";
 import { toast } from "sonner";
 import { GeneratingOverlay } from "../preview/GeneratingOverlay";
@@ -62,12 +62,11 @@ export function CustomGeneratorWizard() {
   const [direction, setDirection] = useState(1); // 1 = forward, -1 = backward
   const [config, setConfig] = useState<PaperConfig>(initialConfig);
   
-  // Custom free-text states
+  // Custom free-text states stored locally
   const [classText, setClassText] = useState("");
   const [subjectText, setSubjectText] = useState("");
   const [chaptersText, setChaptersText] = useState("");
   
-  const [normalizing, setNormalizing] = useState(false);
   const { generatePaper, loading: generating } = useGeneratePaper();
   const [remainingCount, setRemainingCount] = useState(5);
 
@@ -114,13 +113,14 @@ export function CustomGeneratorWizard() {
     );
   };
 
-  const handleNext = async (
+  const handleNext = (
     classIdOverride?: string,
     subjectOverride?: string,
     examTypeOverride?: string
   ) => {
     const examType = examTypeOverride !== undefined ? examTypeOverride : config.examType;
-    // Validation gating per step
+    
+    // Strict local validation gating per step without early AI calls
     if (step === 1) {
       if (!classText.trim()) {
         toast.error("Please enter a target class/grade standard.");
@@ -149,42 +149,9 @@ export function CustomGeneratorWizard() {
         return;
       }
       saveTextInputs(classText, subjectText, chaptersText);
-      
-      // Call Gemini API to normalize inputs
-      setNormalizing(true);
-      const toastId = toast.loading("Analyzing and normalizing syllabus using Gemini AI...");
-      try {
-        const response = await fetch("/api/normalize", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ classText, subjectText, chaptersText }),
-        });
-
-        const data = await response.json();
-        if (!response.ok) {
-          throw new Error(data.error || "Failed to normalize inputs");
-        }
-
-        // Apply normalized config
-        updateConfig((prev) => ({
-          ...prev,
-          classId: data.classId,
-          subject: data.subject,
-          selectedChapters: data.selectedChapters,
-        }));
-
-        toast.success(`Syllabus recognized successfully! Normalized to Class ${data.classId} ${data.subject.toUpperCase()}`, { id: toastId });
-        
-        setDirection(1);
-        setStep(4);
-      } catch (err: any) {
-        console.error(err);
-        toast.error(err.message || "Failed to recognize chapters. Please check spelling.", { id: toastId });
-      } finally {
-        setNormalizing(false);
-      }
+      // Advance to step 4 locally with NO Gemini API calls
+      setDirection(1);
+      setStep(4);
       return;
     }
 
@@ -224,7 +191,58 @@ export function CustomGeneratorWizard() {
   };
 
   const handleGenerate = () => {
-    generatePaper(config);
+    // Comprehensive input validation before making the single AI call
+    if (!classText.trim()) {
+      toast.error("Class selection is missing. Please provide a class.");
+      setStep(1);
+      return;
+    }
+    if (!subjectText.trim()) {
+      toast.error("Subject selection is missing. Please provide a subject.");
+      setStep(2);
+      return;
+    }
+    if (!chaptersText.trim()) {
+      toast.error("Chapters input is missing. Please provide at least one chapter.");
+      setStep(3);
+      return;
+    }
+    if (!config.examType) {
+      toast.error("Exam format is missing. Please select an exam type.");
+      setStep(4);
+      return;
+    }
+
+    // Validate marks match
+    const dist = config.questionDistribution;
+    const currentMarks = 
+      (dist.mcq * 1) + 
+      (dist.assertionReason * 1) + 
+      (dist.vsa * 2) + 
+      (dist.sa * 3) + 
+      (dist.caseStudy * 4) + 
+      (dist.la * 5);
+    
+    if (currentMarks !== config.totalMarks) {
+      toast.error(`Marks mismatch! Your allocated questions total ${currentMarks} Marks, but your target is ${config.totalMarks} Marks. Adjust counts before continuing.`);
+      setStep(6);
+      return;
+    }
+
+    // Build single complete config with exact user inputs
+    const finalConfig: PaperConfig = {
+      ...config,
+      classId: classText.trim(),
+      subject: subjectText.trim(),
+      selectedChapters: [chaptersText.trim()],
+      isCustom: true,
+      customClass: classText.trim(),
+      customSubject: subjectText.trim(),
+      customChapters: chaptersText.trim(),
+    };
+
+    // Make ONE SINGLE Gemini API call only after all inputs are collected
+    generatePaper(finalConfig);
   };
 
   // Slide animations
@@ -254,16 +272,6 @@ export function CustomGeneratorWizard() {
   return (
     <div className="w-full max-w-5xl mx-auto px-4 py-8">
       {generating && <GeneratingOverlay />}
-      
-      {/* Normalization overlay spinner */}
-      {normalizing && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-md z-50 flex flex-col items-center justify-center gap-4">
-          <Loader2 className="w-10 h-10 text-indigo-500 animate-spin" />
-          <span className="text-sm font-semibold font-heading text-foreground/80">
-            Intelligently recognizing syllabus details with Gemini AI...
-          </span>
-        </div>
-      )}
 
       {/* Steps indicator bar */}
       <CustomProgressBar currentStep={step} />
@@ -341,7 +349,7 @@ export function CustomGeneratorWizard() {
                 setTotalMarks={(val) => updateConfig((prev) => ({ ...prev, totalMarks: val }))}
                 duration={config.duration}
                 setDuration={(val) => updateConfig((prev) => ({ ...prev, duration: val }))}
-                subject={config.subject}
+                subject={subjectText || config.subject}
               />
             )}
 

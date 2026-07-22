@@ -150,16 +150,20 @@ export async function POST(request: NextRequest) {
           config.subject === "हिन्दी कोर" || 
           config.subject === "हिन्दी ऐच्छिक";
 
-        let displaySubject = config.subject;
+        let displaySubject = config.isCustom && config.customSubject ? config.customSubject : config.subject;
         if (config.subject === "hindi") displaySubject = "हिन्दी";
         if (config.subject === "hindi_core") displaySubject = "हिन्दी कोर";
         if (config.subject === "hindi_elective") displaySubject = "हिन्दी ऐच्छिक";
+
+        const displayClassText = config.isCustom && config.customClass
+          ? (config.customClass.toLowerCase().startsWith("class") ? config.customClass : `Class ${config.customClass}`)
+          : `Class ${config.classId}`;
 
         finalPaper = {
           schoolName: config.options.includeSchoolName ? config.options.schoolName : undefined,
           examName: config.examType,
           subject: displaySubject,
-          classText: `Class ${config.classId}`,
+          classText: displayClassText,
           timeText: config.duration,
           maxMarksText: isHindiSubject ? `${config.totalMarks} अंक` : `${config.totalMarks} Marks`,
           instructions: config.options.includeInstructions

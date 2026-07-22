@@ -23,7 +23,7 @@ export interface PaperOptions {
 }
 
 export interface PaperConfig {
-  classId: string; // "9" | "10" | "11" | "12"
+  classId: string;
   subject: string;
   examType: string;
   difficulty: 'Easy' | 'Medium' | 'Hard';
@@ -33,6 +33,10 @@ export interface PaperConfig {
   questionDistribution: QuestionDistribution;
   options: PaperOptions;
   selectedChapters?: string[];
+  isCustom?: boolean;
+  customClass?: string;
+  customSubject?: string;
+  customChapters?: string;
 }
 
 export interface Question {

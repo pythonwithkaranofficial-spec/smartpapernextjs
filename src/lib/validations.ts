@@ -25,9 +25,7 @@ export const paperOptionsSchema = z.object({
 });
 
 export const paperConfigSchema = z.object({
-  classId: z.enum(["9", "10", "11", "12"], {
-    message: "Please select a class",
-  }),
+  classId: z.string().min(1, "Please select a class"),
   subject: z.string().min(1, "Please select a subject"),
   examType: z.string().min(1, "Please select an exam type"),
   difficulty: z.enum(["Easy", "Medium", "Hard"]),
@@ -37,6 +35,10 @@ export const paperConfigSchema = z.object({
   questionDistribution: questionDistributionSchema,
   options: paperOptionsSchema,
   selectedChapters: z.array(z.string()).optional(),
+  isCustom: z.boolean().optional(),
+  customClass: z.string().optional(),
+  customSubject: z.string().optional(),
+  customChapters: z.string().optional(),
 });
 
 export type PaperConfigInput = z.infer<typeof paperConfigSchema>;

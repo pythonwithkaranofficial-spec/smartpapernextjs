@@ -41,6 +41,7 @@ export const CLASS_SUBJECTS: Record<string, Subject[]> = {
     { id: "geography", name: "Geography", iconName: "Map", color: "from-green-500 to-emerald-600" },
     { id: "polscience", name: "Political Science", iconName: "Scale", color: "from-blue-600 to-indigo-700" },
     { id: "phyedu", name: "Physical Education", iconName: "Activity", color: "from-rose-500 to-red-600" },
+    { id: "finearts", name: "Fine Arts", iconName: "Palette", color: "from-pink-500 to-rose-600" },
   ],
   "12": [
     { id: "physics", name: "Physics", iconName: "Atom", color: "from-blue-500 to-cyan-600" },
@@ -59,5 +60,6 @@ export const CLASS_SUBJECTS: Record<string, Subject[]> = {
     { id: "geography", name: "Geography", iconName: "Map", color: "from-green-500 to-emerald-600" },
     { id: "polscience", name: "Political Science", iconName: "Scale", color: "from-blue-600 to-indigo-700" },
     { id: "phyedu", name: "Physical Education", iconName: "Activity", color: "from-rose-500 to-red-600" },
+    { id: "finearts", name: "Fine Arts", iconName: "Palette", color: "from-pink-500 to-rose-600" },
   ]
 };

@@ -52,6 +52,103 @@ export function buildGeminiPrompt(config: PaperConfig): string {
          (D) A असत्य है लेकिन R सत्य है।`
     : "";
 
+  if (config.isCustom) {
+    const customClassStr = config.customClass || config.classId;
+    const customSubjectStr = config.customSubject || config.subject;
+    const customChaptersStr = config.customChapters || (config.selectedChapters ? config.selectedChapters.join(", ") : "");
+    const totalQuestionsCount = dist.mcq + dist.assertionReason + dist.vsa + dist.sa + dist.caseStudy + dist.la;
+
+    const selectedTypesList: string[] = [];
+    if (dist.mcq > 0) selectedTypesList.push(`MCQ (${dist.mcq})`);
+    if (dist.assertionReason > 0) selectedTypesList.push(`Assertion-Reason (${dist.assertionReason})`);
+    if (dist.vsa > 0) selectedTypesList.push(`Very Short Answer (${dist.vsa})`);
+    if (dist.sa > 0) selectedTypesList.push(`Short Answer (${dist.sa})`);
+    if (dist.caseStudy > 0) selectedTypesList.push(`Case Study (${dist.caseStudy})`);
+    if (dist.la > 0) selectedTypesList.push(`Long Answer (${dist.la})`);
+
+    return `
+You are a Senior CBSE Examination Paper Setter with 20+ years of experience.
+Your task is to generate a professional, curriculum-compliant question paper strictly according to the exact user-specified inputs below.
+
+Generate a CBSE Question Paper for:
+
+Class:
+${customClassStr}
+
+Subject:
+${customSubjectStr}
+
+Chapters:
+${customChaptersStr}
+
+Paper Type:
+${config.examType}
+
+Difficulty:
+${config.difficulty}
+
+Marks:
+${config.totalMarks}
+
+Question Types:
+${selectedTypesList.join(", ")}
+
+Number of Questions:
+${totalQuestionsCount}
+
+Time:
+${config.duration}
+
+--- CRITICAL VALIDATION & BOUNDARY DIRECTIVES ---
+1. STRICT SUBJECT & CLASS BOUNDARY: Generate questions ONLY for the exact Class "${customClassStr}" and Subject "${customSubjectStr}".
+   - Generate ONLY for the above class and subject.
+   - Do NOT substitute another subject (e.g. if Subject is "${customSubjectStr}", NEVER generate Physics, Chemistry, Biology, Mathematics, History, or Science questions instead).
+   - Do NOT substitute another class.
+   - Do NOT infer a different curriculum.
+   - Do NOT assume another stream.
+   - Strictly follow the provided inputs.
+
+2. STRICT CHAPTER BOUNDARY: Generate questions ONLY from the chapters entered by the user: "${customChaptersStr}". Do not introduce questions from other chapters or extra units.
+
+3. QUESTION DISTRIBUTION:
+${distributionDetails}
+
+4. LANGUAGE INSTRUCTIONS:
+${languagePrompt}
+
+5. INTERNAL CHOICE OPTIONS:
+${internalChoicePrompt}
+
+6. NO ANSWERS: Do NOT generate answers, solutions, or marking schemes. Only generate the questions.
+7. MCQ FORMAT: MCQs must have exactly 4 plausible choices. Only generate choices for MCQs (the "choices" array must be null or empty for all other types).
+8. ASSERTION REASON FORMAT: Assertion-Reason questions must follow the standard 4 option structure. Set these 4 options in the "choices" array.
+9. JSON ESCAPING: Every backslash character (\\) in mathematical formulas or LaTeX MUST be double-escaped as (\\\\).
+10. FORMAT OUTPUT: You must output strictly a single valid JSON object following the schema defined below. Do not wrap the JSON in markdown code blocks.
+${hindiConstraint}
+
+--- JSON SCHEMA FORMAT ---
+{
+  "sections": [
+    {
+      "name": "Section A",
+      "description": "Multiple Choice Questions (1 Mark each)",
+      "marksPerQuestion": 1,
+      "questions": [
+        {
+          "id": "uq_1",
+          "text": "Question text here...",
+          "marks": 1,
+          "type": "mcq",
+          "choices": ["Option 1", "Option 2", "Option 3", "Option 4"],
+          "orQuestion": null
+        }
+      ]
+    }
+  ]
+}
+`;
+  }
+
   return `
 You are a Senior CBSE Examination Paper Setter with 20+ years of experience.
 Your task is to generate a professional, curriculum-compliant question paper based on the following configurations.
