@@ -1,11 +1,14 @@
 import { User } from 'firebase/auth';
 import { DecodedIdToken } from 'firebase-admin/auth';
 import { UserRepository } from '../db/user-repository';
+import { queryOne } from '../turso';
 import { DatabaseUser } from '@/types/db';
+import { UserRole } from '@/types/auth';
 
 export class UserSyncService {
   /**
-   * Synchronize Firebase User or Decoded ID Token payload to Turso DB
+   * Synchronize Firebase User or Decoded ID Token payload to Turso DB.
+   * Bootstrapping rule: The very first user created in the database automatically receives the ADMIN role.
    */
   static async syncFirebaseUser(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -35,7 +38,20 @@ export class UserSyncService {
     const existingUser = await UserRepository.findUserByFirebaseUid(uid);
 
     if (!existingUser) {
-      // First-time registration synchronization
+      // First-time registration synchronization: Check if any ADMIN exists
+      let initialRole: UserRole = 'USER';
+      try {
+        const adminCountRow = await queryOne<{ count: number }>({
+          sql: `SELECT COUNT(*) as count FROM users WHERE role = 'ADMIN'`,
+        });
+        const adminCount = adminCountRow?.count || 0;
+        if (adminCount === 0) {
+          initialRole = 'ADMIN';
+        }
+      } catch (err) {
+        console.warn('[First Admin Check Notice]:', err);
+      }
+
       return await UserRepository.createUser({
         firebase_uid: uid,
         email: email,
@@ -43,10 +59,25 @@ export class UserSyncService {
         photo_url: photoURL,
         provider: provider,
         email_verified: emailVerified ? 1 : 0,
-        role: 'USER',
+        role: initialRole,
         plan: 'FREE',
       });
     } else {
+      // Check if DB has 0 Admins. If so, auto-promote existing logged in user to ADMIN
+      try {
+        if (existingUser.role !== 'ADMIN') {
+          const adminCountRow = await queryOne<{ count: number }>({
+            sql: `SELECT COUNT(*) as count FROM users WHERE role = 'ADMIN'`,
+          });
+          if ((adminCountRow?.count || 0) === 0) {
+            await UserRepository.updateRole(uid, 'ADMIN');
+            existingUser.role = 'ADMIN';
+          }
+        }
+      } catch (err) {
+        console.warn('[Admin Upgrade Check Notice]:', err);
+      }
+
       // Update existing record details
       return await UserRepository.updateUser(uid, {
         name: displayName,

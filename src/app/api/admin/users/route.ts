@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAuthToken } from '@/lib/auth/middleware';
 import { UserRepository } from '@/lib/db/user-repository';
-import { queryRows, executeSql } from '@/lib/turso';
+import { queryRows, queryOne } from '@/lib/turso';
 import { DatabaseUser } from '@/types/db';
 import { UserRole, UserPlan } from '@/types/auth';
 import { handleApiError, AuthError, ValidationError } from '@/lib/errors';
@@ -9,7 +9,22 @@ import { handleApiError, AuthError, ValidationError } from '@/lib/errors';
 export async function GET(req: NextRequest) {
   try {
     const authContext = await verifyAuthToken(req);
-    const caller = await UserRepository.findUserByFirebaseUid(authContext.uid);
+    let caller = await UserRepository.findUserByFirebaseUid(authContext.uid);
+
+    if (!caller) {
+      throw new AuthError('User account not found', 404, 'NOT_FOUND');
+    }
+
+    // First Admin Auto-Claim: If 0 Admins exist, promote current caller to ADMIN
+    if (caller.role !== 'ADMIN') {
+      const adminCountRow = await queryOne<{ count: number }>({
+        sql: `SELECT COUNT(*) as count FROM users WHERE role = 'ADMIN'`,
+      });
+      if ((adminCountRow?.count || 0) === 0) {
+        await UserRepository.updateRole(caller.firebase_uid, 'ADMIN');
+        caller = await UserRepository.findUserByFirebaseUid(caller.firebase_uid);
+      }
+    }
 
     if (!caller || caller.role !== 'ADMIN') {
       throw new AuthError('Admin privileges required to access this endpoint', 403, 'FORBIDDEN');
@@ -48,7 +63,22 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const authContext = await verifyAuthToken(req);
-    const caller = await UserRepository.findUserByFirebaseUid(authContext.uid);
+    let caller = await UserRepository.findUserByFirebaseUid(authContext.uid);
+
+    if (!caller) {
+      throw new AuthError('User account not found', 404, 'NOT_FOUND');
+    }
+
+    // First Admin Auto-Claim: If 0 Admins exist, promote current caller to ADMIN
+    if (caller.role !== 'ADMIN') {
+      const adminCountRow = await queryOne<{ count: number }>({
+        sql: `SELECT COUNT(*) as count FROM users WHERE role = 'ADMIN'`,
+      });
+      if ((adminCountRow?.count || 0) === 0) {
+        await UserRepository.updateRole(caller.firebase_uid, 'ADMIN');
+        caller = await UserRepository.findUserByFirebaseUid(caller.firebase_uid);
+      }
+    }
 
     if (!caller || caller.role !== 'ADMIN') {
       throw new AuthError('Admin privileges required to access this endpoint', 403, 'FORBIDDEN');
