@@ -8,28 +8,38 @@ import { Check, Smile, Meh, Frown } from "lucide-react";
 
 interface StepConfigurationProps {
   difficulty: "Easy" | "Medium" | "Hard";
-  setDifficulty: (val: "Easy" | "Medium" | "Hard") => void;
+  setDifficulty?: (val: "Easy" | "Medium" | "Hard") => void;
+  onChangeDifficulty?: (val: "Easy" | "Medium" | "Hard") => void;
   language: "English" | "Hindi" | "Bilingual";
-  setLanguage: (val: "English" | "Hindi" | "Bilingual") => void;
+  setLanguage?: (val: "English" | "Hindi" | "Bilingual") => void;
+  onChangeLanguage?: (val: "English" | "Hindi" | "Bilingual") => void;
   totalMarks: number;
-  setTotalMarks: (val: number) => void;
+  setTotalMarks?: (val: number) => void;
+  onChangeTotalMarks?: (val: number) => void;
   duration: string;
-  setDuration: (val: string) => void;
+  setDuration?: (val: string) => void;
+  onChangeDuration?: (val: string) => void;
   subject?: string;
+  isHindiSubject?: boolean;
 }
 
 export function StepConfiguration({
   difficulty,
   setDifficulty,
+  onChangeDifficulty,
   language,
   setLanguage,
+  onChangeLanguage,
   totalMarks,
   setTotalMarks,
+  onChangeTotalMarks,
   duration,
   setDuration,
+  onChangeDuration,
   subject,
+  isHindiSubject: isHindiOverride,
 }: StepConfigurationProps) {
-  const isHindiSubject = 
+  const isHindiSubjectCalculated = 
     subject === "hindi" || 
     subject === "hindi_core" || 
     subject === "hindi_elective" || 
@@ -37,209 +47,145 @@ export function StepConfiguration({
     subject === "हिन्दी कोर" || 
     subject === "हिन्दी ऐच्छिक";
 
+  const isHindiSubject = isHindiOverride !== undefined ? isHindiOverride : isHindiSubjectCalculated;
+
+  const handleDifficulty = (val: "Easy" | "Medium" | "Hard") => {
+    if (setDifficulty) setDifficulty(val);
+    if (onChangeDifficulty) onChangeDifficulty(val);
+  };
+
+  const handleLanguage = (val: "English" | "Hindi" | "Bilingual") => {
+    if (setLanguage) setLanguage(val);
+    if (onChangeLanguage) onChangeLanguage(val);
+  };
+
+  const handleTotalMarks = (val: number) => {
+    if (setTotalMarks) setTotalMarks(val);
+    if (onChangeTotalMarks) onChangeTotalMarks(val);
+  };
+
+  const handleDuration = (val: string) => {
+    if (setDuration) setDuration(val);
+    if (onChangeDuration) onChangeDuration(val);
+  };
+
   // Automatically force language to Hindi if it's a Hindi subject
   useEffect(() => {
     if (isHindiSubject && language !== "Hindi") {
-      setLanguage("Hindi");
+      handleLanguage("Hindi");
     }
-  }, [isHindiSubject, language, setLanguage]);
+  }, [isHindiSubject]);
 
-  const difficulties = [
-    { id: "Easy", icon: Smile, label: "Easy", color: "text-emerald-600 dark:text-emerald-400 border-emerald-500/20 bg-emerald-500/5", desc: "Basic recall & simple direct questions" },
-    { id: "Medium", icon: Meh, label: "Medium", color: "text-indigo-600 dark:text-indigo-400 border-indigo-500/20 bg-indigo-500/5", desc: "Application, understanding & analytical" },
-    { id: "Hard", icon: Frown, label: "Hard", color: "text-rose-600 dark:text-rose-400 border-rose-500/20 bg-rose-500/5", desc: "High Order Thinking Skills (HOTS) & proofs" },
-  ] as const;
+  const difficulties: { id: "Easy" | "Medium" | "Hard"; label: string; desc: string; icon: React.ReactNode; color: string }[] = [
+    { id: "Easy", label: "Easy", desc: "Basic recall & direct conceptual questions", icon: <Smile className="w-5 h-5" />, color: "text-emerald-500 bg-emerald-500/10 border-emerald-500/20" },
+    { id: "Medium", label: "Medium", desc: "Standard CBSE/Board balanced difficulty", icon: <Meh className="w-5 h-5" />, color: "text-blue-500 bg-blue-500/10 border-blue-500/20" },
+    { id: "Hard", label: "Hard", desc: "Advanced analytical & HOTS questions", icon: <Frown className="w-5 h-5" />, color: "text-purple-500 bg-purple-500/10 border-purple-500/20" },
+  ];
 
-  const languages = [
-    { id: "English", label: "English Only", desc: "Questions drafted in English language" },
-    { id: "Hindi", label: "Hindi Only", desc: "Questions drafted in Hindi language" },
-    { id: "Bilingual", label: "Bilingual", desc: "Questions drafted in English with Hindi translation" },
-  ] as const;
-
-  const quickMarks = [10, 20, 30, 40, 50, 60, 70, 80, 100];
-  const quickDurations = ["30 Minutes", "45 Minutes", "1 Hour", "1.5 Hours", "2 Hours", "3 Hours"];
-
-  const handleCustomMarksChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = parseInt(e.target.value, 10);
-    if (!isNaN(val)) {
-      setTotalMarks(val);
-    }
-  };
+  const languages: { id: "English" | "Hindi" | "Bilingual"; label: string; desc: string }[] = [
+    { id: "English", label: "English", desc: "Standard English Medium" },
+    { id: "Hindi", label: "Hindi (हिंदी)", desc: "Devanagari Script Medium" },
+    { id: "Bilingual", label: "Bilingual", desc: "English & Hindi Side-by-Side" },
+  ];
 
   return (
     <div className="space-y-8 max-w-4xl mx-auto">
-      <div className="text-center max-w-lg mx-auto mb-6">
-        <h3 className="text-xl sm:text-2xl font-bold font-heading mb-2">Configure Parameters</h3>
-        <p className="text-muted-foreground text-sm">
-          Set the difficulty level, language, total marks, and examination time limit.
-        </p>
+      {/* 1. Difficulty Selector */}
+      <div className="space-y-3">
+        <Label className="text-sm font-bold font-heading">1. Select Target Difficulty Level</Label>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          {difficulties.map((item) => {
+            const isSelected = difficulty === item.id;
+            return (
+              <div
+                key={item.id}
+                onClick={() => handleDifficulty(item.id)}
+                className={cn(
+                  "p-4 rounded-2xl border cursor-pointer transition-all duration-300 flex items-center justify-between gap-3 bg-background/50 backdrop-blur-sm",
+                  isSelected
+                    ? "border-blue-500/50 bg-blue-500/5 ring-1 ring-blue-500/20 shadow-md"
+                    : "border-border/40 hover:border-border/80"
+                )}
+              >
+                <div className="flex items-center gap-3">
+                  <div className={cn("p-2 rounded-xl border shrink-0", item.color)}>
+                    {item.icon}
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold font-heading">{item.label}</h4>
+                    <p className="text-[10px] text-muted-foreground">{item.desc}</p>
+                  </div>
+                </div>
+                {isSelected && <Check className="w-4 h-4 text-blue-500 shrink-0" />}
+              </div>
+            );
+          })}
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-2">
-        {/* Left column: Difficulty & Language */}
-        <div className="space-y-6 text-left">
-          {/* Difficulty Selection */}
-          <div className="space-y-3">
-            <Label className="text-sm font-semibold tracking-wide font-heading text-foreground/90 uppercase">
-              Difficulty Level
-            </Label>
-            <div className="flex flex-col gap-2.5">
-              {difficulties.map((diff) => {
-                const DiffIcon = diff.icon;
-                const isSelected = difficulty === diff.id;
-                return (
-                  <div
-                    key={diff.id}
-                    onClick={() => setDifficulty(diff.id)}
-                    className={cn(
-                      "p-3.5 rounded-xl border cursor-pointer flex gap-4 items-center transition-all duration-300",
-                      isSelected
-                        ? cn("border-indigo-500/50 bg-indigo-500/5 ring-1 ring-indigo-500/20")
-                        : "border-border/40 hover:border-indigo-500/20 bg-card"
-                    )}
-                  >
-                    <div className={cn("p-2 rounded-lg border", isSelected ? diff.color : "bg-muted text-muted-foreground border-border/50")}>
-                      <DiffIcon className="w-5 h-5" />
-                    </div>
-                    <div className="flex-grow">
-                      <span className="text-sm font-bold font-heading block">{diff.label}</span>
-                      <span className="text-[11px] text-muted-foreground block">{diff.desc}</span>
-                    </div>
-                    {isSelected && <Check className="w-4 h-4 text-indigo-500" />}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+      {/* 2. Language Medium Selector */}
+      <div className="space-y-3">
+        <Label className="text-sm font-bold font-heading">
+          2. Language Medium {isHindiSubject && <span className="text-xs font-normal text-amber-500">(Locked to Hindi for Hindi subjects)</span>}
+        </Label>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          {languages.map((item) => {
+            const isSelected = language === item.id;
+            const isDisabled = isHindiSubject && item.id !== "Hindi";
 
-          {/* Language Selection */}
-          <div className="space-y-3">
-            <Label className="text-sm font-semibold tracking-wide font-heading text-foreground/90 uppercase">
-              Paper Language
-            </Label>
-            <div className="grid grid-cols-1 gap-2.5">
-              {languages.map((lang) => {
-                const isSelected = language === lang.id;
-                const isDisabled = isHindiSubject && lang.id !== "Hindi";
-                return (
-                  <div
-                    key={lang.id}
-                    onClick={() => {
-                      if (isDisabled) return;
-                      setLanguage(lang.id);
-                    }}
-                    title={isDisabled ? "Hindi papers are available only in Hindi." : undefined}
-                    className={cn(
-                      "p-3.5 rounded-xl border flex items-center justify-between transition-all duration-300",
-                      isSelected
-                        ? "border-indigo-500/50 bg-indigo-500/5 ring-1 ring-indigo-500/20"
-                        : "border-border/40 bg-card",
-                      isDisabled
-                        ? "opacity-40 cursor-not-allowed border-border/20"
-                        : "hover:border-indigo-500/20 cursor-pointer"
-                    )}
-                  >
-                    <div>
-                      <span className="text-sm font-bold font-heading block">{lang.label}</span>
-                      <span className="text-[11px] text-muted-foreground block">{lang.desc}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {isSelected && <Check className="w-4 h-4 text-indigo-500" />}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+            return (
+              <div
+                key={item.id}
+                onClick={() => !isDisabled && handleLanguage(item.id)}
+                className={cn(
+                  "p-4 rounded-2xl border transition-all duration-300 flex items-center justify-between gap-3 bg-background/50 backdrop-blur-sm",
+                  isDisabled
+                    ? "opacity-40 cursor-not-allowed border-border/20 bg-muted/20"
+                    : isSelected
+                      ? "border-blue-500/50 bg-blue-500/5 ring-1 ring-blue-500/20 shadow-md cursor-pointer"
+                      : "border-border/40 hover:border-border/80 cursor-pointer"
+                )}
+              >
+                <div>
+                  <h4 className="text-xs font-bold font-heading">{item.label}</h4>
+                  <p className="text-[10px] text-muted-foreground">{item.desc}</p>
+                </div>
+                {isSelected && <Check className="w-4 h-4 text-blue-500 shrink-0" />}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* 3. Paper Duration and Total Marks */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+        <div className="space-y-2">
+          <Label htmlFor="total-marks" className="text-xs font-bold font-heading">
+            Total Paper Marks
+          </Label>
+          <Input
+            id="total-marks"
+            type="number"
+            value={totalMarks}
+            onChange={(e) => handleTotalMarks(Number(e.target.value))}
+            min={10}
+            max={100}
+            className="bg-background/50 border-border/60 rounded-xl"
+          />
         </div>
 
-        {/* Right column: Marks & Time */}
-        <div className="space-y-6 text-left">
-          {/* Total Marks */}
-          <div className="space-y-3">
-            <Label className="text-sm font-semibold tracking-wide font-heading text-foreground/90 uppercase">
-              Total Marks
-            </Label>
-            
-            {/* Quick selectors */}
-            <div className="flex flex-wrap gap-2 mb-3">
-              {quickMarks.map((marks) => {
-                const isSelected = totalMarks === marks;
-                return (
-                  <button
-                    type="button"
-                    key={marks}
-                    onClick={() => setTotalMarks(marks)}
-                    className={cn(
-                      "px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all duration-300 font-heading cursor-pointer",
-                      isSelected
-                        ? "bg-indigo-500 border-transparent text-white shadow-md shadow-indigo-500/20"
-                        : "border-border/60 hover:border-indigo-500/20 bg-card text-muted-foreground hover:text-foreground"
-                    )}
-                  >
-                    {marks}
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Custom Input */}
-            <div className="relative max-w-[200px]">
-              <Input
-                type="number"
-                value={totalMarks || ""}
-                onChange={handleCustomMarksChange}
-                placeholder="Custom marks"
-                className="pl-8 rounded-xl border-border/50 glass hover:border-indigo-500/20 focus:border-indigo-500/40"
-              />
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-muted-foreground font-heading">
-                M
-              </span>
-            </div>
-          </div>
-
-          {/* Time Duration */}
-          <div className="space-y-3">
-            <Label className="text-sm font-semibold tracking-wide font-heading text-foreground/90 uppercase">
-              Examination Duration
-            </Label>
-            
-            {/* Quick selectors */}
-            <div className="flex flex-wrap gap-2 mb-3">
-              {quickDurations.map((dur) => {
-                const isSelected = duration === dur;
-                return (
-                  <button
-                    type="button"
-                    key={dur}
-                    onClick={() => setDuration(dur)}
-                    className={cn(
-                      "px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all duration-300 font-heading cursor-pointer",
-                      isSelected
-                        ? "bg-indigo-500 border-transparent text-white shadow-md shadow-indigo-500/20"
-                        : "border-border/60 hover:border-indigo-500/20 bg-card text-muted-foreground hover:text-foreground"
-                    )}
-                  >
-                    {dur}
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Custom Input */}
-            <div className="relative max-w-[200px]">
-              <Input
-                type="text"
-                value={duration}
-                onChange={(e) => setDuration(e.target.value)}
-                placeholder="e.g. 2.5 Hours"
-                className="pl-8 rounded-xl border-border/50 glass hover:border-indigo-500/20 focus:border-indigo-500/40"
-              />
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-muted-foreground font-heading">
-                T
-              </span>
-            </div>
-          </div>
+        <div className="space-y-2">
+          <Label htmlFor="duration" className="text-xs font-bold font-heading">
+            Allowed Exam Duration
+          </Label>
+          <Input
+            id="duration"
+            type="text"
+            value={duration}
+            onChange={(e) => handleDuration(e.target.value)}
+            placeholder="e.g. 1.5 Hours, 3 Hours"
+            className="bg-background/50 border-border/60 rounded-xl"
+          />
         </div>
       </div>
     </div>

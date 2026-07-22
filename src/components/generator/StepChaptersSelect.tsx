@@ -11,118 +11,123 @@ interface StepChaptersSelectProps {
   classId: string;
   subject: string;
   selectedChapters: string[];
-  onChange: (chapters: string[]) => void;
+  onChange?: (chapters: string[]) => void;
+  onChaptersChange?: (chapters: string[]) => void;
 }
 
 export function StepChaptersSelect({
   classId,
   subject,
-  selectedChapters,
+  selectedChapters = [],
   onChange,
+  onChaptersChange,
 }: StepChaptersSelectProps) {
   // Retrieve chapters from curriculum context
   const subjectData = CURRICULUM_DATA[classId]?.[subject];
   const chapters = subjectData?.chapters || [];
 
-  const handleToggle = (chapter: string) => {
-    if (selectedChapters.includes(chapter)) {
-      onChange(selectedChapters.filter((c) => c !== chapter));
+  const updateSelected = (newChapters: string[]) => {
+    if (onChange) onChange(newChapters);
+    if (onChaptersChange) onChaptersChange(newChapters);
+  };
+
+  const handleToggleChapter = (chapterTitle: string) => {
+    if (selectedChapters.includes(chapterTitle)) {
+      updateSelected(selectedChapters.filter((c) => c !== chapterTitle));
     } else {
-      onChange([...selectedChapters, chapter]);
+      updateSelected([...selectedChapters, chapterTitle]);
     }
   };
 
   const handleSelectAll = () => {
-    onChange([...chapters]);
+    if (selectedChapters.length === chapters.length) {
+      updateSelected([]);
+    } else {
+      updateSelected(chapters.map((c) => c.title));
+    }
   };
-
-  const handleDeselectAll = () => {
-    onChange([]);
-  };
-
-  if (chapters.length === 0) {
-    return (
-      <div className="space-y-6 text-center max-w-lg mx-auto py-8">
-        <div className="w-16 h-16 mx-auto rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
-          <BookOpen className="w-8 h-8" />
-        </div>
-        <div className="space-y-2">
-          <h3 className="text-xl font-bold font-heading">No Chapters Found</h3>
-          <p className="text-sm text-muted-foreground">
-            No specific chapter mappings are configured for Class {classId} {subject.toUpperCase()}. You can proceed to the next step to generate questions from the general curriculum.
-          </p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">
-      <div className="text-center max-w-lg mx-auto">
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-indigo-500/30 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 text-xs font-semibold uppercase tracking-wider mb-2">
-          <Layers className="w-3.5 h-3.5" />
-          <span>Curriculum Alignment</span>
-        </div>
-        <h3 className="text-xl sm:text-2xl font-bold font-heading mb-2">Select Syllabus Chapters</h3>
-        <p className="text-muted-foreground text-sm">
-          Choose one or multiple chapters to restrict the AI to generate questions strictly from these topics.
+      <div className="text-center max-w-lg mx-auto space-y-2">
+        <h3 className="text-xl sm:text-2xl font-bold font-heading">
+          Select Syllabus Chapters
+        </h3>
+        <p className="text-muted-foreground text-xs sm:text-sm">
+          Select specific units or chapters to include in your paper generator queue.
         </p>
       </div>
 
-      {/* Control Buttons */}
-      <div className="flex justify-center gap-3 no-print">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleSelectAll}
-          className="rounded-full text-xs border-border/60 hover:bg-muted/40 cursor-pointer"
-        >
-          Select All Chapters
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleDeselectAll}
-          className="rounded-full text-xs border-border/60 hover:bg-muted/40 cursor-pointer"
-        >
-          Clear Selection
-        </Button>
-      </div>
+      <div className="max-w-4xl mx-auto space-y-4">
+        {/* Actions Bar */}
+        <div className="flex items-center justify-between px-2">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground font-heading">
+            <Layers className="w-4 h-4 text-blue-500" />
+            <span>
+              Selected: <strong className="text-foreground">{selectedChapters.length}</strong> of {chapters.length} Chapters
+            </span>
+          </div>
 
-      {/* Chapters Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl mx-auto pt-4 max-h-[450px] overflow-y-auto pr-2 custom-scrollbar">
-        {chapters.map((chapter) => {
-          const isSelected = selectedChapters.includes(chapter);
-          return (
-            <GlassCard
-              key={chapter}
-              onClick={() => handleToggle(chapter)}
-              className={cn(
-                "p-4 cursor-pointer text-left border flex justify-between items-center transition-all duration-300 relative group",
-                isSelected
-                  ? "border-indigo-500/50 bg-indigo-500/5 shadow-[0_0_15px_rgba(99,102,241,0.08)]"
-                  : "border-border/40 hover:border-indigo-500/25"
-              )}
-            >
-              <div className="space-y-1 pr-4">
-                <span className="text-sm font-bold font-heading block group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors duration-250 leading-snug">
-                  {chapter}
-                </span>
-              </div>
-              
-              <div
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleSelectAll}
+            className="text-xs text-blue-500 hover:text-blue-600 hover:bg-blue-500/10 rounded-xl"
+          >
+            {selectedChapters.length === chapters.length ? "Deselect All" : "Select All"}
+          </Button>
+        </div>
+
+        {/* Chapters Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {chapters.map((chap, index) => {
+            const isSelected = selectedChapters.includes(chap.title);
+            return (
+              <GlassCard
+                key={index}
+                onClick={() => handleToggleChapter(chap.title)}
                 className={cn(
-                  "w-5 h-5 rounded-full flex items-center justify-center border shrink-0 transition-all duration-300",
+                  "p-4 cursor-pointer border flex items-center justify-between gap-3 transition-all duration-300 relative group",
                   isSelected
-                    ? "bg-indigo-500 border-transparent text-white scale-100"
-                    : "border-border text-transparent scale-90 group-hover:border-indigo-500/30"
+                    ? "border-blue-500/50 bg-blue-500/5 shadow-[0_0_15px_rgba(59,130,246,0.1)]"
+                    : "border-border/40 hover:border-blue-500/25"
                 )}
               >
-                <Check className="w-3 h-3" />
-              </div>
-            </GlassCard>
-          );
-        })}
+                <div className="flex items-center gap-3">
+                  <div className={cn(
+                    "w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold font-heading shrink-0 border",
+                    isSelected
+                      ? "bg-blue-500/15 border-blue-500/30 text-blue-500"
+                      : "bg-muted border-border/50 text-muted-foreground"
+                  )}>
+                    <BookOpen className="w-3.5 h-3.5" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold font-heading text-foreground group-hover:text-blue-500 transition-colors">
+                      {chap.title}
+                    </h4>
+                    {chap.weightage && (
+                      <span className="text-[10px] text-muted-foreground">
+                        Estimated Weightage: {chap.weightage}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div
+                  className={cn(
+                    "w-5 h-5 rounded-full flex items-center justify-center border transition-all duration-300 shrink-0",
+                    isSelected
+                      ? "bg-blue-500 border-transparent text-white"
+                      : "border-border text-transparent scale-90 group-hover:border-blue-500/30"
+                  )}
+                >
+                  <Check className="w-3.5 h-3.5" />
+                </div>
+              </GlassCard>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

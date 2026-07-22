@@ -7,140 +7,122 @@ import { Textarea } from "@/components/ui/textarea";
 import { PaperOptions } from "@/types";
 
 interface StepPaperOptionsProps {
-  value: PaperOptions;
-  onChange: (val: PaperOptions) => void;
+  value?: PaperOptions;
+  options?: PaperOptions;
+  onChange?: (val: PaperOptions) => void;
+  onChangeOptions?: (val: PaperOptions) => void;
 }
 
-export function StepPaperOptions({ value, onChange }: StepPaperOptionsProps) {
+export function StepPaperOptions({ value, options, onChange, onChangeOptions }: StepPaperOptionsProps) {
+  const currentOptions = options || value || {
+    includeSchoolName: false,
+    schoolName: "",
+    includeTeacherName: false,
+    teacherName: "",
+    includeSchoolLogo: false,
+    includeClass: true,
+    includeSubject: true,
+    includeTime: true,
+    includeMaxMarks: true,
+    includeInstructions: true,
+    instructionsText: "1. All questions are compulsory.\n2. Write answers clearly.",
+    includeInternalChoice: false,
+  };
+
+  const updateOptions = (newOptions: PaperOptions) => {
+    if (onChange) onChange(newOptions);
+    if (onChangeOptions) onChangeOptions(newOptions);
+  };
+
   const handleToggle = (field: keyof PaperOptions) => {
-    onChange({
-      ...value,
-      [field]: !value[field],
+    updateOptions({
+      ...currentOptions,
+      [field]: !currentOptions[field],
     });
   };
 
   const handleInputChange = (field: keyof PaperOptions, val: string) => {
-    onChange({
-      ...value,
+    updateOptions({
+      ...currentOptions,
       [field]: val,
     });
   };
 
-  const toggleItems = [
-    { id: "includeClass", label: "Include Class Label", desc: "Show standard Class standard in subheader" },
-    { id: "includeSubject", label: "Include Subject Label", desc: "Show active Subject name in subheader" },
-    { id: "includeTime", label: "Include Time Duration", desc: "Show allowed examination time limit" },
-    { id: "includeMaxMarks", label: "Include Maximum Marks", desc: "Show total maximum paper marks" },
-    { id: "includeSchoolLogo", label: "Include School Logo Placeholder", desc: "Adds logo layout slot at top center" },
-    { id: "includeInternalChoice", label: "Provide Internal Choices", desc: "Adds fallback optional questions ('OR' options)" },
-  ] as const;
-
   return (
-    <div className="space-y-6 max-w-2xl mx-auto text-left">
-      <div className="text-center max-w-lg mx-auto mb-6">
-        <h3 className="text-xl sm:text-2xl font-bold font-heading mb-2">Paper Sheet Layout Toggles</h3>
+    <div className="space-y-6 max-w-4xl mx-auto">
+      <div className="text-center max-w-lg mx-auto">
+        <h3 className="text-xl sm:text-2xl font-bold font-heading mb-2">Configure Header & Options</h3>
         <p className="text-muted-foreground text-sm">
-          Customize what information labels and formatting segments should be included in the header of the printed sheet.
+          Customize header metadata, school details, and general instructions on the generated paper.
         </p>
       </div>
 
-      <div className="space-y-5">
-        {/* School Name Toggle Group */}
-        <div className="p-4 rounded-xl border border-border/40 bg-card/40 backdrop-blur-sm space-y-3">
+      <div className="space-y-4">
+        {/* School Name Option */}
+        <div className="p-4 rounded-2xl border border-border/40 bg-background/50 backdrop-blur-sm space-y-3">
           <div className="flex items-center justify-between">
             <div>
-              <span className="text-sm font-bold font-heading block">Include School Name</span>
-              <span className="text-[11px] text-muted-foreground block">Renders school title centered at the very top</span>
+              <h4 className="text-xs font-bold font-heading">Include School / Institution Header</h4>
+              <p className="text-[10px] text-muted-foreground">Print custom school name on top of the paper</p>
             </div>
             <Switch
-              checked={value.includeSchoolName}
+              checked={currentOptions.includeSchoolName}
               onCheckedChange={() => handleToggle("includeSchoolName")}
             />
           </div>
-          
-          {value.includeSchoolName && (
-            <div className="pt-2 animate-in fade-in slide-in-from-top-1 duration-200">
-              <Input
-                type="text"
-                value={value.schoolName}
-                onChange={(e) => handleInputChange("schoolName", e.target.value)}
-                placeholder="Enter School Name (e.g. Saint Xavier Senior Secondary School)"
-                className="rounded-lg border-border/60"
-              />
-            </div>
+          {currentOptions.includeSchoolName && (
+            <Input
+              type="text"
+              placeholder="e.g. St. Xavier's Senior Secondary School"
+              value={currentOptions.schoolName || ""}
+              onChange={(e) => handleInputChange("schoolName", e.target.value)}
+              className="bg-background/80 rounded-xl border-border/60 text-xs"
+            />
           )}
         </div>
 
-        {/* Teacher Name Toggle Group */}
-        <div className="p-4 rounded-xl border border-border/40 bg-card/40 backdrop-blur-sm space-y-3">
+        {/* Teacher Name Option */}
+        <div className="p-4 rounded-2xl border border-border/40 bg-background/50 backdrop-blur-sm space-y-3">
           <div className="flex items-center justify-between">
             <div>
-              <span className="text-sm font-bold font-heading block">Include Teacher Name</span>
-              <span className="text-[11px] text-muted-foreground block">Renders examiner label in subheader</span>
+              <h4 className="text-xs font-bold font-heading">Include Educator / Teacher Name</h4>
+              <p className="text-[10px] text-muted-foreground">Print paper setter name in paper header</p>
             </div>
             <Switch
-              checked={value.includeTeacherName}
+              checked={currentOptions.includeTeacherName}
               onCheckedChange={() => handleToggle("includeTeacherName")}
             />
           </div>
-          
-          {value.includeTeacherName && (
-            <div className="pt-2 animate-in fade-in slide-in-from-top-1 duration-200">
-              <Input
-                type="text"
-                value={value.teacherName}
-                onChange={(e) => handleInputChange("teacherName", e.target.value)}
-                placeholder="Enter Examiner/Teacher Name (e.g. Karan Saini)"
-                className="rounded-lg border-border/60"
-              />
-            </div>
+          {currentOptions.includeTeacherName && (
+            <Input
+              type="text"
+              placeholder="e.g. Prepared by: Prof. R. K. Sharma"
+              value={currentOptions.teacherName || ""}
+              onChange={(e) => handleInputChange("teacherName", e.target.value)}
+              className="bg-background/80 rounded-xl border-border/60 text-xs"
+            />
           )}
         </div>
 
-        {/* Other toggles in a neat 2-column layout */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {toggleItems.map((item) => {
-            return (
-              <div
-                key={item.id}
-                className="p-4 rounded-xl border border-border/40 bg-card/40 backdrop-blur-sm flex items-center justify-between gap-4"
-              >
-                <div className="pr-2">
-                  <span className="text-sm font-bold font-heading block leading-tight">{item.label}</span>
-                  <span className="text-[10px] text-muted-foreground block mt-0.5 leading-tight">{item.desc}</span>
-                </div>
-                <Switch
-                  checked={value[item.id] as boolean}
-                  onCheckedChange={() => handleToggle(item.id as keyof PaperOptions)}
-                />
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Instructions Toggle Group */}
-        <div className="p-4 rounded-xl border border-border/40 bg-card/40 backdrop-blur-sm space-y-3">
+        {/* General Instructions Text */}
+        <div className="p-4 rounded-2xl border border-border/40 bg-background/50 backdrop-blur-sm space-y-3">
           <div className="flex items-center justify-between">
             <div>
-              <span className="text-sm font-bold font-heading block">Include Examination Instructions</span>
-              <span className="text-[11px] text-muted-foreground block">Renders general guidelines box under subheader</span>
+              <h4 className="text-xs font-bold font-heading">General Examination Instructions</h4>
+              <p className="text-[10px] text-muted-foreground">Custom rules printed under the header</p>
             </div>
             <Switch
-              checked={value.includeInstructions}
+              checked={currentOptions.includeInstructions}
               onCheckedChange={() => handleToggle("includeInstructions")}
             />
           </div>
-          
-          {value.includeInstructions && (
-            <div className="pt-2 animate-in fade-in slide-in-from-top-1 duration-200">
-              <Textarea
-                value={value.instructionsText}
-                onChange={(e) => handleInputChange("instructionsText", e.target.value)}
-                placeholder="Enter general instructions (separated by lines, e.g. 1. All questions are compulsory. 2. Section A contains MCQs...)"
-                rows={4}
-                className="rounded-lg border-border/60"
-              />
-            </div>
+          {currentOptions.includeInstructions && (
+            <Textarea
+              rows={3}
+              value={currentOptions.instructionsText || ""}
+              onChange={(e) => handleInputChange("instructionsText", e.target.value)}
+              className="bg-background/80 rounded-xl border-border/60 text-xs font-mono"
+            />
           )}
         </div>
       </div>
