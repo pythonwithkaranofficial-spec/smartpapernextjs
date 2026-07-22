@@ -3,6 +3,7 @@ import { Navbar } from "@/components/shared/Navbar";
 import { AnimatedBackground } from "@/components/shared/AnimatedBackground";
 import { CustomGeneratorWizard } from "@/components/generator/CustomGeneratorWizard";
 import { Footer } from "@/components/landing/Footer";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -16,16 +17,18 @@ export default function GenerateCustomPage() {
       <AnimatedBackground />
       <Navbar />
       <main className="flex-grow pt-28 pb-16">
-        <div className="container mx-auto px-4 max-w-7xl text-center space-y-4 mb-8">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-indigo-500/30 bg-indigo-500/10 text-indigo-400 text-xs font-semibold uppercase tracking-wider">
-            <Sliders className="w-3.5 h-3.5" />
-            <span>AI Custom Generator</span>
+        <ProtectedRoute>
+          <div className="container mx-auto px-4 max-w-7xl text-center space-y-4 mb-8">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-indigo-500/30 bg-indigo-500/10 text-indigo-400 text-xs font-semibold uppercase tracking-wider">
+              <Sliders className="w-3.5 h-3.5" />
+              <span>AI Custom Generator</span>
+            </div>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold font-heading tracking-tight">
+              Create Custom Paper
+            </h2>
           </div>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold font-heading tracking-tight">
-            Create Custom Paper
-          </h2>
-        </div>
-        <CustomGeneratorWizard />
+          <CustomGeneratorWizard />
+        </ProtectedRoute>
       </main>
       <Footer />
     </>

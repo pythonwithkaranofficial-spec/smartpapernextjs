@@ -14,11 +14,13 @@ import { StepQuestionDist } from "./StepQuestionDist";
 import { StepPaperOptions } from "./StepPaperOptions";
 import { PaperConfig } from "@/types";
 import { useGeneratePaper } from "@/hooks/useGeneratePaper";
+import { AuthService } from "@/lib/firebase/auth-service";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight, Sparkles } from "lucide-react";
 import { clientRateLimiter } from "@/lib/rate-limiter";
 import { toast } from "sonner";
 import { GeneratingOverlay } from "../preview/GeneratingOverlay";
+import { DailyLimitModal } from "../auth/DailyLimitModal";
 
 // Separate storage key for custom wizard configurations
 const CUSTOM_LOCAL_STORAGE_KEY = "smart_paper_custom_form_config";
@@ -68,7 +70,37 @@ export function CustomGeneratorWizard() {
   const [chaptersText, setChaptersText] = useState("");
   
   const { generatePaper, loading: generating } = useGeneratePaper();
-  const [remainingCount, setRemainingCount] = useState(5);
+  const [usageInfo, setUsageInfo] = useState<{ usedToday: number; dailyLimit: number; remainingToday: number } | null>(null);
+  const [showLimitModal, setShowLimitModal] = useState(false);
+
+  // Load usage details from API or local fallback
+  useEffect(() => {
+    async function checkUsage() {
+      try {
+        const token = await AuthService.getFirebaseToken();
+        if (token) {
+          const res = await fetch("/api/user/usage", {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          const json = await res.json();
+          if (json.success && json.data) {
+            setUsageInfo(json.data);
+            return;
+          }
+        }
+      } catch (e) {
+        console.error("Failed to fetch user usage:", e);
+      }
+
+      setUsageInfo({
+        usedToday: 5 - clientRateLimiter.getRemainingCount(),
+        dailyLimit: 5,
+        remainingToday: clientRateLimiter.getRemainingCount(),
+      });
+    }
+
+    checkUsage();
+  }, []);
 
   // Load from localStorage on mount
   useEffect(() => {
@@ -78,26 +110,25 @@ export function CustomGeneratorWizard() {
         try {
           setConfig(JSON.parse(savedConfig));
         } catch (e) {
-          console.error("Failed to parse saved config", e);
+          console.error("Failed to parse saved custom config", e);
         }
       }
-      
-      const savedTexts = localStorage.getItem(TEXT_INPUTS_STORAGE_KEY);
-      if (savedTexts) {
+
+      const savedInputs = localStorage.getItem(TEXT_INPUTS_STORAGE_KEY);
+      if (savedInputs) {
         try {
-          const parsed = JSON.parse(savedTexts);
-          setClassText(parsed.classText || "");
-          setSubjectText(parsed.subjectText || "");
-          setChaptersText(parsed.chaptersText || "");
+          const parsedInputs = JSON.parse(savedInputs);
+          setClassText(parsedInputs.classText || "");
+          setSubjectText(parsedInputs.subjectText || "");
+          setChaptersText(parsedInputs.chaptersText || "");
         } catch (e) {
-          console.error("Failed to parse saved texts", e);
+          console.error("Failed to parse saved custom text inputs", e);
         }
       }
-      setRemainingCount(clientRateLimiter.getRemainingCount());
     }
   }, []);
 
-  // Save changes to localStorage
+  // Save to localStorage on change
   const updateConfig = (updater: (prev: PaperConfig) => PaperConfig) => {
     setConfig((prev) => {
       const updated = updater(prev);
@@ -106,60 +137,31 @@ export function CustomGeneratorWizard() {
     });
   };
 
-  const saveTextInputs = (cls: string, sub: string, ch: string) => {
+  const saveTextInputs = (cls: string, sbj: string, chps: string) => {
     localStorage.setItem(
       TEXT_INPUTS_STORAGE_KEY,
-      JSON.stringify({ classText: cls, subjectText: sub, chaptersText: ch })
+      JSON.stringify({ classText: cls, subjectText: sbj, chaptersText: chps })
     );
   };
 
-  const handleNext = (
-    classIdOverride?: string,
-    subjectOverride?: string,
-    examTypeOverride?: string
-  ) => {
-    const examType = examTypeOverride !== undefined ? examTypeOverride : config.examType;
-    
-    // Strict local validation gating per step without early AI calls
-    if (step === 1) {
-      if (!classText.trim()) {
-        toast.error("Please enter a target class/grade standard.");
-        return;
-      }
-      saveTextInputs(classText, subjectText, chaptersText);
-      setDirection(1);
-      setStep(2);
+  const handleNext = () => {
+    // Validation gating per step
+    if (step === 1 && !classText.trim()) {
+      toast.error("Please enter a target class to proceed.");
       return;
     }
-    
-    if (step === 2) {
-      if (!subjectText.trim()) {
-        toast.error("Please enter a subject name.");
-        return;
-      }
-      saveTextInputs(classText, subjectText, chaptersText);
-      setDirection(1);
-      setStep(3);
+    if (step === 2 && !subjectText.trim()) {
+      toast.error("Please enter a subject name to proceed.");
       return;
     }
-
-    if (step === 3) {
-      if (!chaptersText.trim()) {
-        toast.error("Please enter chapter names or syllabus details.");
-        return;
-      }
-      saveTextInputs(classText, subjectText, chaptersText);
-      // Advance to step 4 locally with NO Gemini API calls
-      setDirection(1);
-      setStep(4);
+    if (step === 3 && !chaptersText.trim()) {
+      toast.error("Please enter syllabus / chapter names to proceed.");
       return;
     }
-
-    if (step === 4 && !examType) {
-      toast.error("Please choose an exam format to proceed.");
+    if (step === 4 && !config.examType) {
+      toast.error("Please choose an assessment format to proceed.");
       return;
     }
-
     if (step === 6) {
       // Validate marks match
       const dist = config.questionDistribution;
@@ -191,58 +193,23 @@ export function CustomGeneratorWizard() {
   };
 
   const handleGenerate = () => {
-    // Comprehensive input validation before making the single AI call
-    if (!classText.trim()) {
-      toast.error("Class selection is missing. Please provide a class.");
-      setStep(1);
-      return;
-    }
-    if (!subjectText.trim()) {
-      toast.error("Subject selection is missing. Please provide a subject.");
-      setStep(2);
-      return;
-    }
-    if (!chaptersText.trim()) {
-      toast.error("Chapters input is missing. Please provide at least one chapter.");
-      setStep(3);
-      return;
-    }
-    if (!config.examType) {
-      toast.error("Exam format is missing. Please select an exam type.");
-      setStep(4);
+    if (usageInfo && usageInfo.remainingToday <= 0) {
+      setShowLimitModal(true);
       return;
     }
 
-    // Validate marks match
-    const dist = config.questionDistribution;
-    const currentMarks = 
-      (dist.mcq * 1) + 
-      (dist.assertionReason * 1) + 
-      (dist.vsa * 2) + 
-      (dist.sa * 3) + 
-      (dist.caseStudy * 4) + 
-      (dist.la * 5);
-    
-    if (currentMarks !== config.totalMarks) {
-      toast.error(`Marks mismatch! Your allocated questions total ${currentMarks} Marks, but your target is ${config.totalMarks} Marks. Adjust counts before continuing.`);
-      setStep(6);
-      return;
-    }
-
-    // Build single complete config with exact user inputs
-    const finalConfig: PaperConfig = {
+    // Construct final custom paper configuration
+    const finalCustomConfig: PaperConfig = {
       ...config,
-      classId: classText.trim(),
-      subject: subjectText.trim(),
-      selectedChapters: [chaptersText.trim()],
       isCustom: true,
+      classId: "custom",
+      subject: subjectText.trim(),
       customClass: classText.trim(),
       customSubject: subjectText.trim(),
       customChapters: chaptersText.trim(),
     };
 
-    // Make ONE SINGLE Gemini API call only after all inputs are collected
-    generatePaper(finalConfig);
+    generatePaper(finalCustomConfig);
   };
 
   // Slide animations
@@ -269,22 +236,34 @@ export function CustomGeneratorWizard() {
     }),
   };
 
+  const remaining = usageInfo?.remainingToday ?? 5;
+  const limit = usageInfo?.dailyLimit ?? 5;
+  const used = usageInfo?.usedToday ?? 0;
+
   return (
     <div className="w-full max-w-5xl mx-auto px-4 py-8">
       {generating && <GeneratingOverlay />}
+      <DailyLimitModal
+        open={showLimitModal}
+        onClose={() => setShowLimitModal(false)}
+        usedToday={used}
+        dailyLimit={limit}
+      />
 
       {/* Steps indicator bar */}
-      <CustomProgressBar currentStep={step} />
+      <CustomProgressBar currentStep={step} totalSteps={7} />
 
-      {/* Limits indicator */}
+      {/* Limits indicator (no-print) */}
       <div className="flex justify-between items-center text-xs text-muted-foreground mb-6 font-heading font-medium">
-        <span>DAILY GENERATIONS LIMIT</span>
-        <span>{remainingCount} OF 5 REMAINING</span>
+        <span>DAILY AI GENERATIONS LIMIT</span>
+        <span className={remaining <= 0 ? "text-rose-500 font-bold" : "text-blue-400"}>
+          {remaining} OF {limit} REMAINING
+        </span>
       </div>
 
-      {/* Steps Form Content */}
-      <div className="min-h-[400px] mb-8 relative">
-        <AnimatePresence mode="wait" custom={direction}>
+      {/* Wizard Steps Container */}
+      <div className="relative min-h-[460px] flex flex-col justify-between overflow-hidden p-1">
+        <AnimatePresence custom={direction} mode="wait">
           <motion.div
             key={step}
             custom={direction}
@@ -303,7 +282,6 @@ export function CustomGeneratorWizard() {
                 }}
               />
             )}
-
             {step === 2 && (
               <StepCustomSubject
                 value={subjectText}
@@ -313,7 +291,6 @@ export function CustomGeneratorWizard() {
                 }}
               />
             )}
-
             {step === 3 && (
               <StepCustomChapters
                 value={chaptersText}
@@ -323,88 +300,92 @@ export function CustomGeneratorWizard() {
                 }}
               />
             )}
-
             {step === 4 && (
               <StepExamType
-                value={config.examType}
-                onChange={(val, defaultMarks, defaultDuration) => 
-                  updateConfig((prev) => ({ 
-                    ...prev, 
-                    examType: val, 
-                    totalMarks: defaultMarks, 
-                    duration: defaultDuration 
-                  }))
-                }
-                onNext={handleNext}
+                selectedExamType={config.examType}
+                onSelectExamType={(examType) => {
+                  updateConfig((prev) => ({ ...prev, examType }));
+                  setDirection(1);
+                  setStep(5);
+                }}
               />
             )}
-
             {step === 5 && (
               <StepConfiguration
                 difficulty={config.difficulty}
-                setDifficulty={(val) => updateConfig((prev) => ({ ...prev, difficulty: val }))}
                 language={config.language}
-                setLanguage={(val) => updateConfig((prev) => ({ ...prev, language: val }))}
                 totalMarks={config.totalMarks}
-                setTotalMarks={(val) => updateConfig((prev) => ({ ...prev, totalMarks: val }))}
                 duration={config.duration}
-                setDuration={(val) => updateConfig((prev) => ({ ...prev, duration: val }))}
-                subject={subjectText || config.subject}
+                isHindiSubject={
+                  subjectText.toLowerCase().includes("hindi") ||
+                  subjectText.includes("हिन्दी")
+                }
+                onChangeDifficulty={(difficulty) =>
+                  updateConfig((prev) => ({ ...prev, difficulty }))
+                }
+                onChangeLanguage={(language) =>
+                  updateConfig((prev) => ({ ...prev, language }))
+                }
+                onChangeTotalMarks={(totalMarks) =>
+                  updateConfig((prev) => ({ ...prev, totalMarks }))
+                }
+                onChangeDuration={(duration) =>
+                  updateConfig((prev) => ({ ...prev, duration }))
+                }
               />
             )}
-
             {step === 6 && (
               <StepQuestionDist
-                value={config.questionDistribution}
-                onChange={(val) => updateConfig((prev) => ({ ...prev, questionDistribution: val }))}
-                targetMarks={config.totalMarks}
-                examType={config.examType}
+                totalMarks={config.totalMarks}
+                distribution={config.questionDistribution}
+                onChangeDistribution={(questionDistribution) =>
+                  updateConfig((prev) => ({ ...prev, questionDistribution }))
+                }
               />
             )}
-
             {step === 7 && (
               <StepPaperOptions
-                value={config.options}
-                onChange={(val) => updateConfig((prev) => ({ ...prev, options: val }))}
+                options={config.options}
+                onChangeOptions={(options) =>
+                  updateConfig((prev) => ({ ...prev, options }))
+                }
               />
             )}
           </motion.div>
         </AnimatePresence>
-      </div>
 
-      {/* Navigation action bar */}
-      <div className="flex justify-between items-center mt-8">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={handleBack}
-          disabled={step === 1}
-          className="rounded-full px-6 py-5 border-border/60 hover:bg-muted/40 hover:text-foreground text-muted-foreground transition-all duration-300 cursor-pointer disabled:opacity-30 disabled:pointer-events-none"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back
-        </Button>
+        {/* Action Controls */}
+        <div className="flex justify-between items-center pt-8 border-t border-border/40 mt-8">
+          <Button
+            variant="outline"
+            onClick={handleBack}
+            disabled={step === 1 || generating}
+            className="rounded-full px-6 py-5 border-border/60 hover:bg-muted/40 font-heading font-medium"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back
+          </Button>
 
-        {step < 7 ? (
-          <Button
-            type="button"
-            onClick={() => handleNext()}
-            className="rounded-full px-6 py-5 bg-gradient-to-r from-indigo-500 to-violet-600 text-white shadow-lg shadow-indigo-500/10 cursor-pointer border-none hover:scale-[1.02] active:scale-95 transition-all duration-300"
-          >
-            Next
-            <ArrowRight className="w-4 h-4 ml-2" />
-          </Button>
-        ) : (
-          <Button
-            type="button"
-            onClick={handleGenerate}
-            disabled={remainingCount === 0}
-            className="rounded-full px-8 py-5 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white shadow-xl shadow-indigo-500/15 border-none hover:scale-[1.02] active:scale-95 transition-all duration-300 cursor-pointer disabled:opacity-40 disabled:pointer-events-none"
-          >
-            <Sparkles className="w-4 h-4 mr-2 animate-pulse" />
-            Generate Paper
-          </Button>
-        )}
+          {step < 7 ? (
+            <Button
+              onClick={handleNext}
+              disabled={generating}
+              className="rounded-full px-8 py-5 bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-[0_4px_14px_rgba(59,130,246,0.3)] hover:shadow-[0_6px_20px_rgba(59,130,246,0.45)] hover:scale-[1.02] transition-all font-heading font-medium border-none"
+            >
+              Continue
+              <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
+          ) : (
+            <Button
+              onClick={handleGenerate}
+              disabled={generating}
+              className="rounded-full px-9 py-6 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white shadow-[0_6px_20px_rgba(99,102,241,0.4)] hover:shadow-[0_8px_25px_rgba(99,102,241,0.6)] hover:scale-[1.03] transition-all font-heading font-bold text-base border-none animate-pulse-glow"
+            >
+              <Sparkles className="w-5 h-5 mr-2" />
+              Generate Custom Paper AI
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   );

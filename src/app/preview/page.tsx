@@ -7,6 +7,7 @@ import { AnimatedBackground } from "@/components/shared/AnimatedBackground";
 import { PaperPreview } from "@/components/preview/PaperPreview";
 import { DownloadBar } from "@/components/preview/DownloadBar";
 import { Footer } from "@/components/landing/Footer";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { GeneratedPaper, PaperConfig } from "@/types";
 import { Button } from "@/components/ui/button";
 import { AlertCircle, ArrowLeft } from "lucide-react";
@@ -94,48 +95,50 @@ export default function PreviewPage() {
       <Navbar />
       
       <main className="flex-grow pt-28 pb-32">
-        {paper ? (
-          <div className="container mx-auto px-4 max-w-7xl text-center space-y-8">
-            <div className="no-print space-y-3">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-semibold uppercase tracking-wider">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                <span>AI Generation Complete</span>
+        <ProtectedRoute>
+          {paper ? (
+            <div className="container mx-auto px-4 max-w-7xl text-center space-y-8">
+              <div className="no-print space-y-3">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-semibold uppercase tracking-wider">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  <span>AI Generation Complete</span>
+                </div>
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold font-heading tracking-tight">
+                  Preview Question Paper
+                </h2>
+                <p className="text-muted-foreground text-sm max-w-md mx-auto">
+                  Review the questions below. Click on any text (school name, instruction, question body) to edit details inline before downloading.
+                </p>
               </div>
-              <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold font-heading tracking-tight">
-                Preview Question Paper
-              </h2>
-              <p className="text-muted-foreground text-sm max-w-md mx-auto">
-                Review the questions below. Click on any text (school name, instruction, question body) to edit details inline before downloading.
-              </p>
-            </div>
 
-            {/* Render paper sheet */}
-            <div className="relative pt-6">
-              <PaperPreview paper={paper} onChange={handlePaperChange} />
-            </div>
+              {/* Render paper sheet */}
+              <div className="relative pt-6">
+                <PaperPreview paper={paper} onChange={handlePaperChange} />
+              </div>
 
-            {/* Sticky download actions bar */}
-            <DownloadBar paper={paper} onRegenerate={handleRegenerate} />
-          </div>
-        ) : (
-          <div className="container mx-auto px-4 max-w-md text-center py-20 space-y-6">
-            <div className="w-16 h-16 mx-auto rounded-full bg-rose-500/10 flex items-center justify-center text-rose-600 dark:text-rose-400 border border-rose-500/20">
-              <AlertCircle className="w-8 h-8" />
+              {/* Sticky download actions bar */}
+              <DownloadBar paper={paper} onRegenerate={handleRegenerate} />
             </div>
-            
-            <div className="space-y-2">
-              <h3 className="text-xl font-bold font-heading">No Paper Generated</h3>
-              <p className="text-sm text-muted-foreground">
-                You haven&apos;t generated any CBSE question papers yet in this session. Go to the wizard setup to create one.
-              </p>
-            </div>
+          ) : (
+            <div className="container mx-auto px-4 max-w-md text-center py-20 space-y-6">
+              <div className="w-16 h-16 mx-auto rounded-full bg-rose-500/10 flex items-center justify-center text-rose-600 dark:text-rose-400 border border-rose-500/20">
+                <AlertCircle className="w-8 h-8" />
+              </div>
+              
+              <div className="space-y-2">
+                <h3 className="text-xl font-bold font-heading">No Paper Generated</h3>
+                <p className="text-sm text-muted-foreground">
+                  You haven&apos;t generated any CBSE question papers yet in this session. Go to the wizard setup to create one.
+                </p>
+              </div>
 
-            <Button onClick={() => router.push("/generate")} className="rounded-full bg-indigo-500 text-white shadow-md w-full py-5 cursor-pointer border-none hover:scale-[1.02]">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Go to Generator
-            </Button>
-          </div>
-        )}
+              <Button onClick={() => router.push("/generate")} className="rounded-full bg-indigo-500 text-white shadow-md w-full py-5 cursor-pointer border-none hover:scale-[1.02]">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Go to Generator
+              </Button>
+            </div>
+          )}
+        </ProtectedRoute>
       </main>
 
       <Footer />

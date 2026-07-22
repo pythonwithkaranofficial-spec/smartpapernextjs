@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { PaperConfig } from "@/types";
 import { clientRateLimiter } from "@/lib/rate-limiter";
+import { AuthService } from "@/lib/firebase/auth-service";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -47,6 +48,35 @@ export function useGeneratePaper() {
 
       // Record count in client rate limiter
       clientRateLimiter.recordGeneration();
+
+      // If user is authenticated, save paper to Turso DB history and increment usage count
+      const firebaseToken = await AuthService.getFirebaseToken();
+      if (firebaseToken) {
+        // Background DB history save
+        fetch("/api/user/history", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${firebaseToken}`,
+          },
+          body: JSON.stringify({
+            class: config.isCustom && config.customClass ? config.customClass : config.classId,
+            subject: config.isCustom && config.customSubject ? config.customSubject : config.subject,
+            paper_type: config.examType,
+            marks: config.totalMarks,
+            difficulty: config.difficulty,
+            paper_json: data,
+          }),
+        }).catch((err) => console.error("[History Save Error]:", err));
+
+        // Background usage increment
+        fetch("/api/user/usage/increment", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${firebaseToken}`,
+          },
+        }).catch((err) => console.error("[Usage Increment Error]:", err));
+      }
 
       toast.success("Question paper generated successfully!", { id: toastId });
       

@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { Inter, Outfit } from "next/font/google";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
+import { AuthProvider } from "@/components/providers/AuthProvider";
+import { AuthModal } from "@/components/auth/AuthModal";
+import { EmailVerificationBanner } from "@/components/auth/EmailVerificationBanner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
 import { CustomCursor } from "@/components/shared/CustomCursor";
@@ -35,11 +38,15 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col bg-background text-foreground transition-colors duration-300">
         <ThemeProvider>
-          <TooltipProvider>
-            {children}
-            <CustomCursor />
-            <Toaster position="top-right" richColors />
-          </TooltipProvider>
+          <AuthProvider>
+            <TooltipProvider>
+              <EmailVerificationBanner />
+              {children}
+              <AuthModal />
+              <CustomCursor />
+              <Toaster position="top-right" richColors />
+            </TooltipProvider>
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>

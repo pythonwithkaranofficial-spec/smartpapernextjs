@@ -12,11 +12,13 @@ import { StepPaperOptions } from "./StepPaperOptions";
 import { StepChaptersSelect } from "./StepChaptersSelect";
 import { PaperConfig } from "@/types";
 import { useGeneratePaper } from "@/hooks/useGeneratePaper";
+import { AuthService } from "@/lib/firebase/auth-service";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight, Sparkles } from "lucide-react";
 import { clientRateLimiter } from "@/lib/rate-limiter";
 import { toast } from "sonner";
 import { GeneratingOverlay } from "../preview/GeneratingOverlay";
+import { DailyLimitModal } from "../auth/DailyLimitModal";
 
 const LOCAL_STORAGE_KEY = "smart_paper_form_config";
 
@@ -58,7 +60,38 @@ export function GeneratorWizard() {
   const [direction, setDirection] = useState(1); // 1 = forward, -1 = backward
   const [config, setConfig] = useState<PaperConfig>(initialConfig);
   const { generatePaper, loading } = useGeneratePaper();
-  const [remainingCount, setRemainingCount] = useState(5);
+
+  const [usageInfo, setUsageInfo] = useState<{ usedToday: number; dailyLimit: number; remainingToday: number } | null>(null);
+  const [showLimitModal, setShowLimitModal] = useState(false);
+
+  // Load usage details from API or local fallback
+  useEffect(() => {
+    async function checkUsage() {
+      try {
+        const token = await AuthService.getFirebaseToken();
+        if (token) {
+          const res = await fetch("/api/user/usage", {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          const json = await res.json();
+          if (json.success && json.data) {
+            setUsageInfo(json.data);
+            return;
+          }
+        }
+      } catch (e) {
+        console.error("Failed to fetch user usage:", e);
+      }
+
+      setUsageInfo({
+        usedToday: 5 - clientRateLimiter.getRemainingCount(),
+        dailyLimit: 5,
+        remainingToday: clientRateLimiter.getRemainingCount(),
+      });
+    }
+
+    checkUsage();
+  }, []);
 
   // Load from localStorage on mount (Auto-save)
   useEffect(() => {
@@ -67,13 +100,11 @@ export function GeneratorWizard() {
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
-          // eslint-disable-next-line react-hooks/set-state-in-effect
           setConfig(parsed);
         } catch (e) {
           console.error("Failed to parse saved config", e);
         }
       }
-      setRemainingCount(clientRateLimiter.getRemainingCount());
     }
   }, []);
 
@@ -139,6 +170,10 @@ export function GeneratorWizard() {
   };
 
   const handleGenerate = () => {
+    if (usageInfo && usageInfo.remainingToday <= 0) {
+      setShowLimitModal(true);
+      return;
+    }
     generatePaper(config);
   };
 
@@ -166,9 +201,19 @@ export function GeneratorWizard() {
     }),
   };
 
+  const remaining = usageInfo?.remainingToday ?? 5;
+  const limit = usageInfo?.dailyLimit ?? 5;
+  const used = usageInfo?.usedToday ?? 0;
+
   return (
     <div className="w-full max-w-5xl mx-auto px-4 py-8">
       {loading && <GeneratingOverlay />}
+      <DailyLimitModal
+        open={showLimitModal}
+        onClose={() => setShowLimitModal(false)}
+        usedToday={used}
+        dailyLimit={limit}
+      />
 
       {/* Steps indicator bar */}
       <ProgressBar currentStep={step} totalSteps={7} />
@@ -176,12 +221,14 @@ export function GeneratorWizard() {
       {/* Limits indicator (no-print) */}
       <div className="flex justify-between items-center text-xs text-muted-foreground mb-6 font-heading font-medium">
         <span>DAILY GENERATIONS LIMIT</span>
-        <span>{remainingCount} OF 5 REMAINING</span>
+        <span className={remaining <= 0 ? "text-rose-500 font-bold" : "text-blue-400"}>
+          {remaining} OF {limit} REMAINING
+        </span>
       </div>
 
-      {/* Steps Form Content */}
-      <div className="min-h-[400px] mb-8 relative">
-        <AnimatePresence mode="wait" custom={direction}>
+      {/* Wizard Steps Container */}
+      <div className="relative min-h-[460px] flex flex-col justify-between overflow-hidden p-1">
+        <AnimatePresence custom={direction} mode="wait">
           <motion.div
             key={step}
             custom={direction}
@@ -193,111 +240,119 @@ export function GeneratorWizard() {
           >
             {step === 1 && (
               <StepClassSelect
-                value={config.classId}
-                onChange={(val) => updateConfig((prev) => ({ ...prev, classId: val, subject: "", selectedChapters: [] }))}
-                onNext={handleNext}
+                selectedClass={config.classId}
+                onSelectClass={(classId) => {
+                  updateConfig((prev) => ({ ...prev, classId }));
+                  handleNext(classId, undefined, undefined);
+                }}
               />
             )}
-
             {step === 2 && (
               <StepSubjectSelect
                 classId={config.classId}
-                value={config.subject}
-                onChange={(val) => updateConfig((prev) => ({ ...prev, subject: val, selectedChapters: [] }))}
-                onNext={handleNext}
+                selectedSubject={config.subject}
+                onSelectSubject={(subject) => {
+                  updateConfig((prev) => ({ ...prev, subject }));
+                  handleNext(undefined, subject, undefined);
+                }}
               />
             )}
-
             {step === 3 && (
               <StepChaptersSelect
                 classId={config.classId}
                 subject={config.subject}
                 selectedChapters={config.selectedChapters || []}
-                onChange={(val) => updateConfig((prev) => ({ ...prev, selectedChapters: val }))}
+                onChaptersChange={(selectedChapters) =>
+                  updateConfig((prev) => ({ ...prev, selectedChapters }))
+                }
               />
             )}
-
             {step === 4 && (
               <StepExamType
-                value={config.examType}
-                onChange={(val, defaultMarks, defaultDuration) => 
-                  updateConfig((prev) => ({ 
-                    ...prev, 
-                    examType: val, 
-                    totalMarks: defaultMarks, 
-                    duration: defaultDuration 
-                  }))
-                }
-                onNext={handleNext}
+                selectedExamType={config.examType}
+                onSelectExamType={(examType) => {
+                  updateConfig((prev) => ({ ...prev, examType }));
+                  handleNext(undefined, undefined, examType);
+                }}
               />
             )}
-
             {step === 5 && (
               <StepConfiguration
                 difficulty={config.difficulty}
-                setDifficulty={(val) => updateConfig((prev) => ({ ...prev, difficulty: val }))}
                 language={config.language}
-                setLanguage={(val) => updateConfig((prev) => ({ ...prev, language: val }))}
                 totalMarks={config.totalMarks}
-                setTotalMarks={(val) => updateConfig((prev) => ({ ...prev, totalMarks: val }))}
                 duration={config.duration}
-                setDuration={(val) => updateConfig((prev) => ({ ...prev, duration: val }))}
-                subject={config.subject}
+                isHindiSubject={
+                  config.subject === "hindi" ||
+                  config.subject === "hindi_core" ||
+                  config.subject === "hindi_elective"
+                }
+                onChangeDifficulty={(difficulty) =>
+                  updateConfig((prev) => ({ ...prev, difficulty }))
+                }
+                onChangeLanguage={(language) =>
+                  updateConfig((prev) => ({ ...prev, language }))
+                }
+                onChangeTotalMarks={(totalMarks) =>
+                  updateConfig((prev) => ({ ...prev, totalMarks }))
+                }
+                onChangeDuration={(duration) =>
+                  updateConfig((prev) => ({ ...prev, duration }))
+                }
               />
             )}
-
             {step === 6 && (
               <StepQuestionDist
-                value={config.questionDistribution}
-                onChange={(val) => updateConfig((prev) => ({ ...prev, questionDistribution: val }))}
-                targetMarks={config.totalMarks}
-                examType={config.examType}
+                totalMarks={config.totalMarks}
+                distribution={config.questionDistribution}
+                onChangeDistribution={(questionDistribution) =>
+                  updateConfig((prev) => ({ ...prev, questionDistribution }))
+                }
               />
             )}
-
             {step === 7 && (
               <StepPaperOptions
-                value={config.options}
-                onChange={(val) => updateConfig((prev) => ({ ...prev, options: val }))}
+                options={config.options}
+                onChangeOptions={(options) =>
+                  updateConfig((prev) => ({ ...prev, options }))
+                }
               />
             )}
           </motion.div>
         </AnimatePresence>
-      </div>
 
-      {/* Navigation action bar */}
-      <div className="flex justify-between items-center mt-8">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={handleBack}
-          disabled={step === 1}
-          className="rounded-full px-6 py-5 border-border/60 hover:bg-muted/40 hover:text-foreground text-muted-foreground transition-all duration-300 cursor-pointer disabled:opacity-30 disabled:pointer-events-none"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back
-        </Button>
+        {/* Action Controls */}
+        <div className="flex justify-between items-center pt-8 border-t border-border/40 mt-8">
+          <Button
+            variant="outline"
+            onClick={handleBack}
+            disabled={step === 1 || loading}
+            className="rounded-full px-6 py-5 border-border/60 hover:bg-muted/40 font-heading font-medium"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back
+          </Button>
 
-        {step < 7 ? (
-          <Button
-            type="button"
-            onClick={() => handleNext()}
-            className="rounded-full px-6 py-5 bg-gradient-to-r from-indigo-500 to-violet-600 text-white shadow-lg shadow-indigo-500/10 cursor-pointer border-none hover:scale-[1.02] active:scale-95 transition-all duration-300"
-          >
-            Next
-            <ArrowRight className="w-4 h-4 ml-2" />
-          </Button>
-        ) : (
-          <Button
-            type="button"
-            onClick={handleGenerate}
-            disabled={remainingCount === 0}
-            className="rounded-full px-8 py-5 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white shadow-xl shadow-indigo-500/15 border-none hover:scale-[1.02] active:scale-95 transition-all duration-300 cursor-pointer disabled:opacity-40 disabled:pointer-events-none"
-          >
-            <Sparkles className="w-4 h-4 mr-2 animate-pulse" />
-            Generate Paper
-          </Button>
-        )}
+          {step < 7 ? (
+            <Button
+              onClick={() => handleNext()}
+              disabled={loading}
+              className="rounded-full px-8 py-5 bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-[0_4px_14px_rgba(59,130,246,0.3)] hover:shadow-[0_6px_20px_rgba(59,130,246,0.45)] hover:scale-[1.02] transition-all font-heading font-medium border-none"
+            >
+              Continue
+              <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
+          ) : (
+            <Button
+              onClick={handleGenerate}
+              disabled={loading}
+              className="rounded-full px-9 py-6 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white shadow-[0_6px_20px_rgba(99,102,241,0.4)] hover:shadow-[0_8px_25px_rgba(99,102,241,0.6)] hover:scale-[1.03] transition-all font-heading font-bold text-base border-none animate-pulse-glow"
+            >
+              <Sparkles className="w-5 h-5 mr-2" />
+              Generate Paper AI
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   );

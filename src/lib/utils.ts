@@ -11,6 +11,53 @@ export function formatTime(seconds: number): string {
   return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
 }
 
+export function compressImageToBase64(
+  file: File,
+  maxWidth = 150,
+  maxHeight = 150,
+  quality = 0.85
+): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          }
+        } else {
+          if (height > maxHeight) {
+            width = Math.round((width * maxHeight) / height);
+            height = maxHeight;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          reject(new Error("Failed to get canvas 2d context"));
+          return;
+        }
+
+        ctx.drawImage(img, 0, 0, width, height);
+        const dataUrl = canvas.toDataURL("image/jpeg", quality);
+        resolve(dataUrl);
+      };
+      img.onerror = () => reject(new Error("Failed to load image for compression"));
+      img.src = e.target?.result as string;
+    };
+    reader.onerror = () => reject(new Error("Failed to read image file"));
+    reader.readAsDataURL(file);
+  });
+}
+
 export function formatScientificText(text: string): string {
   if (!text) return "";
   
@@ -58,294 +105,103 @@ export function formatScientificText(text: string): string {
   while ((matrixMatch = matrixRegex.exec(formatted)) !== null) {
     const fullMatch = matrixMatch[0];
     const env = matrixMatch[1];
-    const body = matrixMatch[2];
-    
-    const openBracket = env === "bmatrix" ? "[" : env === "pmatrix" ? "(" : env === "vmatrix" ? "|" : "[";
-    const closeBracket = env === "bmatrix" ? "]" : env === "pmatrix" ? ")" : env === "vmatrix" ? "|" : "]";
-    
-    const lines = body.trim().split(/\\\\/);
-    const formattedLines = lines.map((line: string) => {
-      const elements = line.split(/&/).map(el => el.trim());
-      // Format each cell element
-      const formattedElements = elements.map(el => formatScientificText(el));
-      return `${openBracket} ${formattedElements.join("  ")} ${closeBracket}`;
+    const content = matrixMatch[2];
+
+    const rows = content
+      .trim()
+      .split("\\\\")
+      .map(r => r.split("&").map(c => c.trim()).filter(c => c.length > 0))
+      .filter(r => r.length > 0);
+
+    if (rows.length === 0) continue;
+
+    const colWidths: number[] = [];
+    rows.forEach(r => {
+      r.forEach((c, colIdx) => {
+        colWidths[colIdx] = Math.max(colWidths[colIdx] || 0, c.length);
+      });
     });
-    
-    const replacement = "\n" + formattedLines.join("\n") + "\n";
-    formatted = formatted.replace(fullMatch, replacement);
-    matrixRegex.lastIndex = 0; // reset
+
+    const openChar = (env === "pmatrix" || env === "matrix") ? "║ " : env === "bmatrix" ? "[ " : "| ";
+    const closeChar = (env === "pmatrix" || env === "matrix") ? " ║" : env === "bmatrix" ? " ]" : " |";
+
+    const formattedRows = rows.map(r => {
+      const paddedCols = r.map((c, colIdx) => c.padEnd(colWidths[colIdx] || 0, " "));
+      return openChar + paddedCols.join("  ") + closeChar;
+    });
+
+    const formattedMatrix = "\n" + formattedRows.join("\n") + "\n";
+    formatted = formatted.replace(fullMatch, formattedMatrix);
   }
 
-  // 5. Process piecewise functions (cases) using ⎧, ⎨, ⎩
-  const casesRegex = /\\begin\{cases\}([\s\S]*?)\\end\{cases\}/g;
-  let casesMatch;
-  while ((casesMatch = casesRegex.exec(formatted)) !== null) {
-    const fullMatch = casesMatch[0];
-    const body = casesMatch[1];
-    
-    const lines = body.trim().split(/\\\\/).filter(l => l.trim() !== "");
-    const formattedLines = lines.map((line: string, idx: number) => {
-      let cleanedLine = line.trim();
-      cleanedLine = cleanedLine.replace(/&/g, "  ");
-      const formattedLine = formatScientificText(cleanedLine);
-      
-      let brace = "{";
-      if (lines.length === 1) {
-        brace = "{";
-      } else if (lines.length === 2) {
-        brace = idx === 0 ? "⎧" : "⎩";
-      } else {
-        if (idx === 0) {
-          brace = "⎧";
-        } else if (idx === lines.length - 1) {
-          brace = "⎩";
-        } else {
-          brace = "⎨";
-        }
-      }
-      return `${brace} ${formattedLine}`;
-    });
-    
-    const replacement = "\n" + formattedLines.join("\n") + "\n";
-    formatted = formatted.replace(fullMatch, replacement);
-    casesRegex.lastIndex = 0;
-  }
+  // 5. Replace fraction representations \frac{a}{b} -> (a/b)
+  formatted = formatted.replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, "($1/$2)");
 
-  // 6. Process fractions recursively to convert \frac{A}{B} to A/B or (A)/(B)
-  const replaceFractions = (str: string): string => {
-    let current = str;
-    const fracRegex = /\\frac\{((?:[^{}]|\{(?:[^{}]|\{[^{}]*\})*\})*)\}\{((?:[^{}]|\{(?:[^{}]|\{[^{}]*\})*\})*)\}/g;
-    let match;
-    while ((match = fracRegex.exec(current)) !== null) {
-      const fullMatch = match[0];
-      const num = match[1];
-      const den = match[2];
-      
-      const simplifiedNum = replaceFractions(num);
-      const simplifiedDen = replaceFractions(den);
-      
-      const needsParen = (expr: string) => {
-        return /[\s+\-*\/=<>≤≥≠±→⇒⇔·∫]/.test(expr);
-      };
-      
-      const numStr = needsParen(simplifiedNum) ? `(${simplifiedNum})` : simplifiedNum;
-      const denStr = needsParen(simplifiedDen) ? `(${simplifiedDen})` : simplifiedDen;
-      
-      current = current.replace(fullMatch, `${numStr}/${simplifiedDen === "2" && !needsParen(simplifiedNum) ? "2" : denStr}`);
-      fracRegex.lastIndex = 0;
-    }
-    return current;
-  };
-  formatted = replaceFractions(formatted);
+  // 6. Replace square roots \sqrt{a} -> √(a)
+  formatted = formatted.replace(/\\sqrt\{([^}]+)\}/g, "√($1)");
+  formatted = formatted.replace(/\\sqrt\b/g, "√");
 
-  // 7. Process roots recursively to convert \sqrt{A} to √(A) or √A
-  const replaceRoots = (str: string): string => {
-    let current = str;
-    const sqrtRegex = /\\sqrt\{((?:[^{}]|\{(?:[^{}]|\{[^{}]*\})*\})*)\}/g;
-    let match;
-    while ((match = sqrtRegex.exec(current)) !== null) {
-      const fullMatch = match[0];
-      const inner = match[1];
-      const simplifiedInner = replaceRoots(inner);
-      
-      const needsParen = (expr: string) => {
-        return expr.length > 1 || /[\s+\-*\/=<>≤≥≠±→⇒⇔·]/.test(expr);
-      };
-      const replacement = needsParen(simplifiedInner) ? `√(${simplifiedInner})` : `√${simplifiedInner}`;
-      current = current.replace(fullMatch, replacement);
-      sqrtRegex.lastIndex = 0;
-    }
-    // Also support \sqrt without braces e.g. \sqrt x
-    current = current.replace(/\\sqrt\s*([a-zA-Z0-9])/g, "√$1");
-    return current;
-  };
-  formatted = replaceRoots(formatted);
-
-  // 8. Format vectors, bars, hats, tildes (e.g. \vec{x} -> x⃗)
-  formatted = formatted.replace(/\\(bar|vec|hat|tilde)\{([a-zA-Z0-9])\}/g, (match, cmd, char) => {
-    const combiningChars: Record<string, string> = {
-      bar: "\u0304",   // U+0304 Combining Macron
-      vec: "\u20D7",   // U+20D7 Combining Right Arrow Above
-      hat: "\u0302",   // U+0302 Combining Circumflex Accent
-      tilde: "\u0303", // U+0303 Combining Tilde
-    };
-    return char + (combiningChars[cmd] || "");
-  });
-
-  // 9. Format set theory blackboard bold symbols (e.g. \mathbb{R} -> ℝ)
-  formatted = formatted.replace(/\\mathbb\{([NZQRC])\}/g, (match, char) => {
-    const map: Record<string, string> = { N: "ℕ", Z: "ℤ", Q: "ℚ", R: "ℝ", C: "ℂ" };
-    return map[char] || char;
-  });
-  formatted = formatted.replace(/\\mathbb\s*([NZQRC])(?![a-zA-Z])/g, (match, char) => {
-    const map: Record<string, string> = { N: "ℕ", Z: "ℤ", Q: "ℚ", R: "ℝ", C: "ℂ" };
-    return map[char] || char;
-  });
-
-  // 10. LaTeX scientific symbol conversions
-  const replacements: Record<string, string> = {
-    // Limits / Integrals / Sums
-    "\\oint": "∮",
-    "\\iint": "∬",
-    "\\iiint": "∭",
-    "\\int": "∫",
-    "\\sum": "∑",
-    "\\prod": "∏",
-    
-    // Relations / Operators
-    "\\rightarrow": "→",
-    "\\to": "→",
-    "\\leftarrow": "←",
-    "\\rightleftharpoons": "⇌",
-    "\\leftrightarrow": "↔",
-    "\\Rightarrow": "⇒",
-    "\\Leftarrow": "⇐",
-    "\\Leftrightarrow": "⇔",
-    "\\times": "×",
-    "\\div": "÷",
-    "\\pm": "±",
-    "\\mp": "∓",
-    "\\cdot": "·",
-    "\\bullet": "•",
-    "\\ast": "*",
-    "\\star": "★",
-    
-    // Set Theory
-    "\\subset": "⊂",
-    "\\subseteq": "⊆",
-    "\\supset": "⊃",
-    "\\supseteq": "⊇",
-    "\\cup": "∪",
-    "\\cap": "∩",
-    "\\in": "∈",
-    "\\notin": "∉",
-    "\\ni": "∋",
-    "\\varnothing": "∅",
-    "\\emptyset": "∅",
-    
-    // Logic / Proofs
-    "\\therefore": "∴",
-    "\\because": "∵",
-    "\\exists": "∃",
-    "\\forall": "∀",
-    "\\neg": "¬",
-    "\\lor": "∨",
-    "\\land": "∧",
-    
-    // Geometry
-    "\\angle": "∠",
-    "\\triangle": "△",
-    "\\parallel": "∥",
-    "\\perp": "⊥",
-    "\\degree": "°",
-    
-    // General
-    "\\partial": "∂",
-    "\\nabla": "∇",
-    "\\hbar": "ℏ",
-    "\\ell": "ℓ",
-    "\\infty": "∞",
-    "\\propto": "∝",
-    "\\approx": "≈",
-    "\\cong": "≅",
-    "\\sim": "~",
-    "\\equiv": "≡",
-    "\\neq": "≠",
-    "\\ne": "≠",
-    "\\leq": "≤",
-    "\\le": "≤",
-    "\\geq": "≥",
-    "\\ge": "≥",
-    "\\Delta": "Δ",
-    "\\Theta": "Θ",
-    "\\Lambda": "Λ",
-    "\\Xi": "Ξ",
-    "\\Pi": "Π",
-    "\\Sigma": "Σ",
-    "\\Upsilon": "Υ",
-    "\\Phi": "Φ",
-    "\\Psi": "Ψ",
-    "\\Omega": "Ω",
-    "\\alpha": "α",
-    "\\beta": "β",
-    "\\gamma": "γ",
-    "\\delta": "δ",
-    "\\epsilon": "ε",
-    "\\varepsilon": "ε",
-    "\\zeta": "ζ",
-    "\\eta": "η",
-    "\\theta": "θ",
-    "\\vartheta": "ϑ",
-    "\\iota": "ι",
-    "\\kappa": "κ",
-    "\\lambda": "λ",
-    "\\mu": "μ",
-    "\\nu": "ν",
-    "\\xi": "ξ",
-    "\\pi": "π",
-    "\\rho": "ρ",
-    "\\sigma": "σ",
-    "\\tau": "τ",
-    "\\upsilon": "υ",
-    "\\phi": "φ",
-    "\\chi": "χ",
-    "\\psi": "ψ",
-    "\\omega": "ω",
-  };
-
-  // Replace each LaTeX pattern ensuring it is matched safely as a command word (not prefixing another)
-  Object.entries(replacements).forEach(([latex, unicode]) => {
-    const isAlpha = /^\\[a-zA-Z]+$/.test(latex);
-    const escapedLatex = latex.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&");
-    const regexStr = isAlpha ? `${escapedLatex}(?![a-zA-Z])` : escapedLatex;
-    const regex = new RegExp(regexStr, "g");
-    formatted = formatted.replace(regex, unicode);
-  });
-
-  // 11. Remove backslashes from standard trigonometric and logarithmic functions
-  formatted = formatted.replace(/\\(sin|cos|tan|log|ln|lim|sec|cosec|csc|cot|arcsin|arccos|arctan|sinh|cosh|tanh|det|max|min|sup|inf|deg|arg|lg)(?![a-zA-Z])/g, "$1");
-
-  // 12. Format Subscripts e.g. _{12} or _2 or _{x+y}
-  const subscripts: Record<string, string> = {
-    "0": "₀", "1": "₁", "2": "₂", "3": "₃", "4": "₄",
-    "5": "₅", "6": "₆", "7": "₇", "8": "₈", "9": "₉",
-    "+": "₊", "-": "₋", "=": "₌", "(": "₍", ")": "₎",
-    "a": "ₐ", "e": "ₑ", "h": "ₕ", "i": "ᵢ", "j": "ⱼ", "k": "ₖ", "l": "ₗ", "m": "ₘ", "n": "ₙ", "o": "ₒ", "p": "ₚ", "r": "ᵣ", "s": "ₛ", "t": "ₜ", "u": "ᵤ", "v": "ᵥ", "x": "ₓ",
-    "A": "ₐ", "E": "ₑ", "H": "ₕ", "I": "ᵢ", "J": "ⱼ", "K": "ₖ", "L": "ₗ", "M": "ₘ", "N": "ₙ", "O": "ₒ", "P": "ₚ", "R": "ᵣ", "S": "ₛ", "T": "ₜ", "U": "ᵤ", "V": "ᵥ", "X": "ₓ"
-  };
-
-  formatted = formatted.replace(/_\{([a-zA-Z0-9+\-=()₀₁₂₃₄₅₆₇₈₉⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻⁼⁽⁾ⁿ]*)\}/g, (match, p1) => {
-    return p1.split("").map((char: string) => subscripts[char] || char).join("");
-  });
-  
-  formatted = formatted.replace(/_([a-zA-Z0-9+\-=()])/g, (match, p1) => {
-    return subscripts[p1] || p1;
-  });
-
-  // 13. Format Superscripts e.g. ^{2} or ^2 or ^n
+  // 7. Superscripts (numbers, +/-, letters)
   const superscripts: Record<string, string> = {
-    "0": "⁰", "1": "¹", "2": "²", "3": "³", "4": "⁴",
-    "5": "⁵", "6": "⁶", "7": "⁷", "8": "⁸", "9": "⁹",
-    "+": "⁺", "-": "⁻", "=": "⁼", "(": "⁽", ")": "⁾", 
-    "a": "ᵃ", "b": "ᵇ", "c": "ᶜ", "d": "ᵈ", "e": "ᵉ", "f": "ᶠ", "g": "ᵍ", "h": "ʰ", "i": "ⁱ", "j": "ʲ", "k": "ᵏ", "l": "ˡ", "m": "ᵐ", "n": "ⁿ", "o": "ᵒ", "p": "ᵖ", "r": "ʳ", "s": "ˢ", "t": "ᵗ", "u": "ᵘ", "v": "ᵛ", "w": "ʷ", "x": "ˣ", "y": "ʸ", "z": "ᶻ",
-    "A": "ᴬ", "B": "ᴮ", "C": "ᶜ", "D": "ᴰ", "E": "ᴱ", "F": "ᶠ", "G": "ᴳ", "H": "ᴴ", "I": "ᴵ", "J": "ᴶ", "K": "ᴷ", "L": "ᴸ", "M": "ᴹ", "N": "ᴺ", "O": "ᴼ", "P": "ᴾ", "R": "ᴿ", "S": "ˢ", "T": "ᵀ", "U": "ᵁ", "V": "ⱽ", "W": "ᵂ", "X": "ˣ", "Y": "ʸ", "Z": "ᶻ"
+    "0": "⁰", "1": "¹", "2": "²", "3": "³", "4": "⁴", "5": "⁵", "6": "⁶", "7": "⁷", "8": "⁸", "9": "⁹",
+    "+": "⁺", "-": "⁻", "=": "⁼", "(": "⁽", ")": "⁾", "n": "ⁿ", "x": "ˣ"
+  };
+  formatted = formatted.replace(/\^\{([^}]+)\}/g, (match, grp) => {
+    return grp.split("").map((ch: string) => superscripts[ch] || ch).join("");
+  });
+  formatted = formatted.replace(/\^([0-9+\-n])/g, (match, grp) => superscripts[grp] || grp);
+
+  // 8. Subscripts (numbers, +/-, letters)
+  const subscripts: Record<string, string> = {
+    "0": "₀", "1": "₁", "2": "₂", "3": "₃", "4": "₄", "5": "₅", "6": "₆", "7": "₇", "8": "₈", "9": "₉",
+    "+": "₊", "-": "₋", "=": "₌", "(": "₍", ")": "₎", "a": "ₐ", "e": "ₑ", "o": "ₒ", "x": "ₓ", "h": "ₕ", "k": "ₖ", "l": "ₗ", "m": "ₘ", "n": "ₙ", "p": "ₚ", "s": "ₛ", "t": "ₜ"
+  };
+  formatted = formatted.replace(/_\{([^}]+)\}/g, (match, grp) => {
+    return grp.split("").map((ch: string) => subscripts[ch] || ch).join("");
+  });
+  formatted = formatted.replace(/_([0-9+\-a-z])/g, (match, grp) => subscripts[grp] || grp);
+
+  // 9. Standard mathematical and Greek symbols
+  const mathSymbols: Record<string, string> = {
+    "\\alpha": "α", "\\beta": "β", "\\gamma": "γ", "\\delta": "δ", "\\epsilon": "ε", "\\zeta": "ζ",
+    "\\eta": "η", "\\theta": "θ", "\\iota": "ι", "\\kappa": "κ", "\\lambda": "λ", "\\mu": "μ",
+    "\\nu": "ν", "\\xi": "ξ", "\\pi": "π", "\\rho": "ρ", "\\sigma": "σ", "\\tau": "τ",
+    "\\phi": "φ", "\\chi": "χ", "\\psi": "ψ", "\\omega": "ω",
+    "\\Gamma": "Γ", "\\Delta": "Δ", "\\Theta": "Θ", "\\Lambda": "Λ", "\\Xi": "Ξ",
+    "\\Pi": "Π", "\\Sigma": "Σ", "\\Phi": "Φ", "\\Psi": "Ψ", "\\Omega": "Ω",
+    "\\times": "×", "\\div": "÷", "\\pm": "±", "\\mp": "∓", "\\cdot": "·", "\\degree": "°",
+    "\\infty": "∞", "\\approx": "≈", "\\neq": "≠", "\\leq": "≤", "\\geq": "≥",
+    "\\equiv": "≡", "\\propto": "∝", "\\partial": "∂", "\\nabla": "∇",
+    "\\sum": "∑", "\\prod": "∏", "\\int": "∫", "\\iint": "∬", "\\iiint": "∭",
+    "\\subset": "⊂", "\\supset": "⊃", "\\subseteq": "⊆", "\\supseteq": "⊇",
+    "\\in": "∈", "\\notin": "∉", "\\cup": "∪", "\\cap": "∩", "\\forall": "∀", "\\exists": "∃",
+    "\\to": "→", "\\rightarrow": "→", "\\leftarrow": "←", "\\Rightarrow": "⇒", "\\Leftarrow": "⇐", "\\leftrightarrow": "↔",
+    "\\circ": "°"
   };
 
-  formatted = formatted.replace(/\^\{([a-zA-Z0-9+\-=()₀₁₂₃₄₅₆₇₈₉⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻⁼⁽⁾ⁿ]*)\}/g, (match, p1) => {
-    return p1.split("").map((char: string) => superscripts[char] || char).join("");
-  });
-  
-  formatted = formatted.replace(/\^([a-zA-Z0-9+\-=()])/g, (match, p1) => {
-    return superscripts[p1] || p1;
+  Object.entries(mathSymbols).forEach(([sym, uni]) => {
+    const regex = new RegExp(sym.replace(/\\/g, "\\\\") + "(?![a-zA-Z])", "g");
+    formatted = formatted.replace(regex, uni);
   });
 
-  // 14. Keep content inside text/mathrm/mathbf/mathit/operatorname commands but drop the outer command word
-  let textCmdPrev;
-  const textCmdRegex = /\\(text|mathrm|mathbf|mathit|operatorname)\{((?:[^{}]|\{[^{}]*\})*)\}/g;
-  do {
-    textCmdPrev = formatted;
-    formatted = formatted.replace(textCmdRegex, "$2");
-  } while (formatted !== textCmdPrev);
+  // 10. Simplify common chemical formulas formatting (e.g. H2O -> H₂O, CO2 -> CO₂)
+  formatted = formatted.replace(/\b(H|O|N|C|Cl|S|P|Na|K|Ca|Fe|Mg)(2|3|4|5|6|7|8|9)\b/g, (match, elem, num) => {
+    return elem + (subscripts[num] || num);
+  });
+
+  // 11. Decode LaTeX text formatting commands \text{...}, \mathbf{...}, \mathrm{...}
+  formatted = formatted.replace(/\\(text|mathbf|mathrm|mathit|mathsf|mathtt)\{([^}]+)\}/g, "$2");
+
+  // 12. Remove remaining inline math delimiters $ ... $ or \( ... \)
+  formatted = formatted.replace(/\$([^$]+)\$/g, "$1");
+  formatted = formatted.replace(/\\\((.*?)\\\)/g, "$1");
+
+  // 13. Convert display math delimiters $$ ... $$ or \[ ... \]
+  formatted = formatted.replace(/\$\$([\s\S]*?)\$\$/g, "\n$1\n");
+  formatted = formatted.replace(/\\\[([\s\S]*?)\\]/g, "\n$1\n");
+
+  // 14. Convert vector notation \vec{a} -> a⃗
+  formatted = formatted.replace(/\\vec\{([^}]+)\}/g, "$1⃗");
 
   // 15. Simplify common fractions (e.g. 1/2 -> ½) when they stand alone
   const commonFractions: Record<string, string> = {
@@ -386,4 +242,3 @@ export function formatScientificText(text: string): string {
 
   return formatted;
 }
-
