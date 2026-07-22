@@ -52,11 +52,13 @@ export function Footer() {
             <ul className="space-y-3 text-sm text-muted-foreground">
               <li className="flex items-center gap-2">
                 <Mail className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
-                <span>karan.saini.teacher@gmail.com</span>
+                <a href="mailto:tpaofficial1999@gmail.com" className="hover:text-indigo-400 transition-colors">
+                  tpaofficial1999@gmail.com
+                </a>
               </li>
               <li className="flex items-center gap-2">
                 <Shield className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
-                <span>Local Usage Limits: 5 papers/day</span>
+                <span>Daily Paper Limits: 5 papers/day</span>
               </li>
               <li className="flex items-center gap-2">
                 <BookOpen className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
@@ -76,7 +78,7 @@ export function Footer() {
             <span>Made with</span>
             <Heart className="w-3.5 h-3.5 text-red-500 fill-red-500 animate-pulse" />
             <span>by</span>
-            <span className="font-semibold text-foreground/80">Karan Saini</span>
+            <span className="font-semibold text-foreground/80">Karan Sir</span>
             <span>(Computer Teacher)</span>
           </div>
         </div>

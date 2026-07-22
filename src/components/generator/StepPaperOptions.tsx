@@ -96,7 +96,7 @@ export function StepPaperOptions({ value, options, onChange, onChangeOptions }: 
           {currentOptions.includeTeacherName && (
             <Input
               type="text"
-              placeholder="e.g. Prepared by: Prof. R. K. Sharma"
+              placeholder="e.g. Prepared by: Karan Sir"
               value={currentOptions.teacherName || ""}
               onChange={(e) => handleInputChange("teacherName", e.target.value)}
               className="bg-background/80 rounded-xl border-border/60 text-xs"

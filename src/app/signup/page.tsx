@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/components/providers/AuthProvider";
-import { Sparkles, Mail, Lock, User as UserIcon, Loader2, ArrowRight } from "lucide-react";
+import { Sparkles, Mail, Lock, Eye, EyeOff, User as UserIcon, Loader2, ArrowRight } from "lucide-react";
 
 function getFriendlyErrorMessage(error: unknown): string {
   const errCode = (error as { code?: string })?.code || "";
@@ -38,6 +38,7 @@ export default function SignUpPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -116,7 +117,7 @@ export default function SignUpPage() {
                 <Input
                   id="signup-name"
                   type="text"
-                  placeholder="Karan Saini"
+                  placeholder="Karan Sir"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   className="pl-9 bg-muted/40 border-border/60 focus:border-blue-500 rounded-xl"
@@ -150,13 +151,22 @@ export default function SignUpPage() {
                 <Lock className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
                 <Input
                   id="signup-password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   placeholder="At least 6 characters"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="pl-9 bg-muted/40 border-border/60 focus:border-blue-500 rounded-xl"
+                  className="pl-9 pr-10 bg-muted/40 border-border/60 focus:border-blue-500 rounded-xl"
                   required
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-3 text-muted-foreground hover:text-foreground transition-colors"
+                  tabIndex={-1}
+                  title={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
               </div>
             </div>
 
