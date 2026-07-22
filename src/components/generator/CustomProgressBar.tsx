@@ -4,9 +4,10 @@ import { cn } from "@/lib/utils";
 
 interface ProgressBarProps {
   currentStep: number;
+  totalSteps?: number;
 }
 
-export function CustomProgressBar({ currentStep }: ProgressBarProps) {
+export function CustomProgressBar({ currentStep, totalSteps = 7 }: ProgressBarProps) {
   const steps = [
     { label: "Class", step: 1 },
     { label: "Subject", step: 2 },
@@ -18,7 +19,7 @@ export function CustomProgressBar({ currentStep }: ProgressBarProps) {
   ];
 
   // Calculate width percentage
-  const progressPercent = ((currentStep - 1) / (steps.length - 1)) * 100;
+  const progressPercent = ((currentStep - 1) / ((totalSteps || steps.length) - 1)) * 100;
 
   return (
     <div className="w-full py-4 mb-8">
@@ -38,28 +39,37 @@ export function CustomProgressBar({ currentStep }: ProgressBarProps) {
           const isCompleted = item.step < currentStep;
           
           return (
-            <div key={item.step} className="flex flex-col items-center gap-2">
-              <div
+            <div 
+              key={item.step} 
+              className="flex flex-col items-center group cursor-default"
+            >
+              {/* Step indicator circle */}
+              <div 
                 className={cn(
-                  "w-8 h-8 rounded-full flex items-center justify-center font-heading text-xs font-semibold border transition-all duration-300",
+                  "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold font-heading transition-all duration-300 shadow-sm",
                   isCompleted 
-                    ? "bg-gradient-to-tr from-indigo-500 to-violet-600 text-white border-transparent shadow-[0_0_15px_rgba(99,102,241,0.25)]" 
-                    : isActive
-                      ? "bg-background border-indigo-500 text-indigo-500 ring-4 ring-indigo-500/10 font-bold"
-                      : "bg-background border-border text-muted-foreground"
+                    ? "bg-gradient-to-tr from-indigo-500 to-purple-600 text-white shadow-indigo-500/20" 
+                    : isActive 
+                      ? "bg-background border-2 border-purple-500 text-purple-400 ring-4 ring-purple-500/15 scale-110 shadow-lg" 
+                      : "bg-muted border border-border text-muted-foreground"
                 )}
               >
                 {isCompleted ? (
                   <Check className="w-4 h-4 text-white" />
                 ) : (
-                  <span>{item.step}</span>
+                  item.step
                 )}
               </div>
-              
+
+              {/* Step label text */}
               <span 
                 className={cn(
-                  "text-[10px] sm:text-xs font-medium font-heading transition-colors duration-300 hidden sm:block",
-                  isActive ? "text-indigo-600 dark:text-indigo-400 font-bold" : isCompleted ? "text-foreground/80" : "text-muted-foreground"
+                  "text-[11px] font-heading font-medium mt-2 transition-colors duration-300 hidden sm:block",
+                  isActive 
+                    ? "text-purple-400 font-semibold" 
+                    : isCompleted 
+                      ? "text-foreground/80" 
+                      : "text-muted-foreground/60"
                 )}
               >
                 {item.label}
