@@ -60,7 +60,7 @@ export function StepSubjectSelect({ classId, value, selectedSubject, onChange, o
                   "p-2.5 rounded-xl flex items-center justify-center border",
                   subj.color
                 )}>
-                  <Icon className="w-5 h-5" />
+                  <Icon className="w-5 h-5 text-foreground" />
                 </div>
                 
                 {/* Selection Checkmark */}
@@ -81,7 +81,7 @@ export function StepSubjectSelect({ classId, value, selectedSubject, onChange, o
                   {subj.name}
                 </span>
                 <span className="text-[11px] text-muted-foreground block mt-0.5">
-                  {subj.description}
+                  {(subj as { description?: string }).description || "Standard Board Curriculum"}
                 </span>
               </div>
             </GlassCard>

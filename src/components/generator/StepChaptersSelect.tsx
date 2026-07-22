@@ -24,7 +24,11 @@ export function StepChaptersSelect({
 }: StepChaptersSelectProps) {
   // Retrieve chapters from curriculum context
   const subjectData = CURRICULUM_DATA[classId]?.[subject];
-  const chapters = subjectData?.chapters || [];
+  const rawChapters = subjectData?.chapters || [];
+
+  const getChapterTitle = (chap: string | { title: string }): string => {
+    return typeof chap === "string" ? chap : chap.title;
+  };
 
   const updateSelected = (newChapters: string[]) => {
     if (onChange) onChange(newChapters);
@@ -40,10 +44,10 @@ export function StepChaptersSelect({
   };
 
   const handleSelectAll = () => {
-    if (selectedChapters.length === chapters.length) {
+    if (selectedChapters.length === rawChapters.length) {
       updateSelected([]);
     } else {
-      updateSelected(chapters.map((c) => c.title));
+      updateSelected(rawChapters.map(getChapterTitle));
     }
   };
 
@@ -64,7 +68,7 @@ export function StepChaptersSelect({
           <div className="flex items-center gap-2 text-xs text-muted-foreground font-heading">
             <Layers className="w-4 h-4 text-blue-500" />
             <span>
-              Selected: <strong className="text-foreground">{selectedChapters.length}</strong> of {chapters.length} Chapters
+              Selected: <strong className="text-foreground">{selectedChapters.length}</strong> of {rawChapters.length} Chapters
             </span>
           </div>
 
@@ -74,18 +78,19 @@ export function StepChaptersSelect({
             onClick={handleSelectAll}
             className="text-xs text-blue-500 hover:text-blue-600 hover:bg-blue-500/10 rounded-xl"
           >
-            {selectedChapters.length === chapters.length ? "Deselect All" : "Select All"}
+            {selectedChapters.length === rawChapters.length ? "Deselect All" : "Select All"}
           </Button>
         </div>
 
         {/* Chapters Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {chapters.map((chap, index) => {
-            const isSelected = selectedChapters.includes(chap.title);
+          {rawChapters.map((chap, index) => {
+            const title = getChapterTitle(chap);
+            const isSelected = selectedChapters.includes(title);
             return (
               <GlassCard
                 key={index}
-                onClick={() => handleToggleChapter(chap.title)}
+                onClick={() => handleToggleChapter(title)}
                 className={cn(
                   "p-4 cursor-pointer border flex items-center justify-between gap-3 transition-all duration-300 relative group",
                   isSelected
@@ -104,13 +109,8 @@ export function StepChaptersSelect({
                   </div>
                   <div>
                     <h4 className="text-xs font-bold font-heading text-foreground group-hover:text-blue-500 transition-colors">
-                      {chap.title}
+                      {title}
                     </h4>
-                    {chap.weightage && (
-                      <span className="text-[10px] text-muted-foreground">
-                        Estimated Weightage: {chap.weightage}
-                      </span>
-                    )}
                   </div>
                 </div>
 
