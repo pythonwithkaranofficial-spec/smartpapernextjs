@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useRef } from "react";
+import Script from "next/script";
 import { Navbar } from "@/components/shared/Navbar";
 import { AnimatedBackground } from "@/components/shared/AnimatedBackground";
 import { Footer } from "@/components/landing/Footer";
@@ -26,6 +27,36 @@ import {
   Upload,
 } from "lucide-react";
 import { toast } from "sonner";
+
+interface RazorpayResponse {
+  razorpay_order_id: string;
+  razorpay_payment_id: string;
+  razorpay_signature: string;
+}
+
+interface RazorpayOptions {
+  key: string;
+  amount: number;
+  currency: string;
+  name: string;
+  description: string;
+  order_id: string;
+  handler: (response: RazorpayResponse) => void;
+  prefill?: {
+    name?: string;
+    email?: string;
+  };
+  theme?: {
+    color?: string;
+  };
+}
+
+declare global {
+  interface Window {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    Razorpay: any;
+  }
+}
 
 const PLANS: { key: UserPlan; name: string; limit: string; price: string; features: string[] }[] = [
   {
@@ -134,12 +165,46 @@ export default function ProfilePage() {
   };
 
   const handlePlanUpgrade = async (newPlan: UserPlan) => {
+    if (newPlan === "FREE") {
+      setUpdatingPlan(newPlan);
+      try {
+        const token = await AuthService.getFirebaseToken();
+        if (!token) return;
+
+        const res = await fetch("/api/user/plan", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ plan: newPlan }),
+        });
+
+        const json = await res.json();
+        if (json.success) {
+          toast.success("Plan updated to FREE!");
+          await syncUserWithTurso();
+        }
+      } catch (err) {
+        console.error(err);
+        toast.error("Failed to update plan.");
+      } finally {
+        setUpdatingPlan(null);
+      }
+      return;
+    }
+
+    // Razorpay Online Payment Flow for PRO / PREMIUM
     setUpdatingPlan(newPlan);
     try {
       const token = await AuthService.getFirebaseToken();
-      if (!token) return;
+      if (!token) {
+        toast.error("Please log in to upgrade your subscription.");
+        return;
+      }
 
-      const res = await fetch("/api/user/plan", {
+      // 1. Create Razorpay Order
+      const checkoutRes = await fetch("/api/payment/checkout", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -148,17 +213,73 @@ export default function ProfilePage() {
         body: JSON.stringify({ plan: newPlan }),
       });
 
-      const json = await res.json();
-      if (json.success) {
-        toast.success(`Plan updated to ${newPlan}!`);
-        await syncUserWithTurso();
+      const checkoutJson = await checkoutRes.json();
+      if (!checkoutJson.success || !checkoutJson.data) {
+        throw new Error(checkoutJson.error?.message || "Failed to create payment order.");
+      }
+
+      const { orderId, amount, currency, keyId } = checkoutJson.data;
+
+      // 2. Open Razorpay Checkout Modal
+      const options: RazorpayOptions = {
+        key: keyId,
+        amount,
+        currency,
+        name: "Smart Paper AI",
+        description: `Upgrade to ${newPlan} Subscription`,
+        order_id: orderId,
+        prefill: {
+          name: displayName || firebaseUser?.displayName || "",
+          email: firebaseUser?.email || "",
+        },
+        theme: {
+          color: "#3b82f6",
+        },
+        handler: async (response: RazorpayResponse) => {
+          toast.loading("Verifying payment transaction...");
+          try {
+            const verifyRes = await fetch("/api/payment/verify", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                plan: newPlan,
+              }),
+            });
+
+            const verifyJson = await verifyRes.json();
+            if (verifyJson.success) {
+              toast.dismiss();
+              toast.success(`Payment successful! Welcome to ${newPlan} Plan! 🎉`);
+              await syncUserWithTurso();
+            } else {
+              toast.dismiss();
+              toast.error(verifyJson.error?.message || "Payment verification failed.");
+            }
+          } catch (verifyErr) {
+            console.error("Payment verification error:", verifyErr);
+            toast.dismiss();
+            toast.error("Payment verification error.");
+          } finally {
+            setUpdatingPlan(null);
+          }
+        },
+      };
+
+      if (window.Razorpay) {
+        const rzp = new window.Razorpay(options);
+        rzp.open();
       } else {
-        toast.error(json.error?.message || "Failed to update plan.");
+        toast.error("Razorpay SDK failed to load. Please try again.");
       }
     } catch (err) {
-      console.error("Plan upgrade error:", err);
-      toast.error("Failed to update plan.");
-    } finally {
+      console.error("Razorpay Checkout Error:", err);
+      toast.error(err instanceof Error ? err.message : "Payment initialization failed.");
       setUpdatingPlan(null);
     }
   };
@@ -180,6 +301,7 @@ export default function ProfilePage() {
 
   return (
     <>
+      <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
       <AnimatedBackground />
       <Navbar />
 
@@ -393,7 +515,7 @@ export default function ProfilePage() {
                           ) : isCurrent ? (
                             "Current Plan"
                           ) : (
-                            `Switch to ${plan.name}`
+                            `Pay & Upgrade to ${plan.name}`
                           )}
                         </Button>
                       </GlassCard>

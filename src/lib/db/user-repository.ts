@@ -1,59 +1,10 @@
-import { queryOne, queryRows, executeSql } from '../turso';
-import { DatabaseUser, CreateUserInput, UpdateUserInput, DailyUsage, PaperHistoryRecord, CreatePaperHistoryInput } from '../../types/db';
-import { UserPlan, UserRole } from '../../types/auth';
-import { DatabaseError, NotFoundError } from '../errors';
+import { executeSql, queryOne, queryRows } from '../turso';
+import { DatabaseUser, PaperHistoryRecord, CreatePaperHistoryInput } from '@/types/db';
+import { UserRole, UserPlan } from '@/types/auth';
 
 export class UserRepository {
   /**
-   * Helper to format current ISO date (YYYY-MM-DD)
-   */
-  private static getTodayDateString(): string {
-    return new Date().toISOString().split('T')[0];
-  }
-
-  /**
-   * Create a new user in the database
-   */
-  static async createUser(input: CreateUserInput): Promise<DatabaseUser> {
-    const id = crypto.randomUUID();
-    const now = new Date().toISOString();
-    const provider = input.provider || 'email';
-    const emailVerified = input.email_verified ? 1 : 0;
-    const role = input.role || 'USER';
-    const plan = input.plan || 'FREE';
-
-    try {
-      await executeSql({
-        sql: `INSERT INTO users (id, firebase_uid, name, email, photo_url, provider, email_verified, role, plan, created_at, updated_at)
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        args: [
-          id,
-          input.firebase_uid,
-          input.name || null,
-          input.email,
-          input.photo_url || null,
-          provider,
-          emailVerified,
-          role,
-          plan,
-          now,
-          now,
-        ],
-      });
-
-      const createdUser = await this.findUserByFirebaseUid(input.firebase_uid);
-      if (!createdUser) {
-        throw new DatabaseError('Failed to fetch newly created user record');
-      }
-      return createdUser;
-    } catch (error) {
-      console.error('[UserRepository.createUser Error]:', error);
-      throw new DatabaseError(`Could not create user: ${error instanceof Error ? error.message : String(error)}`);
-    }
-  }
-
-  /**
-   * Find a user by Firebase UID
+   * Find a user record by Firebase UID
    */
   static async findUserByFirebaseUid(firebaseUid: string): Promise<DatabaseUser | null> {
     return queryOne<DatabaseUser>({
@@ -63,7 +14,7 @@ export class UserRepository {
   }
 
   /**
-   * Find a user by Email address
+   * Find a user record by Email Address
    */
   static async findUserByEmail(email: string): Promise<DatabaseUser | null> {
     return queryOne<DatabaseUser>({
@@ -73,97 +24,127 @@ export class UserRepository {
   }
 
   /**
-   * Update user details
+   * Insert new user record into Turso DB
    */
-  static async updateUser(firebaseUid: string, input: UpdateUserInput): Promise<DatabaseUser> {
-    const existing = await this.findUserByFirebaseUid(firebaseUid);
-    if (!existing) {
-      throw new NotFoundError(`User with Firebase UID ${firebaseUid} not found`);
-    }
-
+  static async createUser(user: Partial<DatabaseUser> & { firebase_uid: string; email: string }): Promise<DatabaseUser> {
+    const id = user.id || crypto.randomUUID();
+    const name = user.name || null;
+    const photoUrl = user.photo_url || null;
+    const provider = user.provider || 'email';
+    const emailVerified = user.email_verified ? 1 : 0;
+    const role = user.role || 'USER';
+    const plan = user.plan || 'FREE';
     const now = new Date().toISOString();
-    const name = input.name !== undefined ? input.name : existing.name;
-    const photoUrl = input.photo_url !== undefined ? input.photo_url : existing.photo_url;
-    const email = input.email !== undefined ? input.email : existing.email;
-    const emailVerified = input.email_verified !== undefined ? (input.email_verified ? 1 : 0) : existing.email_verified;
-    const role = input.role !== undefined ? input.role : existing.role;
-    const plan = input.plan !== undefined ? input.plan : existing.plan;
 
     await executeSql({
-      sql: `UPDATE users
-            SET name = ?, photo_url = ?, email = ?, email_verified = ?, role = ?, plan = ?, updated_at = ?
-            WHERE firebase_uid = ?`,
-      args: [name, photoUrl, email, emailVerified, role, plan, now, firebaseUid],
+      sql: `INSERT INTO users (id, firebase_uid, name, email, photo_url, provider, email_verified, role, plan, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      args: [id, user.firebase_uid, name, user.email, photoUrl, provider, emailVerified, role, plan, now, now],
     });
 
-    const updated = await this.findUserByFirebaseUid(firebaseUid);
-    if (!updated) {
-      throw new DatabaseError('Failed to fetch updated user record');
+    const created = await this.findUserByFirebaseUid(user.firebase_uid);
+    if (!created) {
+      throw new Error('Failed to create user in database');
     }
-    return updated;
+    return created;
+  }
+
+  /**
+   * Update existing user details
+   */
+  static async updateUser(firebaseUid: string, updates: Partial<DatabaseUser>): Promise<DatabaseUser | null> {
+    const fields: string[] = [];
+    const args: (string | number | null)[] = [];
+
+    if (updates.name !== undefined) {
+      fields.push('name = ?');
+      args.push(updates.name);
+    }
+    if (updates.photo_url !== undefined) {
+      fields.push('photo_url = ?');
+      args.push(updates.photo_url);
+    }
+    if (updates.email_verified !== undefined) {
+      fields.push('email_verified = ?');
+      args.push(updates.email_verified ? 1 : 0);
+    }
+    if (updates.role !== undefined) {
+      fields.push('role = ?');
+      args.push(updates.role);
+    }
+    if (updates.plan !== undefined) {
+      fields.push('plan = ?');
+      args.push(updates.plan);
+    }
+
+    if (fields.length === 0) {
+      return this.findUserByFirebaseUid(firebaseUid);
+    }
+
+    fields.push('updated_at = ?');
+    args.push(new Date().toISOString());
+
+    args.push(firebaseUid);
+
+    await executeSql({
+      sql: `UPDATE users SET ${fields.join(', ')} WHERE firebase_uid = ?`,
+      args,
+    });
+
+    return this.findUserByFirebaseUid(firebaseUid);
   }
 
   /**
    * Update User Plan
    */
-  static async updatePlan(firebaseUid: string, plan: UserPlan): Promise<void> {
-    const now = new Date().toISOString();
-    await executeSql({
-      sql: `UPDATE users SET plan = ?, updated_at = ? WHERE firebase_uid = ?`,
-      args: [plan, now, firebaseUid],
-    });
+  static async updatePlan(firebaseUid: string, plan: UserPlan): Promise<DatabaseUser | null> {
+    return this.updateUser(firebaseUid, { plan });
   }
 
   /**
    * Update User Role
    */
-  static async updateRole(firebaseUid: string, role: UserRole): Promise<void> {
-    const now = new Date().toISOString();
-    await executeSql({
-      sql: `UPDATE users SET role = ?, updated_at = ? WHERE firebase_uid = ?`,
-      args: [role, now, firebaseUid],
-    });
+  static async updateRole(firebaseUid: string, role: UserRole): Promise<DatabaseUser | null> {
+    return this.updateUser(firebaseUid, { role });
   }
 
   /**
-   * Delete User
+   * Delete User record
    */
-  static async deleteUser(firebaseUid: string): Promise<void> {
+  static async deleteUser(firebaseUid: string): Promise<boolean> {
     await executeSql({
       sql: `DELETE FROM users WHERE firebase_uid = ?`,
       args: [firebaseUid],
     });
+    return true;
   }
 
   /**
-   * Fetch Daily Usage record for a user
+   * Helper to format today's date string (YYYY-MM-DD)
    */
-  static async getDailyUsage(firebaseUid: string, date?: string): Promise<DailyUsage> {
+  private static getTodayDateString(): string {
+    return new Date().toISOString().split('T')[0];
+  }
+
+  /**
+   * Get daily usage record for user on date
+   */
+  static async getDailyUsage(firebaseUid: string, date?: string): Promise<number> {
     const targetDate = date || this.getTodayDateString();
-    const usage = await queryOne<DailyUsage>({
-      sql: `SELECT * FROM daily_usage WHERE firebase_uid = ? AND date = ? LIMIT 1`,
+    const row = await queryOne<{ papers_generated: number }>({
+      sql: `SELECT papers_generated FROM daily_usage WHERE firebase_uid = ? AND date = ? LIMIT 1`,
       args: [firebaseUid, targetDate],
     });
-
-    if (usage) {
-      return usage;
-    }
-
-    return {
-      id: '',
-      firebase_uid: firebaseUid,
-      date: targetDate,
-      papers_generated: 0,
-    };
+    return row?.papers_generated || 0;
   }
 
   /**
-   * Increment papers_generated count for the day
+   * Increment daily usage counter for user
    */
   static async incrementDailyUsage(firebaseUid: string, date?: string): Promise<number> {
     const targetDate = date || this.getTodayDateString();
-    const existing = await queryOne<DailyUsage>({
-      sql: `SELECT * FROM daily_usage WHERE firebase_uid = ? AND date = ? LIMIT 1`,
+    const existing = await queryOne<{ id: string; papers_generated: number }>({
+      sql: `SELECT id, papers_generated FROM daily_usage WHERE firebase_uid = ? AND date = ? LIMIT 1`,
       args: [firebaseUid, targetDate],
     });
 
@@ -241,6 +222,26 @@ export class UserRepository {
     return queryRows<PaperHistoryRecord>({
       sql: `SELECT * FROM paper_history WHERE firebase_uid = ? ORDER BY created_at DESC LIMIT ? OFFSET ?`,
       args: [firebaseUid, limit, offset],
+    });
+  }
+
+  /**
+   * Insert record into payments table
+   */
+  static async createPayment(input: {
+    firebase_uid: string;
+    gateway: string;
+    amount: number;
+    currency?: string;
+    status: string;
+    transaction_reference: string;
+  }): Promise<void> {
+    const id = crypto.randomUUID();
+    const currency = input.currency || 'INR';
+    await executeSql({
+      sql: `INSERT INTO payments (id, firebase_uid, gateway, amount, currency, status, transaction_reference, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+      args: [id, input.firebase_uid, input.gateway, input.amount, currency, input.status, input.transaction_reference],
     });
   }
 }

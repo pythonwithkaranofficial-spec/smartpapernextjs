@@ -7,9 +7,9 @@ import { handleApiError, ValidationError } from '@/lib/errors';
 export async function POST(req: NextRequest) {
   try {
     const authContext = await verifyAuthToken(req);
-    const remaining = await getRemainingDailyPapers(authContext.uid);
+    const remainingInfo = await getRemainingDailyPapers(authContext.uid);
 
-    if (remaining <= 0) {
+    if (remainingInfo.remainingToday <= 0) {
       throw new ValidationError('Daily paper generation limit reached for your current plan', 403, 'LIMIT_EXCEEDED');
     }
 
@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
       success: true,
       data: {
         usedToday: updatedCount,
-        remainingToday: Math.max(0, remaining - 1),
+        remainingToday: Math.max(0, remainingInfo.remainingToday - 1),
       },
     });
   } catch (error) {

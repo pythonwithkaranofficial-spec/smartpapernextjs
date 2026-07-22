@@ -1,35 +1,35 @@
 import { UserRepository } from '../db/user-repository';
-import { DatabaseUser } from '../../types/db';
-import { UserPlan, UserRole } from '../../types/auth';
+import { DatabaseUser } from '@/types/db';
+import { UserRole, UserPlan } from '@/types/auth';
 
 export const DAILY_PAPER_LIMITS: Record<UserPlan, number> = {
-  FREE: 3,
+  FREE: 5,
   PRO: 50,
   PREMIUM: 100,
-  ENTERPRISE: 9999,
+  ENTERPRISE: 500,
 };
 
 /**
- * Get user record from database by Firebase UID
+ * Get full user record from Turso DB by Firebase UID
  */
 export async function getCurrentUser(firebaseUid: string): Promise<DatabaseUser | null> {
   return UserRepository.findUserByFirebaseUid(firebaseUid);
 }
 
 /**
- * Get current plan for user from database
+ * Get active subscription plan for user
  */
 export async function getCurrentPlan(firebaseUid: string): Promise<UserPlan> {
-  const user = await UserRepository.findUserByFirebaseUid(firebaseUid);
-  return user ? user.plan : 'FREE';
+  const user = await getCurrentUser(firebaseUid);
+  return user?.plan || 'FREE';
 }
 
 /**
- * Get current role for user from database
+ * Get user role (USER or ADMIN)
  */
 export async function getCurrentRole(firebaseUid: string): Promise<UserRole> {
-  const user = await UserRepository.findUserByFirebaseUid(firebaseUid);
-  return user ? user.role : 'USER';
+  const user = await getCurrentUser(firebaseUid);
+  return user?.role || 'USER';
 }
 
 /**
@@ -37,31 +37,42 @@ export async function getCurrentRole(firebaseUid: string): Promise<UserRole> {
  */
 export async function getCurrentDailyUsage(firebaseUid: string, date?: string): Promise<number> {
   const usage = await UserRepository.getDailyUsage(firebaseUid, date);
-  return usage.papers_generated;
+  return typeof usage === 'number' ? usage : ((usage as unknown as { papers_generated: number })?.papers_generated || 0);
 }
 
 /**
  * Calculate remaining daily paper generations allowed for user
  */
-export async function getRemainingDailyPapers(firebaseUid: string, date?: string): Promise<number> {
+export async function getRemainingDailyPapers(firebaseUid: string): Promise<{
+  plan: UserPlan;
+  dailyLimit: number;
+  usedToday: number;
+  remainingToday: number;
+}> {
   const plan = await getCurrentPlan(firebaseUid);
-  const limit = DAILY_PAPER_LIMITS[plan] ?? DAILY_PAPER_LIMITS.FREE;
-  const currentUsage = await getCurrentDailyUsage(firebaseUid, date);
-  
-  const remaining = limit - currentUsage;
-  return remaining > 0 ? remaining : 0;
+  const usedToday = await getCurrentDailyUsage(firebaseUid);
+
+  const dailyLimit = DAILY_PAPER_LIMITS[plan] || 5;
+  const remainingToday = Math.max(0, dailyLimit - usedToday);
+
+  return {
+    plan,
+    dailyLimit,
+    usedToday,
+    remainingToday,
+  };
 }
 
 /**
- * Check if user has an active premium/paid plan
+ * Check if user is a paid subscriber (PRO, PREMIUM, or ENTERPRISE)
  */
 export async function isPremium(firebaseUid: string): Promise<boolean> {
   const plan = await getCurrentPlan(firebaseUid);
-  return plan === 'PRO' || plan === 'PREMIUM' || plan === 'ENTERPRISE';
+  return plan !== 'FREE';
 }
 
 /**
- * Check if user has ADMIN role
+ * Check if user has administrator privileges
  */
 export async function isAdmin(firebaseUid: string): Promise<boolean> {
   const role = await getCurrentRole(firebaseUid);

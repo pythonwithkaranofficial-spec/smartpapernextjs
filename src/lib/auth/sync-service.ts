@@ -1,50 +1,35 @@
-import { UserRepository } from '../db/user-repository';
-import { DatabaseUser } from '../../types/db';
 import { User } from 'firebase/auth';
 import { DecodedIdToken } from 'firebase-admin/auth';
-
-export interface UserSyncPayload {
-  uid: string;
-  email: string;
-  displayName?: string | null;
-  photoURL?: string | null;
-  emailVerified: boolean;
-  providerId?: string;
-}
+import { UserRepository } from '../db/user-repository';
+import { DatabaseUser } from '@/types/db';
 
 export class UserSyncService {
   /**
-   * Synchronize a Firebase user (client or admin object) with Turso database
+   * Synchronize Firebase User or Decoded ID Token payload to Turso DB
    */
   static async syncFirebaseUser(
-    firebaseUser: User | DecodedIdToken | UserSyncPayload
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    firebaseUser: User | DecodedIdToken | any,
+    overrideData?: {
+      displayName?: string | null;
+      photoURL?: string | null;
+      email?: string | null;
+      providerId?: string;
+    }
   ): Promise<DatabaseUser> {
-    const uid = 'uid' in firebaseUser ? firebaseUser.uid : (firebaseUser as UserSyncPayload).uid;
-    const email = firebaseUser.email || '';
-    const displayName =
-      'displayName' in firebaseUser
-        ? firebaseUser.displayName
-        : 'name' in firebaseUser
-        ? (firebaseUser as DecodedIdToken).name
-        : null;
-    const photoURL =
-      'photoURL' in firebaseUser
-        ? firebaseUser.photoURL
-        : 'picture' in firebaseUser
-        ? (firebaseUser as DecodedIdToken).picture
-        : null;
-    const emailVerified =
-      'emailVerified' in firebaseUser
-        ? (firebaseUser as User).emailVerified
-        : 'email_verified' in firebaseUser
-        ? (firebaseUser as DecodedIdToken).email_verified ?? false
-        : false;
+    const uid = 'uid' in firebaseUser ? firebaseUser.uid : (firebaseUser as DecodedIdToken).uid;
+    const email = overrideData?.email || ('email' in firebaseUser ? firebaseUser.email : null) || '';
+    const displayName = overrideData?.displayName || ('displayName' in firebaseUser ? firebaseUser.displayName : null) || null;
+    const photoURL = overrideData?.photoURL || ('photoURL' in firebaseUser ? firebaseUser.photoURL : null) || null;
+    const emailVerified = ('emailVerified' in firebaseUser ? firebaseUser.emailVerified : false) || Boolean(('email_verified' in firebaseUser ? firebaseUser.email_verified : false));
 
-    let provider = 'email';
-    if ('providerData' in firebaseUser && (firebaseUser as User).providerData.length > 0) {
+    let provider = overrideData?.providerId || 'password';
+    if ('providerData' in firebaseUser && (firebaseUser as User).providerData?.[0]?.providerId) {
       provider = (firebaseUser as User).providerData[0].providerId;
     } else if ('firebase' in firebaseUser && (firebaseUser as DecodedIdToken).firebase?.sign_in_provider) {
       provider = (firebaseUser as DecodedIdToken).firebase.sign_in_provider;
+    } else if ('providerId' in firebaseUser && firebaseUser.providerId) {
+      provider = firebaseUser.providerId;
     }
 
     const existingUser = await UserRepository.findUserByFirebaseUid(uid);
@@ -57,7 +42,7 @@ export class UserSyncService {
         name: displayName,
         photo_url: photoURL,
         provider: provider,
-        email_verified: emailVerified,
+        email_verified: emailVerified ? 1 : 0,
         role: 'USER',
         plan: 'FREE',
       });
@@ -67,8 +52,8 @@ export class UserSyncService {
         name: displayName,
         photo_url: photoURL,
         email: email,
-        email_verified: emailVerified,
-      });
+        email_verified: emailVerified ? 1 : 0,
+      }) as DatabaseUser;
     }
   }
 }
