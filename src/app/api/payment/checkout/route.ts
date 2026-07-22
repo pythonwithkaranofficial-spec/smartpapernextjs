@@ -4,14 +4,6 @@ import { verifyAuthToken } from "@/lib/auth/middleware";
 import { UserPlan } from "@/types/auth";
 import { handleApiError, ValidationError } from "@/lib/errors";
 
-const key_id = process.env.RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_live_TGd0ItjJBk6QgH";
-const key_secret = process.env.RAZORPAY_KEY_SECRET || "jjTFV9nUT6Q7qkR3ZVE0b3wh";
-
-const razorpay = new Razorpay({
-  key_id,
-  key_secret,
-});
-
 const PLAN_PRICES: Record<UserPlan, number> = {
   FREE: 0,
   PRO: 21, // ₹21 (1-Day Unlimited Pass)
@@ -22,12 +14,24 @@ const PLAN_PRICES: Record<UserPlan, number> = {
 export async function POST(req: NextRequest) {
   try {
     const authContext = await verifyAuthToken(req);
-    const body = await req.json();
+    const body = await req.json().catch(() => ({}));
     const { plan } = body as { plan: UserPlan };
 
     if (!plan || PLAN_PRICES[plan] === undefined) {
       throw new ValidationError("Invalid subscription plan selected");
     }
+
+    const key_id = process.env.RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_live_TGd0ItjJBk6QgH";
+    const key_secret = process.env.RAZORPAY_KEY_SECRET || "jjTFV9nUT6Q7qkR3ZVE0b3wh";
+
+    if (!key_id || !key_secret) {
+      throw new ValidationError("Razorpay API Keys are not configured on server.");
+    }
+
+    const razorpay = new Razorpay({
+      key_id,
+      key_secret,
+    });
 
     const amountInINR = PLAN_PRICES[plan];
     const amountInPaise = amountInINR * 100;

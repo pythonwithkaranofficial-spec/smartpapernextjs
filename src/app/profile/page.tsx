@@ -60,6 +60,16 @@ declare global {
   }
 }
 
+async function safeParseJsonResponse(res: Response) {
+  const contentType = res.headers.get("content-type") || "";
+  if (!contentType.includes("application/json")) {
+    const rawText = await res.text();
+    console.error("API returned non-JSON response:", rawText);
+    throw new Error(`Server returned status ${res.status}. Please check your connection or try again.`);
+  }
+  return await res.json();
+}
+
 interface PlanCardData {
   key: UserPlan;
   name: string;
@@ -153,7 +163,7 @@ export default function ProfilePage() {
         const res = await fetch("/api/user/usage", {
           headers: { Authorization: `Bearer ${token}` },
         });
-        const json = await res.json();
+        const json = await safeParseJsonResponse(res);
         if (json.success && json.data) {
           setUsageInfo(json.data);
         }
@@ -230,7 +240,7 @@ export default function ProfilePage() {
           body: JSON.stringify({ plan: newPlan }),
         });
 
-        const json = await res.json();
+        const json = await safeParseJsonResponse(res);
         if (json.success) {
           toast.success("Plan updated to FREE!");
           await syncUserWithTurso();
@@ -263,7 +273,7 @@ export default function ProfilePage() {
         body: JSON.stringify({ plan: newPlan }),
       });
 
-      const checkoutJson = await checkoutRes.json();
+      const checkoutJson = await safeParseJsonResponse(checkoutRes);
       if (!checkoutJson.success || !checkoutJson.data) {
         throw new Error(checkoutJson.error?.message || "Failed to create Razorpay order.");
       }
@@ -302,7 +312,7 @@ export default function ProfilePage() {
               }),
             });
 
-            const verifyJson = await verifyRes.json();
+            const verifyJson = await safeParseJsonResponse(verifyRes);
             if (verifyJson.success) {
               toast.dismiss();
               toast.success(`🎉 Payment verified! Account upgraded to ${newPlan} plan instantly!`);
@@ -314,7 +324,7 @@ export default function ProfilePage() {
           } catch (verifyErr) {
             console.error("Payment verification error:", verifyErr);
             toast.dismiss();
-            toast.error("Payment verification error.");
+            toast.error(verifyErr instanceof Error ? verifyErr.message : "Payment verification error.");
           } finally {
             setUpdatingPlan(null);
           }

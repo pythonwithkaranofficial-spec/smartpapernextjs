@@ -5,8 +5,6 @@ import { UserRepository } from "@/lib/db/user-repository";
 import { UserPlan } from "@/types/auth";
 import { handleApiError, ValidationError } from "@/lib/errors";
 
-const key_secret = process.env.RAZORPAY_KEY_SECRET || "jjTFV9nUT6Q7qkR3ZVE0b3wh";
-
 const PLAN_AMOUNTS: Record<UserPlan, number> = {
   FREE: 0,
   PRO: 21,
@@ -17,7 +15,7 @@ const PLAN_AMOUNTS: Record<UserPlan, number> = {
 export async function POST(req: NextRequest) {
   try {
     const authContext = await verifyAuthToken(req);
-    const body = await req.json();
+    const body = await req.json().catch(() => ({}));
 
     const {
       razorpay_order_id,
@@ -34,6 +32,8 @@ export async function POST(req: NextRequest) {
     if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature || !plan) {
       throw new ValidationError("Missing required payment verification parameters");
     }
+
+    const key_secret = process.env.RAZORPAY_KEY_SECRET || "jjTFV9nUT6Q7qkR3ZVE0b3wh";
 
     // Verify HMAC-SHA256 signature
     const hmac = crypto.createHmac("sha256", key_secret);
