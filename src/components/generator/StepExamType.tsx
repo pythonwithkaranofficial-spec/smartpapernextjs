@@ -8,15 +8,26 @@ import { cn } from "@/lib/utils";
 import { Check } from "lucide-react";
 
 interface StepExamTypeProps {
-  value: string;
-  onChange: (val: string, defaultMarks: number, defaultDuration: string) => void;
-  onNext: (classIdOverride?: string, subjectOverride?: string, examTypeOverride?: string) => void;
+  value?: string;
+  selectedExamType?: string;
+  onChange?: (val: string, defaultMarks: number, defaultDuration: string) => void;
+  onSelectExamType?: (examType: string) => void;
+  onNext?: (classIdOverride?: string, subjectOverride?: string, examTypeOverride?: string) => void;
 }
 
-export function StepExamType({ value, onChange, onNext }: StepExamTypeProps) {
+export function StepExamType({ value, selectedExamType, onChange, onSelectExamType, onNext }: StepExamTypeProps) {
+  const currentValue = value || selectedExamType || "";
+
   const handleSelect = (id: string, defaultMarks: number, defaultDuration: string) => {
-    onChange(id, defaultMarks, defaultDuration);
-    onNext(undefined, undefined, id);
+    if (onChange) {
+      onChange(id, defaultMarks, defaultDuration);
+    }
+    if (onSelectExamType) {
+      onSelectExamType(id);
+    }
+    if (onNext) {
+      onNext(undefined, undefined, id);
+    }
   };
 
   return (
@@ -30,7 +41,7 @@ export function StepExamType({ value, onChange, onNext }: StepExamTypeProps) {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 max-w-6xl mx-auto pt-4">
         {EXAM_TYPES.map((type) => {
-          const isSelected = value === type.id;
+          const isSelected = currentValue === type.id;
           
           // Dynamically get the icon component
           // @ts-expect-error: Dynamically mapping string names to icons
