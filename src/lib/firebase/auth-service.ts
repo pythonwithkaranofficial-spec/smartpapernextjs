@@ -21,8 +21,11 @@ export class AuthService {
    * Register a new user with email and password
    */
   static async signUp(email: string, password: string, displayName?: string): Promise<User> {
+    const auth = getFirebaseAuth();
+    if (!auth) {
+      throw new AuthError('Firebase Auth is not initialized. Check your environment variables.', 500);
+    }
     try {
-      const auth = getFirebaseAuth();
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       
       if (displayName && userCredential.user) {
@@ -44,8 +47,11 @@ export class AuthService {
    * Sign in user with email and password
    */
   static async login(email: string, password: string): Promise<User> {
+    const auth = getFirebaseAuth();
+    if (!auth) {
+      throw new AuthError('Firebase Auth is not initialized. Check your environment variables.', 500);
+    }
     try {
-      const auth = getFirebaseAuth();
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       return userCredential.user;
     } catch (error) {
@@ -62,8 +68,11 @@ export class AuthService {
    * Sign in or register using Google Provider
    */
   static async loginWithGoogle(): Promise<User> {
+    const auth = getFirebaseAuth();
+    if (!auth) {
+      throw new AuthError('Firebase Auth is not initialized. Check your environment variables.', 500);
+    }
     try {
-      const auth = getFirebaseAuth();
       const provider = new GoogleAuthProvider();
       provider.addScope('profile');
       provider.addScope('email');
@@ -83,8 +92,9 @@ export class AuthService {
    * Sign out current user
    */
   static async logout(): Promise<void> {
+    const auth = getFirebaseAuth();
+    if (!auth) return;
     try {
-      const auth = getFirebaseAuth();
       await firebaseSignOut(auth);
     } catch (error) {
       console.error('[AuthService.logout Error]:', error);
@@ -117,8 +127,11 @@ export class AuthService {
    * Send password reset link to user's email
    */
   static async forgotPassword(email: string): Promise<void> {
+    const auth = getFirebaseAuth();
+    if (!auth) {
+      throw new AuthError('Firebase Auth is not initialized. Check your environment variables.', 500);
+    }
     try {
-      const auth = getFirebaseAuth();
       await firebaseSendPasswordResetEmail(auth, email);
     } catch (error) {
       console.error('[AuthService.forgotPassword Error]:', error);
@@ -134,8 +147,11 @@ export class AuthService {
    * Confirm password reset with action code and new password
    */
   static async resetPassword(actionCode: string, newPassword: string): Promise<void> {
+    const auth = getFirebaseAuth();
+    if (!auth) {
+      throw new AuthError('Firebase Auth is not initialized. Check your environment variables.', 500);
+    }
     try {
-      const auth = getFirebaseAuth();
       await firebaseConfirmPasswordReset(auth, actionCode, newPassword);
     } catch (error) {
       console.error('[AuthService.resetPassword Error]:', error);
@@ -152,7 +168,7 @@ export class AuthService {
    */
   static getCurrentUser(): User | null {
     const auth = getFirebaseAuth();
-    return auth.currentUser;
+    return auth ? auth.currentUser : null;
   }
 
   /**
@@ -164,7 +180,8 @@ export class AuthService {
 
     try {
       await user.reload();
-      return getFirebaseAuth().currentUser;
+      const auth = getFirebaseAuth();
+      return auth ? auth.currentUser : null;
     } catch (error) {
       console.error('[AuthService.verifyCurrentUser Error]:', error);
       return null;
@@ -198,6 +215,14 @@ export class AuthService {
    */
   static onAuthStateChangedListener(observer: NextOrObserver<User>): Unsubscribe {
     const auth = getFirebaseAuth();
+    if (!auth) {
+      if (typeof observer === 'function') {
+        observer(null);
+      } else if (observer && typeof observer.next === 'function') {
+        observer.next(null);
+      }
+      return () => {};
+    }
     return firebaseOnAuthStateChanged(auth, observer);
   }
 }
