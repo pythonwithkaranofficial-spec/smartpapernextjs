@@ -4,8 +4,8 @@ import { UserRole, UserPlan } from '@/types/auth';
 
 export const DAILY_PAPER_LIMITS: Record<UserPlan, number> = {
   FREE: 5,
-  PRO: 50,
-  PREMIUM: 100,
+  PRO: 999999, // 1-Day Pass: Unlimited papers per day until quota resets
+  PREMIUM: 50, // 1-Year Plan: 50 papers per day for a year
   ENTERPRISE: 500,
 };
 

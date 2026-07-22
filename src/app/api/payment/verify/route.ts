@@ -7,6 +7,13 @@ import { handleApiError, ValidationError } from "@/lib/errors";
 
 const key_secret = process.env.RAZORPAY_KEY_SECRET || "jjTFV9nUT6Q7qkR3ZVE0b3wh";
 
+const PLAN_AMOUNTS: Record<UserPlan, number> = {
+  FREE: 0,
+  PRO: 21,
+  PREMIUM: 399,
+  ENTERPRISE: 999,
+};
+
 export async function POST(req: NextRequest) {
   try {
     const authContext = await verifyAuthToken(req);
@@ -41,7 +48,7 @@ export async function POST(req: NextRequest) {
     const updatedUser = await UserRepository.updatePlan(authContext.uid, plan);
 
     // Calculate amount based on plan
-    const amount = plan === "PRO" ? 499 : plan === "PREMIUM" ? 999 : 2499;
+    const amount = PLAN_AMOUNTS[plan] ?? 21;
 
     // Record transaction in payments table
     await UserRepository.createPayment({

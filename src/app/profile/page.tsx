@@ -25,6 +25,8 @@ import {
   RefreshCw,
   Camera,
   Upload,
+  Zap,
+  Calendar,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -58,27 +60,74 @@ declare global {
   }
 }
 
-const PLANS: { key: UserPlan; name: string; limit: string; price: string; features: string[] }[] = [
+interface PlanCardData {
+  key: UserPlan;
+  name: string;
+  badge: string;
+  limit: string;
+  price: string;
+  billingText: string;
+  icon: React.ElementType;
+  gradient: string;
+  badgeGradient: string;
+  features: string[];
+  popular?: boolean;
+}
+
+const PLANS: PlanCardData[] = [
   {
     key: "FREE",
-    name: "Free Plan",
+    name: "Free Tier",
+    badge: "Basic Access",
     limit: "5 Papers / day",
     price: "₹0",
-    features: ["5 Question Papers per day", "Standard AI Generator", "PDF & Word Export", "Standard Support"],
+    billingText: "Forever Free",
+    icon: UserIcon,
+    gradient: "from-slate-500/20 to-zinc-500/10 border-border/50",
+    badgeGradient: "bg-slate-500/20 text-slate-300 border-slate-500/30",
+    features: [
+      "5 Question Papers per day",
+      "Standard Board Curriculum",
+      "PDF & Word DOCX Export",
+      "Daily Reset at Midnight",
+    ],
   },
   {
     key: "PRO",
-    name: "Pro Educator",
-    limit: "50 Papers / day",
-    price: "₹499 / mo",
-    features: ["50 Question Papers per day", "Custom AI Prompt Generator", "Priority AI Queue", "Saved History Cloud Sync", "Premium Support"],
+    name: "1-Day Unlimited Pass",
+    badge: "Instant 24-Hour Pass",
+    limit: "Unlimited Papers / day",
+    price: "₹21",
+    billingText: "Valid for 24 Hours",
+    icon: Zap,
+    gradient: "from-amber-500/20 via-orange-500/15 to-yellow-500/10 border-amber-500/40 shadow-[0_0_30px_rgba(245,158,11,0.2)]",
+    badgeGradient: "bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold",
+    popular: true,
+    features: [
+      "Unlimited Question Papers for 24 hrs",
+      "Instant Activation on Payment",
+      "Custom AI Generator Prompts",
+      "Priority Fast AI Queue",
+      "All Class & Subject Curriculums",
+    ],
   },
   {
     key: "PREMIUM",
-    name: "Premium Institute",
-    limit: "100 Papers / day",
-    price: "₹999 / mo",
-    features: ["100 Question Papers per day", "Custom School Watermarks", "Unlimited Saved History", "Custom Branding", "24/7 Dedicated Support"],
+    name: "1-Year Educator Plan",
+    badge: "Annual Value Pass",
+    limit: "50 Papers / day for 1 Year",
+    price: "₹399",
+    billingText: "Per Year (Billed Annually)",
+    icon: Calendar,
+    gradient: "from-blue-500/20 via-indigo-500/15 to-purple-500/10 border-blue-500/40 shadow-[0_0_30px_rgba(59,130,246,0.2)]",
+    badgeGradient: "bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold",
+    features: [
+      "50 Question Papers per day for 1 Year",
+      "Full 365 Days Uninterrupted Access",
+      "Custom School Watermark & Logo",
+      "Saved History Cloud Storage",
+      "24/7 Dedicated Support",
+    ],
   },
 ];
 
@@ -90,6 +139,7 @@ export default function ProfilePage() {
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [updatingPlan, setUpdatingPlan] = useState<UserPlan | null>(null);
   const [sendingVerification, setSendingVerification] = useState(false);
+  const [hoveredPlan, setHoveredPlan] = useState<UserPlan | null>(null);
 
   const [usageInfo, setUsageInfo] = useState<{ usedToday: number; dailyLimit: number; remainingToday: number } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -154,7 +204,7 @@ export default function ProfilePage() {
         const { updateProfile } = await import("firebase/auth");
         await updateProfile(user, { photoURL: base64Photo });
         await syncUserWithTurso();
-        toast.success("Profile photo updated & saved to Turso DB!");
+        toast.success("Profile photo updated & saved!");
       }
     } catch (err) {
       console.error("Photo upload error:", err);
@@ -194,7 +244,7 @@ export default function ProfilePage() {
       return;
     }
 
-    // Razorpay Online Payment Flow for PRO / PREMIUM
+    // Razorpay Online Payment Flow for PRO (₹21) or PREMIUM (₹399)
     setUpdatingPlan(newPlan);
     try {
       const token = await AuthService.getFirebaseToken();
@@ -215,28 +265,28 @@ export default function ProfilePage() {
 
       const checkoutJson = await checkoutRes.json();
       if (!checkoutJson.success || !checkoutJson.data) {
-        throw new Error(checkoutJson.error?.message || "Failed to create payment order.");
+        throw new Error(checkoutJson.error?.message || "Failed to create Razorpay order.");
       }
 
       const { orderId, amount, currency, keyId } = checkoutJson.data;
 
-      // 2. Open Razorpay Checkout Modal
+      // 2. Open Razorpay Checkout Popup Modal
       const options: RazorpayOptions = {
         key: keyId,
         amount,
         currency,
         name: "Smart Paper AI",
-        description: `Upgrade to ${newPlan} Subscription`,
+        description: `Upgrade to ${newPlan === "PRO" ? "₹21 1-Day Pass" : "₹399 1-Year Educator Plan"}`,
         order_id: orderId,
         prefill: {
           name: displayName || firebaseUser?.displayName || "",
           email: firebaseUser?.email || "",
         },
         theme: {
-          color: "#3b82f6",
+          color: newPlan === "PRO" ? "#f59e0b" : "#3b82f6",
         },
         handler: async (response: RazorpayResponse) => {
-          toast.loading("Verifying payment transaction...");
+          toast.loading("Verifying Razorpay payment...");
           try {
             const verifyRes = await fetch("/api/payment/verify", {
               method: "POST",
@@ -255,7 +305,7 @@ export default function ProfilePage() {
             const verifyJson = await verifyRes.json();
             if (verifyJson.success) {
               toast.dismiss();
-              toast.success(`Payment successful! Welcome to ${newPlan} Plan! 🎉`);
+              toast.success(`🎉 Payment verified! Account upgraded to ${newPlan} plan instantly!`);
               await syncUserWithTurso();
             } else {
               toast.dismiss();
@@ -275,7 +325,7 @@ export default function ProfilePage() {
         const rzp = new window.Razorpay(options);
         rzp.open();
       } else {
-        toast.error("Razorpay SDK failed to load. Please try again.");
+        toast.error("Razorpay SDK failed to load. Please refresh and try again.");
       }
     } catch (err) {
       console.error("Razorpay Checkout Error:", err);
@@ -297,7 +347,8 @@ export default function ProfilePage() {
   const currentPlan = dbUser?.plan || "FREE";
   const usedToday = usageInfo?.usedToday ?? 0;
   const dailyLimit = usageInfo?.dailyLimit ?? 5;
-  const usagePercentage = Math.min(100, Math.round((usedToday / dailyLimit) * 100));
+  const displayLimitText = dailyLimit > 9000 ? "Unlimited" : dailyLimit;
+  const usagePercentage = dailyLimit > 9000 ? 100 : Math.min(100, Math.round((usedToday / dailyLimit) * 100));
 
   return (
     <>
@@ -307,25 +358,25 @@ export default function ProfilePage() {
 
       <main className="flex-grow pt-28 pb-20">
         <ProtectedRoute requireEmailVerification={false}>
-          <div className="container mx-auto px-4 max-w-6xl space-y-8">
+          <div className="container mx-auto px-4 max-w-6xl space-y-10">
             <div className="text-center space-y-3">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-blue-500/30 bg-blue-500/10 text-blue-400 text-xs font-semibold uppercase tracking-wider">
+              <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full border border-blue-500/30 bg-blue-500/10 text-blue-400 text-xs font-bold uppercase tracking-widest shadow-sm">
                 <UserIcon className="w-3.5 h-3.5" />
-                <span>User Dashboard</span>
+                <span>User Dashboard & Subscriptions</span>
               </div>
-              <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold font-heading tracking-tight">
-                Account & Subscription
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold font-heading tracking-tight text-foreground">
+                Account & Subscription Plans
               </h1>
-              <p className="text-muted-foreground text-sm max-w-md mx-auto">
-                Manage your profile details, upload avatar, view daily quotas, and upgrade your plan.
+              <p className="text-muted-foreground text-sm max-w-lg mx-auto">
+                Manage your account details and instantly upgrade your paper generation limits with Razorpay.
               </p>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              {/* Profile Details Card */}
-              <GlassCard className="p-6 space-y-6 lg:col-span-1">
+              {/* Profile Info Sidebar */}
+              <GlassCard className="p-6 space-y-6 lg:col-span-1 border border-border/50">
                 <div className="flex flex-col items-center text-center space-y-3 pb-4 border-b border-border/40">
-                  {/* Avatar Upload Container */}
+                  {/* Avatar Photo */}
                   <div className="relative group">
                     <input
                       type="file"
@@ -336,7 +387,7 @@ export default function ProfilePage() {
                     />
 
                     {userPhoto ? (
-                      <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-blue-500/40 shadow-lg relative">
+                      <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-blue-500/50 shadow-xl relative">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={userPhoto}
@@ -345,23 +396,22 @@ export default function ProfilePage() {
                         />
                       </div>
                     ) : (
-                      <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-600 text-white flex items-center justify-center text-2xl font-bold shadow-lg">
+                      <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-600 text-white flex items-center justify-center text-3xl font-extrabold shadow-xl">
                         {(displayName || firebaseUser?.email || "U").substring(0, 2).toUpperCase()}
                       </div>
                     )}
 
-                    {/* Camera Change Button */}
                     <button
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
                       disabled={uploadingPhoto}
-                      className="absolute bottom-0 right-0 w-7 h-7 rounded-full bg-blue-600 hover:bg-blue-500 text-white flex items-center justify-center shadow-md transition-all group-hover:scale-110"
-                      title="Upload profile photo"
+                      className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-blue-600 hover:bg-blue-500 text-white flex items-center justify-center shadow-lg transition-all group-hover:scale-110"
+                      title="Upload photo"
                     >
                       {uploadingPhoto ? (
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        <Loader2 className="w-4 h-4 animate-spin" />
                       ) : (
-                        <Camera className="w-3.5 h-3.5" />
+                        <Camera className="w-4 h-4" />
                       )}
                     </button>
                   </div>
@@ -372,37 +422,37 @@ export default function ProfilePage() {
                     size="sm"
                     onClick={() => fileInputRef.current?.click()}
                     disabled={uploadingPhoto}
-                    className="rounded-xl border-border/60 text-xs flex items-center gap-1.5 h-8 px-3"
+                    className="rounded-xl border-border/60 text-xs flex items-center gap-1.5 h-8 px-3.5 font-medium"
                   >
                     {uploadingPhoto ? (
                       <Loader2 className="w-3.5 h-3.5 animate-spin" />
                     ) : (
                       <Upload className="w-3.5 h-3.5 text-blue-400" />
                     )}
-                    Upload Photo
+                    Upload Custom Photo
                   </Button>
 
                   <div>
-                    <h3 className="text-lg font-bold font-heading">{displayName || "User"}</h3>
-                    <p className="text-xs text-muted-foreground">{firebaseUser?.email}</p>
+                    <h3 className="text-xl font-extrabold font-heading text-foreground">{displayName || "User"}</h3>
+                    <p className="text-xs text-muted-foreground mt-0.5">{firebaseUser?.email}</p>
                   </div>
 
                   <div className="flex items-center gap-2 pt-1">
                     {isEmailVerified ? (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
-                        <ShieldCheck className="w-3.5 h-3.5" />
-                        Verified Email
+                      <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shadow-sm">
+                        <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                        Verified Account
                       </span>
                     ) : (
                       <button
                         onClick={handleResendEmail}
                         disabled={sendingVerification}
-                        className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-500/15 text-amber-400 border border-amber-500/30 hover:bg-amber-500/25 transition-colors"
+                        className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30 hover:bg-amber-500/25 transition-colors"
                       >
                         {sendingVerification ? (
-                          <RefreshCw className="w-3 h-3 animate-spin" />
+                          <RefreshCw className="w-3.5 h-3.5 animate-spin" />
                         ) : (
-                          <AlertCircle className="w-3 h-3" />
+                          <AlertCircle className="w-3.5 h-3.5" />
                         )}
                         Unverified (Resend Link)
                       </button>
@@ -413,7 +463,7 @@ export default function ProfilePage() {
                 {/* Edit Display Name Form */}
                 <form onSubmit={handleNameUpdate} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="display-name" className="text-xs font-medium">
+                    <Label htmlFor="display-name" className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
                       Display Name
                     </Label>
                     <div className="relative">
@@ -430,70 +480,108 @@ export default function ProfilePage() {
                   <Button
                     type="submit"
                     disabled={updatingName}
-                    className="w-full rounded-xl py-4 bg-gradient-to-r from-blue-500 to-indigo-600 text-white text-xs font-medium"
+                    className="w-full rounded-xl py-4 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white text-xs font-bold shadow-md transition-all"
                   >
                     {updatingName ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save Changes"}
                   </Button>
                 </form>
 
-                {/* Daily Quota Card */}
+                {/* Daily Quota Counter */}
                 <div className="pt-4 border-t border-border/40 space-y-3">
-                  <div className="flex items-center justify-between text-xs font-semibold">
-                    <span className="flex items-center gap-1.5">
-                      <Sparkles className="w-4 h-4 text-blue-400" />
-                      Daily Generation Quota
+                  <div className="flex items-center justify-between text-xs font-bold font-heading">
+                    <span className="flex items-center gap-1.5 text-foreground">
+                      <Sparkles className="w-4 h-4 text-amber-400" />
+                      Daily Paper Quota
                     </span>
-                    <span className="text-blue-400">
-                      {usedToday} / {dailyLimit}
+                    <span className="text-blue-400 font-extrabold">
+                      {usedToday} / {displayLimitText}
                     </span>
                   </div>
 
                   <div className="w-full h-3 rounded-full bg-muted/60 overflow-hidden p-0.5 border border-border/40">
                     <div
-                      className="h-full rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 transition-all duration-500"
+                      className="h-full rounded-full bg-gradient-to-r from-blue-500 via-indigo-500 to-amber-500 transition-all duration-500"
                       style={{ width: `${usagePercentage}%` }}
                     />
                   </div>
 
                   <p className="text-[11px] text-muted-foreground text-center">
-                    Resets daily. Upgrade to Pro or Premium for higher daily paper limits.
+                    Quotas reset every midnight. Upgrade to 1-Day Pass (₹21) for unlimited papers or 1-Year Pass (₹399) for 50 papers/day!
                   </p>
                 </div>
               </GlassCard>
 
-              {/* Plans & Subscriptions Section */}
+              {/* Interactive Subscription Plans Grid */}
               <div className="lg:col-span-2 space-y-6">
                 <div className="flex items-center gap-2">
                   <Crown className="w-5 h-5 text-amber-400" />
-                  <h2 className="text-xl font-bold font-heading">Choose Your Plan</h2>
+                  <h2 className="text-xl sm:text-2xl font-extrabold font-heading text-foreground">
+                    Subscription & Educator Plans
+                  </h2>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Interactive Cards Container with Hover Blur Focus */}
+                <div
+                  className="grid grid-cols-1 md:grid-cols-3 gap-5"
+                  onMouseLeave={() => setHoveredPlan(null)}
+                >
                   {PLANS.map((plan) => {
                     const isCurrent = currentPlan === plan.key;
                     const isSelected = updatingPlan === plan.key;
+                    const isHovered = hoveredPlan === plan.key;
+                    const isAnyHovered = hoveredPlan !== null;
+
+                    const IconComp = plan.icon;
 
                     return (
                       <GlassCard
                         key={plan.key}
-                        className={`p-6 flex flex-col justify-between space-y-6 relative transition-all ${
-                          isCurrent ? "border-blue-500/60 shadow-[0_0_20px_rgba(59,130,246,0.2)]" : ""
-                        }`}
+                        onMouseEnter={() => setHoveredPlan(plan.key)}
+                        className={`p-6 flex flex-col justify-between space-y-6 relative transition-all duration-300 transform border ${plan.gradient} ${
+                          isHovered
+                            ? "scale-105 z-20 shadow-[0_0_35px_rgba(59,130,246,0.35)] ring-2 ring-blue-500/60"
+                            : isAnyHovered
+                            ? "blur-[2.5px] opacity-40 scale-95"
+                            : "opacity-100 scale-100"
+                        } ${isCurrent ? "ring-2 ring-emerald-500/80" : ""}`}
                       >
-                        {isCurrent && (
-                          <span className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-blue-500 text-white text-[10px] font-bold uppercase tracking-wider shadow-sm">
-                            Active Plan
+                        {/* Badges */}
+                        <div className="flex justify-between items-center w-full">
+                          <span className={`px-2.5 py-1 rounded-full text-[10px] uppercase tracking-wider font-extrabold border ${plan.badgeGradient}`}>
+                            {plan.badge}
                           </span>
-                        )}
+                          {isCurrent && (
+                            <span className="px-2.5 py-1 rounded-full bg-emerald-500 text-white text-[10px] font-extrabold uppercase tracking-wider shadow-sm flex items-center gap-1">
+                              <Check className="w-3 h-3" /> Active
+                            </span>
+                          )}
+                        </div>
 
-                        <div className="space-y-3">
-                          <h3 className="text-lg font-bold font-heading">{plan.name}</h3>
-                          <div className="text-2xl font-extrabold">{plan.price}</div>
-                          <p className="text-xs text-blue-400 font-semibold">{plan.limit}</p>
+                        {/* Card Content */}
+                        <div className="space-y-4">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2.5 rounded-2xl bg-background/60 border border-border/50 text-amber-400 shadow-inner">
+                              <IconComp className="w-6 h-6" />
+                            </div>
+                            <div>
+                              <h3 className="text-lg font-extrabold font-heading text-foreground">{plan.name}</h3>
+                              <p className="text-xs font-bold text-amber-400">{plan.limit}</p>
+                            </div>
+                          </div>
 
-                          <ul className="space-y-2 pt-2 border-t border-border/40 text-xs">
+                          <div className="pt-2 border-t border-border/40">
+                            <div className="text-3xl font-black font-heading text-foreground">
+                              {plan.price}
+                            </div>
+                            <div className="text-[11px] text-muted-foreground font-medium">
+                              {plan.billingText}
+                            </div>
+                          </div>
+
+                          {/* Features List */}
+                          <ul className="space-y-2 pt-2 text-xs">
                             {plan.features.map((feat, idx) => (
-                              <li key={idx} className="flex items-center gap-2 text-muted-foreground">
+                              <li key={idx} className="flex items-center gap-2 text-foreground/90 font-medium">
                                 <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                                 <span>{feat}</span>
                               </li>
@@ -501,21 +589,26 @@ export default function ProfilePage() {
                           </ul>
                         </div>
 
+                        {/* Interactive Upgrade Button */}
                         <Button
                           onClick={() => handlePlanUpgrade(plan.key)}
                           disabled={isCurrent || isSelected}
-                          className={`w-full rounded-xl py-4 text-xs font-medium ${
+                          className={`w-full rounded-xl py-5 text-xs font-extrabold tracking-wide uppercase shadow-lg transition-all duration-200 ${
                             isCurrent
-                              ? "bg-muted/40 text-muted-foreground border-none"
-                              : "bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white shadow-sm"
+                              ? "bg-muted/40 text-muted-foreground border-none cursor-default"
+                              : plan.key === "PRO"
+                              ? "bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-600 hover:to-orange-600 text-white shadow-[0_4px_16px_rgba(245,158,11,0.4)]"
+                              : plan.key === "PREMIUM"
+                              ? "bg-gradient-to-r from-blue-500 via-indigo-600 to-purple-600 hover:from-blue-600 hover:to-indigo-700 text-white shadow-[0_4px_16px_rgba(59,130,246,0.4)]"
+                              : "bg-muted text-foreground hover:bg-muted/80"
                           }`}
                         >
                           {isSelected ? (
-                            <Loader2 className="w-4 h-4 animate-spin" />
+                            <Loader2 className="w-4 h-4 animate-spin mx-auto" />
                           ) : isCurrent ? (
-                            "Current Plan"
+                            "Current Active Plan"
                           ) : (
-                            `Pay & Upgrade to ${plan.name}`
+                            `Pay ${plan.price} & Upgrade Now`
                           )}
                         </Button>
                       </GlassCard>

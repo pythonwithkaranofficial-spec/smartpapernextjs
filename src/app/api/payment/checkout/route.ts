@@ -14,9 +14,9 @@ const razorpay = new Razorpay({
 
 const PLAN_PRICES: Record<UserPlan, number> = {
   FREE: 0,
-  PRO: 499, // ₹499
-  PREMIUM: 999, // ₹999
-  ENTERPRISE: 2499, // ₹2499
+  PRO: 21, // ₹21 (1-Day Unlimited Pass)
+  PREMIUM: 399, // ₹399 (1-Year Educator Pass - 50 papers/day)
+  ENTERPRISE: 999, // ₹999
 };
 
 export async function POST(req: NextRequest) {
@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { plan } = body as { plan: UserPlan };
 
-    if (!plan || !PLAN_PRICES[plan]) {
+    if (!plan || PLAN_PRICES[plan] === undefined) {
       throw new ValidationError("Invalid subscription plan selected");
     }
 
