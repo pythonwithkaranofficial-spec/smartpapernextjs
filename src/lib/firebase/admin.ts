@@ -14,24 +14,31 @@ export function getFirebaseAdminApp(): App {
     return adminAppInstance;
   }
 
-  const projectId = process.env.FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+  const projectId = process.env.FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'smartpapergenwebsite';
   const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
   const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n');
 
-  if (clientEmail && privateKey && projectId) {
-    adminAppInstance = initializeApp({
-      credential: cert({
+  try {
+    if (clientEmail && privateKey && projectId) {
+      adminAppInstance = initializeApp({
+        credential: cert({
+          projectId,
+          clientEmail,
+          privateKey,
+        }),
+      });
+    } else {
+      adminAppInstance = initializeApp({
         projectId,
-        clientEmail,
-        privateKey,
-      }),
-    });
-  } else if (projectId) {
-    adminAppInstance = initializeApp({
-      projectId,
-    });
-  } else {
-    adminAppInstance = initializeApp();
+      });
+    }
+  } catch (error) {
+    console.error('[Firebase Admin Init Error]:', error);
+    if (getApps().length > 0) {
+      adminAppInstance = getApp();
+    } else {
+      adminAppInstance = initializeApp({ projectId });
+    }
   }
 
   return adminAppInstance;
