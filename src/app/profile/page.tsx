@@ -2,6 +2,8 @@
 
 import React, { useEffect, useState, useRef } from "react";
 import Script from "next/script";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Navbar } from "@/components/shared/Navbar";
 import { AnimatedBackground } from "@/components/shared/AnimatedBackground";
 import { Footer } from "@/components/landing/Footer";
@@ -12,10 +14,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { AuthService } from "@/lib/firebase/auth-service";
-import { compressImageToBase64 } from "@/lib/utils";
+import { compressImageToBase64, getLocalPaperHistory } from "@/lib/utils";
 import { clientRateLimiter } from "@/lib/rate-limiter";
 import { isSuperAdminEmail } from "@/lib/auth/helpers";
 import { UserPlan } from "@/types/auth";
+import { PaperHistoryRecord } from "@/types/db";
 import {
   User as UserIcon,
   ShieldCheck,
@@ -33,6 +36,9 @@ import {
   Building2,
   Wallet,
   Smartphone,
+  History,
+  FileText,
+  ExternalLink,
   Clock,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -174,6 +180,7 @@ interface UsageData {
 }
 
 export default function ProfilePage() {
+  const router = useRouter();
   const { firebaseUser, dbUser, isEmailVerified, sendVerificationEmail, syncUserWithTurso } = useAuth();
 
   const [displayName, setDisplayName] = useState(firebaseUser?.displayName || dbUser?.name || "");
@@ -337,6 +344,51 @@ export default function ProfilePage() {
     }
   };
 
+  const [paperHistory, setPaperHistory] = useState<PaperHistoryRecord[]>([]);
+
+  // Load paper history for Profile dashboard
+  useEffect(() => {
+    async function loadPaperHistory() {
+      const localItems = getLocalPaperHistory();
+      try {
+        const token = await AuthService.getFirebaseToken();
+        if (token) {
+          const res = await fetch("/api/user/history?limit=10", {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          const json = await safeParseJsonResponse(res);
+          if (json.success && Array.isArray(json.data)) {
+            const combined = [...json.data, ...localItems];
+            const uniqueMap = new Map<string, PaperHistoryRecord>();
+            combined.forEach((item) => {
+              const key = item.id || item.created_at;
+              if (!uniqueMap.has(key)) uniqueMap.set(key, item);
+            });
+            const merged = Array.from(uniqueMap.values()).sort(
+              (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+            );
+            setPaperHistory(merged);
+            return;
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load paper history in profile:", err);
+      }
+      setPaperHistory(localItems);
+    }
+
+    loadPaperHistory();
+
+    if (typeof window !== "undefined") {
+      window.addEventListener("paper_generated", loadPaperHistory);
+    }
+    return () => {
+      if (typeof window !== "undefined") {
+        window.removeEventListener("paper_generated", loadPaperHistory);
+      }
+    };
+  }, []);
+
   const handlePhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -348,14 +400,35 @@ export default function ProfilePage() {
 
     setUploadingPhoto(true);
     try {
-      const base64Photo = await compressImageToBase64(file, 150, 150, 0.85);
+      const base64Photo = await compressImageToBase64(file, 120, 120, 0.7);
       const user = AuthService.getCurrentUser();
 
       if (user) {
-        const { updateProfile } = await import("firebase/auth");
-        await updateProfile(user, { photoURL: base64Photo });
+        // Attempt Firebase Auth profile update safely
+        try {
+          const { updateProfile } = await import("firebase/auth");
+          await updateProfile(user, { photoURL: base64Photo });
+        } catch (fbErr) {
+          console.warn("Firebase Auth photoURL limit caught:", fbErr);
+        }
+
+        // Direct Sync to Turso DB user profile record
+        const token = await user.getIdToken();
+        await fetch("/api/auth/sync", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            displayName: user.displayName || displayName,
+            photoURL: base64Photo,
+            email: user.email,
+          }),
+        });
+
         await syncUserWithTurso();
-        toast.success("Profile photo updated & saved!");
+        toast.success("Profile photo updated & saved successfully!");
       }
     } catch (err) {
       console.error("Photo upload error:", err);
@@ -846,6 +919,89 @@ export default function ProfilePage() {
                   </div>
                 </GlassCard>
               </div>
+            </div>
+
+            {/* Lifetime Saved Question Papers Section */}
+            <div className="pt-6 border-t border-border/40 space-y-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <History className="w-5 h-5 text-blue-400" />
+                  <h2 className="text-xl sm:text-2xl font-extrabold font-heading text-foreground">
+                    Lifetime Saved Paper History
+                  </h2>
+                </div>
+                <Link
+                  href="/history"
+                  className="text-xs font-bold text-blue-400 hover:text-blue-300 flex items-center gap-1 hover:underline"
+                >
+                  <span>View Full History</span>
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </Link>
+              </div>
+
+              {paperHistory.length === 0 ? (
+                <GlassCard className="p-8 text-center space-y-3 border border-border/40">
+                  <FileText className="w-10 h-10 text-muted-foreground/50 mx-auto" />
+                  <div className="text-sm font-bold text-muted-foreground font-heading">
+                    No Saved Papers Found Yet
+                  </div>
+                  <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+                    Question papers created by you will be stored here permanently for lifetime access. Generate your first paper now!
+                  </p>
+                  <Button
+                    onClick={() => router.push("/")}
+                    size="sm"
+                    className="rounded-xl text-xs font-bold bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white"
+                  >
+                    Generate Paper Now
+                  </Button>
+                </GlassCard>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {paperHistory.slice(0, 6).map((item) => (
+                    <GlassCard
+                      key={item.id}
+                      className="p-5 flex flex-col justify-between space-y-4 border border-border/40 hover:border-blue-500/40 transition-all group"
+                    >
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-start">
+                          <span className="text-xs font-extrabold uppercase font-heading text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2 py-0.5 rounded-full">
+                            {item.subject}
+                          </span>
+                          <span className="text-[10px] text-muted-foreground font-medium">
+                            {new Date(item.created_at).toLocaleDateString()}
+                          </span>
+                        </div>
+                        <h4 className="text-sm font-bold font-heading text-foreground group-hover:text-blue-400 transition-colors">
+                          {item.paper_type ? item.paper_type.replace(/_/g, " ").toUpperCase() : "EXAM"} ({item.class})
+                        </h4>
+                        <p className="text-[11px] text-muted-foreground">
+                          {item.marks} Marks • {item.difficulty} Difficulty
+                        </p>
+                      </div>
+
+                      <Button
+                        size="sm"
+                        onClick={() => {
+                          try {
+                            const parsedPaper = typeof item.paper_json === "string" ? JSON.parse(item.paper_json) : item.paper_json;
+                            sessionStorage.setItem("generated_paper", JSON.stringify(parsedPaper));
+                            toast.success(`Loaded ${item.subject} paper into previewer.`);
+                            router.push("/preview");
+                          } catch (e) {
+                            console.error("Failed to open paper:", e);
+                            toast.error("Failed to open paper.");
+                          }
+                        }}
+                        className="w-full rounded-xl text-xs font-bold bg-background/80 hover:bg-blue-500 hover:text-white border border-border/60 transition-all flex items-center justify-center gap-1.5"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                        <span>View / Edit Paper</span>
+                      </Button>
+                    </GlassCard>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </ProtectedRoute>

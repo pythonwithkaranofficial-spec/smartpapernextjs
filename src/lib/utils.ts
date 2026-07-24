@@ -242,3 +242,85 @@ export function formatScientificText(text: string): string {
 
   return formatted;
 }
+
+export function saveLocalPaperHistory(record: {
+  class: string;
+  subject: string;
+  paper_type: string;
+  marks: number;
+  difficulty: string;
+  paper_json: unknown;
+}) {
+  if (typeof window === "undefined") return;
+  try {
+    const existing = localStorage.getItem("user_paper_history");
+    const list: unknown[] = existing ? JSON.parse(existing) : [];
+    const newRecord = {
+      id: "local_" + Date.now() + "_" + Math.random().toString(36).substring(2, 7),
+      firebase_uid: "local",
+      class: record.class,
+      subject: record.subject,
+      paper_type: record.paper_type,
+      marks: record.marks,
+      difficulty: record.difficulty,
+      paper_json: typeof record.paper_json === "string" ? record.paper_json : JSON.stringify(record.paper_json),
+      created_at: new Date().toISOString(),
+    };
+    const updated = [newRecord, ...list].slice(0, 100);
+    localStorage.setItem("user_paper_history", JSON.stringify(updated));
+  } catch (e) {
+    console.error("Failed to save paper to local history:", e);
+  }
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function getLocalPaperHistory(): any[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const existing = localStorage.getItem("user_paper_history");
+    return existing ? JSON.parse(existing) : [];
+  } catch {
+    return [];
+  }
+}
+
+export async function syncLocalHistoryToCloud() {
+  if (typeof window === "undefined") return;
+  try {
+    const localItems = getLocalPaperHistory();
+    const unsynced = localItems.filter((item) => item && item.firebase_uid === "local");
+    if (unsynced.length === 0) return;
+
+    const { AuthService } = await import("@/lib/firebase/auth-service");
+    const token = await AuthService.getFirebaseToken();
+    if (!token) return;
+
+    for (const item of unsynced) {
+      try {
+        const res = await fetch("/api/user/history", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            class: item.class,
+            subject: item.subject,
+            paper_type: item.paper_type,
+            marks: item.marks,
+            difficulty: item.difficulty,
+            paper_json: item.paper_json,
+          }),
+        });
+        if (res.ok) {
+          item.firebase_uid = "synced";
+        }
+      } catch (e) {
+        console.error("Failed to sync local paper to cloud:", e);
+      }
+    }
+    localStorage.setItem("user_paper_history", JSON.stringify(localItems));
+  } catch (e) {
+    console.error("Failed to sync local history to cloud:", e);
+  }
+}

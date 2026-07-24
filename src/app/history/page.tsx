@@ -10,6 +10,7 @@ import { GlassCard } from "@/components/shared/GlassCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AuthService } from "@/lib/firebase/auth-service";
+import { getLocalPaperHistory, syncLocalHistoryToCloud } from "@/lib/utils";
 import { PaperHistoryRecord } from "@/types/db";
 import { History, Search, FileText, Calendar, Award, ExternalLink, Loader2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
@@ -22,25 +23,43 @@ export default function HistoryPage() {
 
   useEffect(() => {
     async function loadHistory() {
+      // Trigger background sync of any local guest papers to cloud if user is logged in
+      syncLocalHistoryToCloud().catch(() => {});
+
+      const localItems = getLocalPaperHistory();
       try {
         const token = await AuthService.getFirebaseToken();
-        if (!token) return;
-
-        const res = await fetch("/api/user/history?limit=50", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        const json = await res.json();
-        if (json.success && json.data) {
-          setHistory(json.data);
+        if (token) {
+          const res = await fetch("/api/user/history?limit=50", {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+          const json = await res.json();
+          if (json.success && Array.isArray(json.data)) {
+            // Combine server & local records, deduplicating by id / timestamp
+            const combined = [...json.data, ...localItems];
+            const uniqueMap = new Map<string, PaperHistoryRecord>();
+            combined.forEach((item) => {
+              const key = item.id || item.created_at;
+              if (!uniqueMap.has(key)) {
+                uniqueMap.set(key, item);
+              }
+            });
+            const merged = Array.from(uniqueMap.values()).sort(
+              (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+            );
+            setHistory(merged);
+            return;
+          }
         }
       } catch (error) {
-        console.error("Failed to load paper history:", error);
-        toast.error("Failed to load paper history.");
+        console.error("Failed to load cloud paper history:", error);
       } finally {
         setLoading(false);
       }
+
+      setHistory(localItems);
     }
 
     loadHistory();

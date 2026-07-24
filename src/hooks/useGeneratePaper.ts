@@ -5,6 +5,7 @@ import { PaperConfig } from "@/types";
 import { clientRateLimiter } from "@/lib/rate-limiter";
 import { AuthService } from "@/lib/firebase/auth-service";
 import { isSuperAdminEmail } from "@/lib/auth/helpers";
+import { saveLocalPaperHistory } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -50,6 +51,16 @@ export function useGeneratePaper() {
       
       // Save configuration used
       sessionStorage.setItem("last_paper_config", JSON.stringify(config));
+
+      // Save locally to browser paper history for lifetime offline/instant access
+      saveLocalPaperHistory({
+        class: config.isCustom && config.customClass ? config.customClass : config.classId,
+        subject: config.isCustom && config.customSubject ? config.customSubject : config.subject,
+        paper_type: config.examType,
+        marks: config.totalMarks,
+        difficulty: config.difficulty,
+        paper_json: data,
+      });
 
       // Record count in client rate limiter for this specific user
       clientRateLimiter.recordGeneration(userEmail, isSuperAdmin);
