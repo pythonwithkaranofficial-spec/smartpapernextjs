@@ -32,12 +32,13 @@ export function PaperPreview({ paper, onChange }: PaperPreviewProps) {
     const updated = { ...paper };
 
     if (editingField.type === "header") {
-      if (editingField.id === "schoolName") updated.schoolName = formatScientificText(editValue);
-      if (editingField.id === "examName") updated.examName = formatScientificText(editValue);
-      if (editingField.id === "subject") updated.subject = formatScientificText(editValue);
-      if (editingField.id === "classText") updated.classText = formatScientificText(editValue);
-      if (editingField.id === "timeText") updated.timeText = formatScientificText(editValue);
-      if (editingField.id === "maxMarksText") updated.maxMarksText = formatScientificText(editValue);
+      if (editingField.id === "schoolName") updated.schoolName = editValue.toUpperCase();
+      if (editingField.id === "examName") updated.examName = editValue.replace(/_/g, " ").toUpperCase();
+      if (editingField.id === "teacherName") updated.teacherName = editValue;
+      if (editingField.id === "subject") updated.subject = editValue;
+      if (editingField.id === "classText") updated.classText = editValue;
+      if (editingField.id === "timeText") updated.timeText = editValue;
+      if (editingField.id === "maxMarksText") updated.maxMarksText = editValue;
     } else if (editingField.type === "instruction" && typeof editingField.index === "number") {
       updated.instructions[editingField.index] = formatScientificText(editValue);
     } else if (editingField.type === "question" && editingField.id) {
@@ -186,7 +187,7 @@ export function PaperPreview({ paper, onChange }: PaperPreviewProps) {
                   onClick={() => handleEditStart("header", paper.schoolName || "", "schoolName")}
                   className="cursor-pointer border-b border-dashed border-transparent hover:border-black/30 pb-0.5"
                 >
-                  {paper.schoolName || "YOUR SCHOOL NAME HERE"}
+                  {paper.schoolName ? paper.schoolName.toUpperCase() : "YOUR SCHOOL NAME HERE"}
                 </span>
               )}
             </div>
@@ -201,7 +202,7 @@ export function PaperPreview({ paper, onChange }: PaperPreviewProps) {
               </div>
             ) : (
               <span onClick={() => handleEditStart("header", paper.examName, "examName")} className="cursor-pointer hover:underline decoration-dashed">
-                {paper.examName}
+                {paper.examName ? paper.examName.replace(/_/g, ' ').toUpperCase() : ""}
               </span>
             )}
           </div>
@@ -229,6 +230,23 @@ export function PaperPreview({ paper, onChange }: PaperPreviewProps) {
               <span onClick={() => handleEditStart("header", paper.classText, "classText")} className="cursor-pointer hover:underline decoration-dashed">
                 {paper.classText}
               </span>
+            )}
+            {paper.teacherName !== undefined && paper.teacherName.trim() !== "" && (
+              <>
+                {" | "}
+                {editingField?.type === "header" && editingField.id === "teacherName" ? (
+                  <div className="inline-flex gap-2">
+                    <Input value={editValue} onChange={(e) => setEditValue(e.target.value)} className="w-40 h-7 text-black border-black" />
+                    <Button size="icon-xs" onClick={handleEditSave} className="bg-black hover:bg-black/85 text-white"><Check className="w-3 h-3" /></Button>
+                  </div>
+                ) : (
+                  <span onClick={() => handleEditStart("header", paper.teacherName || "", "teacherName")} className="cursor-pointer hover:underline decoration-dashed">
+                    {paper.teacherName.toLowerCase().startsWith("teacher") || paper.teacherName.toLowerCase().startsWith("prepared by")
+                      ? paper.teacherName
+                      : `Teacher: ${paper.teacherName}`}
+                  </span>
+                )}
+              </>
             )}
           </div>
 

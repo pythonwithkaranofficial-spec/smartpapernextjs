@@ -60,6 +60,7 @@ export interface PaperSection {
 
 export interface GeneratedPaper {
   schoolName?: string;
+  teacherName?: string;
   examName: string;
   subject: string;
   classText: string;

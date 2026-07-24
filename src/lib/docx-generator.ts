@@ -21,6 +21,7 @@ export async function generateDOCX(paper: GeneratedPaper) {
   // Check if any paper content contains Hindi/Devanagari characters
   const hasDevanagari = 
     /[\u0900-\u097F]/.test(paper.schoolName || "") ||
+    /[\u0900-\u097F]/.test(paper.teacherName || "") ||
     /[\u0900-\u097F]/.test(paper.examName || "") ||
     /[\u0900-\u097F]/.test(paper.subject || "") ||
     paper.instructions.some(ins => /[\u0900-\u097F]/.test(ins)) ||
@@ -68,13 +69,14 @@ export async function generateDOCX(paper: GeneratedPaper) {
   }
 
   // 2. Exam Name
+  const formattedExamName = (paper.examName || "").replace(/_/g, " ").toUpperCase();
   children.push(
     new Paragraph({
       alignment: AlignmentType.CENTER,
       spacing: { after: 80 },
       children: [
         new TextRun({
-          text: paper.examName.toUpperCase(),
+          text: formattedExamName,
           bold: true,
           size: 24, // 12pt
           font: docFont,
@@ -83,14 +85,22 @@ export async function generateDOCX(paper: GeneratedPaper) {
     })
   );
 
-  // 3. Subject & Class Standard Info
+  // 3. Subject & Class Standard Info (plus Teacher Name if present)
+  let subjectInfoText = `Subject: ${paper.subject}   |   Class: ${paper.classText}`;
+  if (paper.teacherName && paper.teacherName.trim()) {
+    const formattedTeacher = paper.teacherName.toLowerCase().startsWith("teacher") || paper.teacherName.toLowerCase().startsWith("prepared by")
+      ? paper.teacherName
+      : `Teacher: ${paper.teacherName}`;
+    subjectInfoText += `   |   ${formattedTeacher}`;
+  }
+
   children.push(
     new Paragraph({
       alignment: AlignmentType.CENTER,
       spacing: { after: 150 },
       children: [
         new TextRun({
-          text: `Subject: ${paper.subject}   |   Class: ${paper.classText}`,
+          text: subjectInfoText,
           bold: true,
           size: 20, // 10pt
           font: docFont,

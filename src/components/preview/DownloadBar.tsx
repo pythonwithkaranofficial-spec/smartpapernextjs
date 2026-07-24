@@ -52,9 +52,16 @@ export function DownloadBar({ paper, onRegenerate }: DownloadBarProps) {
     try {
       // Build plain text of the paper
       let text = "";
-      if (paper.schoolName) text += `${paper.schoolName}\n`;
-      text += `${paper.examName}\n`;
-      text += `Subject: ${paper.subject} | Class: ${paper.classText}\n`;
+      if (paper.schoolName) text += `${paper.schoolName.toUpperCase()}\n`;
+      text += `${(paper.examName || "").replace(/_/g, " ").toUpperCase()}\n`;
+      let infoLine = `Subject: ${paper.subject} | Class: ${paper.classText}`;
+      if (paper.teacherName && paper.teacherName.trim()) {
+        const formattedTeacher = paper.teacherName.toLowerCase().startsWith("teacher") || paper.teacherName.toLowerCase().startsWith("prepared by")
+          ? paper.teacherName
+          : `Teacher: ${paper.teacherName}`;
+        infoLine += ` | ${formattedTeacher}`;
+      }
+      text += `${infoLine}\n`;
       text += `Time Allowed: ${paper.timeText} | Max Marks: ${paper.maxMarksText}\n`;
       text += `-----------------------------------------------\n\n`;
 

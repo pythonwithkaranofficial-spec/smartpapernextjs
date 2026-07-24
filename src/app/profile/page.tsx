@@ -13,6 +13,8 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { AuthService } from "@/lib/firebase/auth-service";
 import { compressImageToBase64 } from "@/lib/utils";
+import { clientRateLimiter } from "@/lib/rate-limiter";
+import { isSuperAdminEmail } from "@/lib/auth/helpers";
 import { UserPlan } from "@/types/auth";
 import {
   User as UserIcon,
@@ -188,20 +190,51 @@ export default function ProfilePage() {
   // Real-Time Quota Listener & Automatic Refetching
   useEffect(() => {
     async function loadUsage() {
+      const user = AuthService.getCurrentUser();
+      const userEmail = user?.email || null;
+      const isAdmin = isSuperAdminEmail(userEmail) || dbUser?.role === "ADMIN";
+      const clientUsed = clientRateLimiter.getUsedCount(userEmail);
+
+      if (isAdmin) {
+        setUsageInfo({
+          usedToday: 0,
+          dailyLimit: 999999,
+          remainingToday: 999999,
+          isAdmin: true,
+        });
+        return;
+      }
+
       try {
         const token = await AuthService.getFirebaseToken();
-        if (!token) return;
-
-        const res = await fetch("/api/user/usage", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const json = await safeParseJsonResponse(res);
-        if (json.success && json.data) {
-          setUsageInfo(json.data);
+        if (token) {
+          const res = await fetch("/api/user/usage", {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          const json = await safeParseJsonResponse(res);
+          if (json.success && json.data) {
+            const finalUsed = Math.max(json.data.usedToday || 0, clientUsed);
+            const limit = json.data.dailyLimit || 5;
+            setUsageInfo({
+              ...json.data,
+              usedToday: finalUsed,
+              remainingToday: json.data.isAdmin ? 999999 : Math.max(0, limit - finalUsed),
+            });
+            return;
+          }
         }
       } catch (err) {
         console.error("Failed to fetch user usage:", err);
       }
+
+      // Fallback using client rate limiter state
+      const limit = 5;
+      setUsageInfo({
+        usedToday: clientUsed,
+        dailyLimit: limit,
+        remainingToday: Math.max(0, limit - clientUsed),
+        isAdmin: false,
+      });
     }
 
     loadUsage();
@@ -223,7 +256,7 @@ export default function ProfilePage() {
         window.removeEventListener("storage", loadUsage);
       }
     };
-  }, [dbUser?.plan]);
+  }, [dbUser?.plan, dbUser?.role]);
 
   // Real-Time Subscription Expiration & Midnight Quota Countdown Ticker (Updates every 1s)
   useEffect(() => {

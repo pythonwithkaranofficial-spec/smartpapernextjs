@@ -132,45 +132,113 @@ export function StepQuestionDist({
         </Button>
       </div>
 
-      {/* Questions Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {questionTypes.map((q) => {
-          const count = currentDistribution[q.field] || 0;
-          const subtotal = count * q.marksEach;
+      {/* 1 Mark Questions Category Section */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between px-1">
+          <div className="flex items-center gap-2">
+            <h4 className="text-xs font-bold uppercase tracking-wider font-heading text-blue-400">
+              1 Mark Questions Category
+            </h4>
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 font-semibold">
+              1 Mark Each
+            </span>
+          </div>
+          <span className="text-[10px] text-muted-foreground">
+            Subtotal: {((currentDistribution.mcq || 0) + (currentDistribution.assertionReason || 0))} Marks
+          </span>
+        </div>
 
-          return (
-            <div
-              key={q.field}
-              className="p-4 rounded-2xl border border-border/40 bg-background/50 backdrop-blur-sm flex items-center justify-between gap-4"
-            >
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <h4 className="text-xs font-bold font-heading">{q.title}</h4>
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-semibold">
-                    {q.marksEach} Mark{q.marksEach > 1 ? "s" : ""} each
-                  </span>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {questionTypes.filter(q => q.marksEach === 1).map((q) => {
+            const count = currentDistribution[q.field] || 0;
+            const subtotal = count * q.marksEach;
+
+            return (
+              <div
+                key={q.field}
+                className="p-4 rounded-2xl border border-blue-500/20 bg-blue-500/5 backdrop-blur-sm flex items-center justify-between gap-4"
+              >
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-xs font-bold font-heading">{q.title}</h4>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300 font-semibold">
+                      1 Mark
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground">{q.desc}</p>
+                  {count > 0 && (
+                    <p className="text-[10px] text-blue-400 font-semibold pt-1">
+                      Subtotal: {subtotal} Marks
+                    </p>
+                  )}
                 </div>
-                <p className="text-[10px] text-muted-foreground">{q.desc}</p>
-                {count > 0 && (
-                  <p className="text-[10px] text-blue-400 font-semibold pt-1">
-                    Subtotal: {subtotal} Marks
-                  </p>
-                )}
-              </div>
 
-              <div className="w-20 shrink-0">
-                <Input
-                  type="number"
-                  min={0}
-                  max={50}
-                  value={count}
-                  onChange={(e) => handleCountChange(q.field, Number(e.target.value))}
-                  className="text-center font-bold text-sm bg-background/80 rounded-xl border-border/60"
-                />
+                <div className="w-20 shrink-0">
+                  <Input
+                    type="number"
+                    min={0}
+                    max={50}
+                    value={count}
+                    onChange={(e) => handleCountChange(q.field, Number(e.target.value))}
+                    className="text-center font-bold text-sm bg-background/80 rounded-xl border-border/60"
+                  />
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Subjective & Multi-Mark Questions Section */}
+      <div className="space-y-3 pt-2">
+        <div className="flex items-center justify-between px-1">
+          <h4 className="text-xs font-bold uppercase tracking-wider font-heading text-muted-foreground">
+            Short, Long & Case Study Questions
+          </h4>
+          <span className="text-[10px] text-muted-foreground">
+            Subtotal: {currentMarks - ((currentDistribution.mcq || 0) + (currentDistribution.assertionReason || 0))} Marks
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {questionTypes.filter(q => q.marksEach > 1).map((q) => {
+            const count = currentDistribution[q.field] || 0;
+            const subtotal = count * q.marksEach;
+
+            return (
+              <div
+                key={q.field}
+                className="p-4 rounded-2xl border border-border/40 bg-background/50 backdrop-blur-sm flex items-center justify-between gap-4"
+              >
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-xs font-bold font-heading">{q.title}</h4>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-semibold">
+                      {q.marksEach} Marks each
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground">{q.desc}</p>
+                  {count > 0 && (
+                    <p className="text-[10px] text-blue-400 font-semibold pt-1">
+                      Subtotal: {subtotal} Marks
+                    </p>
+                  )}
+                </div>
+
+                <div className="w-20 shrink-0">
+                  <Input
+                    type="number"
+                    min={0}
+                    max={50}
+                    value={count}
+                    onChange={(e) => handleCountChange(q.field, Number(e.target.value))}
+                    className="text-center font-bold text-sm bg-background/80 rounded-xl border-border/60"
+                  />
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

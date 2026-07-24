@@ -31,12 +31,13 @@ export default function PreviewPage() {
           const parsed = JSON.parse(savedPaper);
           if (parsed && parsed.sections) {
             // Apply scientific symbol formatting to questions, choices, and instructions
-            parsed.schoolName = parsed.schoolName ? formatScientificText(parsed.schoolName) : undefined;
-            parsed.examName = formatScientificText(parsed.examName);
-            parsed.subject = formatScientificText(parsed.subject);
-            parsed.classText = formatScientificText(parsed.classText);
-            parsed.timeText = formatScientificText(parsed.timeText);
-            parsed.maxMarksText = formatScientificText(parsed.maxMarksText);
+            parsed.schoolName = parsed.schoolName ? parsed.schoolName.toUpperCase() : undefined;
+            parsed.examName = parsed.examName ? parsed.examName.replace(/_/g, " ").toUpperCase() : "EXAMINATION";
+            parsed.teacherName = parsed.teacherName ? parsed.teacherName : undefined;
+            parsed.subject = parsed.subject || "";
+            parsed.classText = parsed.classText || "";
+            parsed.timeText = parsed.timeText || "";
+            parsed.maxMarksText = parsed.maxMarksText || "";
             
             parsed.instructions = (parsed.instructions || []).map((ins: string) => formatScientificText(ins));
             

@@ -159,33 +159,122 @@ export function StepConfiguration({
 
       {/* 3. Paper Duration and Total Marks */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+        {/* Total Paper Marks */}
         <div className="space-y-2">
-          <Label htmlFor="total-marks" className="text-xs font-bold font-heading">
+          <Label htmlFor="total-marks-select" className="text-xs font-bold font-heading">
             Total Paper Marks
           </Label>
-          <Input
-            id="total-marks"
-            type="number"
-            value={totalMarks}
-            onChange={(e) => handleTotalMarks(Number(e.target.value))}
-            min={10}
-            max={100}
-            className="bg-background/50 border-border/60 rounded-xl"
-          />
+          {(() => {
+            const marksPresets = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
+            const isPresetMarks = marksPresets.includes(totalMarks);
+            const selectValue = isPresetMarks ? String(totalMarks) : "custom";
+
+            return (
+              <div className="space-y-2">
+                <select
+                  id="total-marks-select"
+                  value={selectValue}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === "custom") {
+                      // default custom value if switching
+                      if (isPresetMarks) handleTotalMarks(50);
+                    } else {
+                      handleTotalMarks(Number(val));
+                    }
+                  }}
+                  className="w-full bg-background/50 border border-border/60 rounded-xl p-2.5 text-xs font-medium text-foreground focus:ring-2 focus:ring-blue-500/50 outline-none"
+                >
+                  {marksPresets.map((m) => (
+                    <option key={m} value={m} className="bg-card text-foreground">
+                      {m} Marks
+                    </option>
+                  ))}
+                  <option value="custom" className="bg-card text-foreground font-bold">
+                    Custom Marks...
+                  </option>
+                </select>
+
+                {!isPresetMarks && (
+                  <div className="pt-1">
+                    <Input
+                      id="total-marks-input"
+                      type="number"
+                      value={totalMarks || ""}
+                      onChange={(e) => handleTotalMarks(Number(e.target.value))}
+                      min={1}
+                      max={500}
+                      placeholder="Enter custom marks..."
+                      className="bg-background/50 border-border/60 rounded-xl text-xs"
+                      autoFocus
+                    />
+                  </div>
+                )}
+              </div>
+            );
+          })()}
         </div>
 
+        {/* Allowed Exam Duration */}
         <div className="space-y-2">
-          <Label htmlFor="duration" className="text-xs font-bold font-heading">
+          <Label htmlFor="duration-select" className="text-xs font-bold font-heading">
             Allowed Exam Duration
           </Label>
-          <Input
-            id="duration"
-            type="text"
-            value={duration}
-            onChange={(e) => handleDuration(e.target.value)}
-            placeholder="e.g. 1.5 Hours, 3 Hours"
-            className="bg-background/50 border-border/60 rounded-xl"
-          />
+          {(() => {
+            const durationPresets = [
+              "30 Minutes",
+              "45 Minutes",
+              "1 Hour",
+              "1.5 Hours",
+              "2 Hours",
+              "2.5 Hours",
+              "3 Hours",
+              "3.5 Hours"
+            ];
+            const isPresetDuration = durationPresets.includes(duration);
+            const selectValue = isPresetDuration ? duration : "custom";
+
+            return (
+              <div className="space-y-2">
+                <select
+                  id="duration-select"
+                  value={selectValue}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === "custom") {
+                      if (isPresetDuration) handleDuration("2 Hours");
+                    } else {
+                      handleDuration(val);
+                    }
+                  }}
+                  className="w-full bg-background/50 border border-border/60 rounded-xl p-2.5 text-xs font-medium text-foreground focus:ring-2 focus:ring-blue-500/50 outline-none"
+                >
+                  {durationPresets.map((d) => (
+                    <option key={d} value={d} className="bg-card text-foreground">
+                      {d}
+                    </option>
+                  ))}
+                  <option value="custom" className="bg-card text-foreground font-bold">
+                    Custom Duration...
+                  </option>
+                </select>
+
+                {!isPresetDuration && (
+                  <div className="pt-1">
+                    <Input
+                      id="duration-input"
+                      type="text"
+                      value={duration || ""}
+                      onChange={(e) => handleDuration(e.target.value)}
+                      placeholder="e.g. 1 Hour 15 Mins, 4 Hours..."
+                      className="bg-background/50 border-border/60 rounded-xl text-xs"
+                      autoFocus
+                    />
+                  </div>
+                )}
+              </div>
+            );
+          })()}
         </div>
       </div>
     </div>

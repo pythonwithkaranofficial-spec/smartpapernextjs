@@ -11,27 +11,92 @@ interface StepCustomClassProps {
 }
 
 export function StepCustomClass({ value, onChange }: StepCustomClassProps) {
+  const presets = [
+    "Class 1", "Class 2", "Class 3", "Class 4",
+    "Class 5", "Class 6", "Class 7", "Class 8",
+    "Class 9", "Class 10", "Class 11", "Class 12"
+  ];
+
+  // Determine current dropdown state
+  const isPreset = presets.includes(value);
+  const [selectedOption, setSelectedOption] = React.useState<string>(
+    isPreset ? value : (value ? "custom" : "Class 10")
+  );
+  const [customText, setCustomText] = React.useState<string>(
+    isPreset ? "" : value
+  );
+
+  // Sync state if value changes externally
+  React.useEffect(() => {
+    if (presets.includes(value)) {
+      setSelectedOption(value);
+    } else if (value) {
+      setSelectedOption("custom");
+      setCustomText(value);
+    }
+  }, [value]);
+
+  const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const val = e.target.value;
+    setSelectedOption(val);
+    if (val === "custom") {
+      onChange(customText || "Custom Class");
+    } else {
+      onChange(val);
+    }
+  };
+
+  const handleCustomTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setCustomText(val);
+    onChange(val);
+  };
+
   return (
     <div className="space-y-6">
       <div className="text-center max-w-lg mx-auto">
-        <h3 className="text-xl sm:text-2xl font-bold font-heading mb-2">Enter Target Class</h3>
+        <h3 className="text-xl sm:text-2xl font-bold font-heading mb-2">Select Target Class</h3>
         <p className="text-muted-foreground text-sm">
-          Type the class standard or grade you are compiling the paper for. Gemini AI will intelligently parse it (e.g. &quot;IX&quot;, &quot;XII&quot;, &quot;Grade 10&quot;, &quot;12&quot;).
+          Choose a class from the list below or select &quot;Custom / Other&quot; to specify your own target grade.
         </p>
       </div>
 
       <div className="max-w-md mx-auto pt-4">
-        <GlassCard className="p-6 border border-border/40">
-          <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest block mb-2 font-heading">
-            Class / Grade Standard
-          </label>
-          <Input
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            placeholder="e.g. Class 12, Grade 10, IX, First..."
-            className="w-full text-lg py-6"
-            autoFocus
-          />
+        <GlassCard className="p-6 border border-border/40 space-y-4">
+          <div>
+            <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest block mb-2 font-heading">
+              Select Class Standard
+            </label>
+            <select
+              value={selectedOption}
+              onChange={handleSelectChange}
+              className="w-full bg-background/80 text-foreground border border-border/60 rounded-xl p-3 text-base font-medium focus:ring-2 focus:ring-blue-500/50 outline-none transition-all"
+            >
+              {presets.map((cls) => (
+                <option key={cls} value={cls} className="bg-card text-foreground">
+                  {cls}
+                </option>
+              ))}
+              <option value="custom" className="bg-card text-foreground font-bold">
+                Custom / Other Class...
+              </option>
+            </select>
+          </div>
+
+          {selectedOption === "custom" && (
+            <div className="pt-2 animate-in fade-in-50 duration-200">
+              <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest block mb-2 font-heading">
+                Enter Custom Class Name
+              </label>
+              <Input
+                value={customText}
+                onChange={handleCustomTextChange}
+                placeholder="e.g. Grade 10 - Advanced, Nursery, B.Sc Physics..."
+                className="w-full text-base py-5"
+                autoFocus
+              />
+            </div>
+          )}
         </GlassCard>
       </div>
     </div>

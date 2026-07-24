@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { User, Target, Lightbulb, Compass, Sparkles } from "lucide-react";
+import { User, Target, Lightbulb, Compass, Sparkles, ExternalLink } from "lucide-react";
 import { GlassCard } from "../shared/GlassCard";
 import { ScrollReveal } from "../shared/ScrollReveal";
 
@@ -37,7 +37,17 @@ export function About() {
                   </div>
                   
                   {/* Title & Bio */}
-                  <h3 className="text-2xl font-heading font-extrabold mb-1">Karan Saini</h3>
+                  <h3 className="text-2xl font-heading font-extrabold mb-1">
+                    <a
+                      href="https://seminarkaran.vercel.app/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors group/name cursor-pointer"
+                    >
+                      <span>Karan Saini</span>
+                      <ExternalLink className="w-4 h-4 opacity-60 group-hover/name:opacity-100 transition-opacity" />
+                    </a>
+                  </h3>
                   <p className="text-indigo-600 dark:text-indigo-400 text-sm font-semibold tracking-wide uppercase mb-6">Computer Teacher & Developer</p>
                   
                   <blockquote className="text-muted-foreground italic mb-6 leading-relaxed border-l-2 border-indigo-500 pl-4">

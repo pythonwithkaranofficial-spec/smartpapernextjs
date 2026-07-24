@@ -3,6 +3,7 @@ import { GoogleGenAI } from "@google/genai";
 import { buildGeminiPrompt } from "@/lib/prompt-builder";
 import { paperConfigSchema } from "@/lib/validations";
 import { formatScientificText } from "@/lib/utils";
+import { EXAM_TYPES } from "@/lib/exam-types";
 
 // Initialize Gemini Client
 // We use the official API key from env variable
@@ -159,9 +160,15 @@ export async function POST(request: NextRequest) {
           ? (config.customClass.toLowerCase().startsWith("class") ? config.customClass : `Class ${config.customClass}`)
           : `Class ${config.classId}`;
 
+        const examTypeObj = EXAM_TYPES.find(e => e.id === config.examType);
+        const displayExamName = examTypeObj 
+          ? examTypeObj.name.toUpperCase() 
+          : (config.examType ? config.examType.replace(/_/g, " ").toUpperCase() : "EXAMINATION");
+
         finalPaper = {
-          schoolName: config.options.includeSchoolName ? config.options.schoolName : undefined,
-          examName: config.examType,
+          schoolName: config.options.includeSchoolName && config.options.schoolName ? config.options.schoolName.toUpperCase() : undefined,
+          teacherName: config.options.includeTeacherName && config.options.teacherName ? config.options.teacherName : undefined,
+          examName: displayExamName,
           subject: displaySubject,
           classText: displayClassText,
           timeText: config.duration,

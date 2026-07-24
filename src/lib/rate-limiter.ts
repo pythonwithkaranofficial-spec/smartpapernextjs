@@ -60,6 +60,14 @@ export const clientRateLimiter = {
     return Math.max(0, LIMIT - count);
   },
 
+  getUsedCount(userEmail?: string | null): number {
+    if (typeof window === "undefined") return 0;
+    const key = getTodayUserKey(userEmail);
+    const countStr = localStorage.getItem(key);
+    if (!countStr) return 0;
+    return parseInt(countStr, 10) || 0;
+  },
+
   getResetTime(): string {
     const now = new Date();
     const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0);
