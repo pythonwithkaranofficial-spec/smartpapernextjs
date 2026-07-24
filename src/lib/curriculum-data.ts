@@ -4,6 +4,315 @@ export interface SubjectCurriculum {
 }
 
 export const CURRICULUM_DATA: Record<string, Record<string, SubjectCurriculum>> = {
+  "6": {
+    maths: {
+      chapters: [
+        "Knowing Our Numbers",
+        "Whole Numbers",
+        "Playing with Numbers",
+        "Basic Geometrical Ideas",
+        "Understanding Elementary Shapes",
+        "Integers",
+        "Fractions",
+        "Decimals",
+        "Data Handling",
+        "Mensuration",
+        "Algebra",
+        "Ratio and Proportion",
+        "Symmetry"
+      ],
+      notes: "CBSE Class 6 Mathematics curriculum."
+    },
+    science: {
+      chapters: [
+        "Components of Food",
+        "Sorting Materials into Groups",
+        "Separation of Substances",
+        "Getting to Know Plants",
+        "Body Movements",
+        "The Living Organisms — Characteristics and Habitats",
+        "Motion and Measurement of Distances",
+        "Light, Shadows and Reflections",
+        "Electricity and Circuits",
+        "Fun with Magnets"
+      ],
+      notes: "CBSE Class 6 Science curriculum."
+    },
+    social: {
+      chapters: [
+        "History: What, Where, How and When?",
+        "History: From Gathering to Growing Food",
+        "History: In the Earliest Cities",
+        "History: What Books and Burials Tell Us",
+        "History: Kingdoms, Kings and an Early Republic",
+        "History: New Questions and Ideas",
+        "History: Ashoka, The Emperor Who Gave Up War",
+        "Geography: The Earth in the Solar System",
+        "Geography: Globe - Latitudes and Longitudes",
+        "Geography: Motions of the Earth",
+        "Geography: Maps",
+        "Geography: Major Domains of the Earth",
+        "Geography: Major Landforms of the Earth",
+        "Civics: Understanding Diversity",
+        "Civics: Diversity and Discrimination",
+        "Civics: What is Government?",
+        "Civics: Key Elements of a Democratic Government",
+        "Civics: Panchayati Raj",
+        "Civics: Rural & Urban Administration"
+      ],
+      notes: "CBSE Class 6 Social Science (History, Geography, Civics)."
+    },
+    english: {
+      chapters: [
+        "Honeysuckle: A House, A Home / Who I Am",
+        "Honeysuckle: How the Dog Found Himself a New Master",
+        "Honeysuckle: Taro's Reward",
+        "Honeysuckle: An Indian-American Woman in Space: Kalpana Chawla",
+        "Honeysuckle: A Different Kind of School",
+        "Honeysuckle: Fair Play",
+        "A Pact with the Sun: The Friendly Mongoose, Tansen, The Shepherd's Treasure",
+        "Grammar & Writing: Nouns, Pronouns, Verbs, Paragraph & Notice Writing"
+      ],
+      notes: "CBSE Class 6 English curriculum."
+    },
+    hindi: {
+      chapters: [
+        "वसंत: वह चिड़िया जो",
+        "वसंत: बचपन",
+        "वसंत: नादान दोस्त",
+        "वसंत: चाँद से थोड़ी सी गप्पें",
+        "वसंत: अक्षरों का महत्व",
+        "वसंत: पार नज़र के",
+        "वसंत: साथी हाथ बढ़ाना",
+        "वसंत: ऐसे-ऐसे",
+        "वसंत: टिकट अलबम",
+        "वसंत: झाँसी की रानी",
+        "व्याकरण: संज्ञा, सर्वनाम, विशेषण, वर्ण विचार, पत्र एवं निबंध लेखन"
+      ],
+      notes: "सीबीएसई कक्षा 6 हिन्दी पाठ्यपुस्तक वसंत भाग-1।"
+    },
+    sanskrit: {
+      chapters: [
+        "रुचिरा: प्रथमः पाठः - शब्दपरिचयः I",
+        "रुचिरा: द्वितीयः पाठः - शब्दपरिचयः II",
+        "रुचिरा: तृतीयः पाठः - शब्दपरिचयः III",
+        "रुचिरा: चतुर्थः पाठः - विद्यालयः",
+        "रुचिरा: पञ्चमः पाठः - वृक्षाः",
+        "रुचिरा: षष्ठः पाठः - समुद्रतटः",
+        "रुचिरा: सप्तमः पाठः - बकस्य प्रतीकारः",
+        "रुचिरा: अष्टमः पाठः - सूक्तिस्तबकः",
+        "व्याकरणम्: शब्दरूपाणि, धातुरूपाणि, अव्ययानि"
+      ],
+      notes: "सीबीएसई कक्षा 6 संस्कृत पाठ्यपुस्तक रुचिरा भाग-1।"
+    }
+  },
+  "7": {
+    maths: {
+      chapters: [
+        "Integers",
+        "Fractions and Decimals",
+        "Data Handling",
+        "Simple Equations",
+        "Lines and Angles",
+        "The Triangle and its Properties",
+        "Comparing Quantities",
+        "Rational Numbers",
+        "Perimeter and Area",
+        "Algebraic Expressions",
+        "Exponents and Powers",
+        "Symmetry",
+        "Visualising Solid Shapes"
+      ],
+      notes: "CBSE Class 7 Mathematics curriculum."
+    },
+    science: {
+      chapters: [
+        "Nutrition in Plants",
+        "Nutrition in Animals",
+        "Heat",
+        "Acids, Bases and Salts",
+        "Physical and Chemical Changes",
+        "Respiration in Organisms",
+        "Transportation in Animals and Plants",
+        "Reproduction in Plants",
+        "Motion and Time",
+        "Electric Current and its Effects",
+        "Light",
+        "Forests: Our Lifeline",
+        "Wastewater Story"
+      ],
+      notes: "CBSE Class 7 Science curriculum."
+    },
+    social: {
+      chapters: [
+        "History: Tracing Changes Through a Thousand Years",
+        "History: New Kings and Kingdoms",
+        "History: The Delhi Sultans",
+        "History: The Mughal Empire",
+        "History: Rulers and Buildings",
+        "History: Towns, Traders and Craftspersons",
+        "Geography: Environment",
+        "Geography: Inside Our Earth",
+        "Geography: Our Changing Earth",
+        "Geography: Air",
+        "Geography: Water",
+        "Geography: Natural Vegetation and Wildlife",
+        "Civics: On Equality",
+        "Civics: Role of the Government in Health",
+        "Civics: How the State Government Works",
+        "Civics: Growing up as Boys and Girls",
+        "Civics: Women Change the World"
+      ],
+      notes: "CBSE Class 7 Social Science (History, Geography, Civics)."
+    },
+    english: {
+      chapters: [
+        "Honeycomb: Three Questions",
+        "Honeycomb: A Gift of Chappals",
+        "Honeycomb: Gopal and the Hilsa Fish",
+        "Honeycomb: The Ashes That Made Trees Bloom",
+        "Honeycomb: Quality",
+        "Honeycomb: Expert Detectives",
+        "Honeycomb: The Invention of Vita-Wonk",
+        "An Alien Hand: The Tiny Teacher, Bringing up Kari, The Desert",
+        "Grammar & Writing: Tenses, Active/Passive Voice, Story Writing, Informal Letters"
+      ],
+      notes: "CBSE Class 7 English curriculum."
+    },
+    hindi: {
+      chapters: [
+        "वसंत: हम पंछी उन्मुक्त गगन के",
+        "वसंत: हिमालय की बेटियाँ",
+        "वसंत: कठपुतली",
+        "वसंत: मिठाईवाला",
+        "वसंत: पापा खो गए",
+        "वसंत: शाम-एक किसान",
+        "वसंत: अपूर्व अनुभव",
+        "वसंत: रहीम के दोहे",
+        "वसंत: एक तिनका",
+        "वसंत: खानपान की बदलती तस्वीर",
+        "बाल महाभारत कथा एवं हिंदी व्याकरण"
+      ],
+      notes: "सीबीएसई कक्षा 7 हिन्दी पाठ्यपुस्तक वसंत भाग-2।"
+    },
+    sanskrit: {
+      chapters: [
+        "रुचिरा: प्रथमः पाठः - सुभाषितानि",
+        "रुचिरा: द्वितीयः पाठः - दुर्बुद्धिः विनश्यति",
+        "रुचिरा: तृतीयः पाठः - स्वावलम्बनम्",
+        "रुचिरा: चतुर्थः पाठः - हास्यबालकविसम्मेलनम्",
+        "रुचिरा: पञ्चमः पाठः - पण्डिता रमाबाई",
+        "रुचिरा: षष्ठः पाठः - सदाचारः",
+        "रुचिरा: सप्तमः पाठः - सङ्कल्पः सिद्धिदायकः",
+        "रुचिरा: अष्टमः पाठः - त्रिवर्णः ध्वजः",
+        "व्याकरणम्: कारक-उपपदविभक्तयः, सन्धिः, शब्दरूपाणि"
+      ],
+      notes: "सीबीएसई कक्षा 7 संस्कृत पाठ्यपुस्तक रुचिरा भाग-2।"
+    }
+  },
+  "8": {
+    maths: {
+      chapters: [
+        "Rational Numbers",
+        "Linear Equations in One Variable",
+        "Understanding Quadrilaterals",
+        "Data Handling",
+        "Squares and Square Roots",
+        "Cubes and Cube Roots",
+        "Comparing Quantities",
+        "Algebraic Expressions and Identities",
+        "Mensuration",
+        "Exponents and Powers",
+        "Direct and Inverse Proportions",
+        "Factorisation",
+        "Introduction to Graphs"
+      ],
+      notes: "CBSE Class 8 Mathematics curriculum."
+    },
+    science: {
+      chapters: [
+        "Crop Production and Management",
+        "Microorganisms: Friend and Foe",
+        "Coal and Petroleum",
+        "Combustion and Flame",
+        "Conservation of Plants and Animals",
+        "Reproduction in Animals",
+        "Reaching the Age of Adolescence",
+        "Force and Pressure",
+        "Friction",
+        "Sound",
+        "Chemical Effects of Electric Current",
+        "Some Natural Phenomena",
+        "Light"
+      ],
+      notes: "CBSE Class 8 Science curriculum."
+    },
+    social: {
+      chapters: [
+        "History: How, When and Where",
+        "History: From Trade to Territory",
+        "History: Ruling the Countryside",
+        "History: Tribals, Dikus and the Vision of a Golden Age",
+        "History: When People Rebel 1857 and After",
+        "Geography: Resources",
+        "Geography: Land, Soil, Water, Natural Vegetation and Wildlife",
+        "Geography: Mineral and Power Resources",
+        "Geography: Agriculture",
+        "Geography: Industries",
+        "Geography: Human Resources",
+        "Civics: The Indian Constitution",
+        "Civics: Understanding Secularism",
+        "Civics: Why Do We Need a Parliament?",
+        "Civics: Understanding Laws",
+        "Civics: Judiciary",
+        "Civics: Understanding Marginalisation"
+      ],
+      notes: "CBSE Class 8 Social Science (History, Geography, Civics)."
+    },
+    english: {
+      chapters: [
+        "Honeydew: The Best Christmas Present in the World",
+        "Honeydew: The Tsunami",
+        "Honeydew: Glimpses of the Past",
+        "Honeydew: Bepin Choudhury's Lapse of Memory",
+        "Honeydew: The Summit Within",
+        "Honeydew: This is Jody's Fawn",
+        "It So Happened: How the Camel Got His Hump, Children at Work, The Selfish Giant",
+        "Grammar & Writing: Reported Speech, Modals, Formal Letter Writing, Essay Writing"
+      ],
+      notes: "CBSE Class 8 English curriculum."
+    },
+    hindi: {
+      chapters: [
+        "वसंत: ध्वनि",
+        "वसंत: बस की यात्रा",
+        "वसंत: दीवानों की हस्ती",
+        "वसंत: भगवान के डाकिए",
+        "वसंत: क्या निराश हुआ जाए",
+        "वसंत: यह सबसे कठिन समय नहीं",
+        "वसंत: कबीर की साखियाँ",
+        "वसंत: सुदामा चरित",
+        "वसंत: जहाँ पहिया है",
+        "वसंत: अकबरी लोटा",
+        "भारत की खोज एवं हिंदी व्याकरण"
+      ],
+      notes: "सीबीएसई कक्षा 8 हिन्दी पाठ्यपुस्तक वसंत भाग-3।"
+    },
+    sanskrit: {
+      chapters: [
+        "रुचिरा: प्रथमः पाठः - सुभाषितानि",
+        "रुचिरा: द्वितीयः पाठः - बिलस्य वाणी न कदापि मे श्रुता",
+        "रुचिरा: तृतीयः पाठः - डिजीभारतम्",
+        "रुचिरा: चतुर्थः पाठः - सदैव पुरतो निधेहि चरणम्",
+        "रुचिरा: पञ्चमः पाठः - कण्टकेनैव कण्टकम्",
+        "रुचिरा: षष्ठः पाठः - गृहं शून्यं सुतां बिना",
+        "रुचिरा: सप्तमः पाठः - भारतजनताऽहम्",
+        "रुचिरा: अष्टमः पाठः - संसारसागरस्य नायकाः",
+        "व्याकरणम्: समासः, प्रत्ययाः, अपठित-गद्यांशः, चित्रवर्णनम्"
+      ],
+      notes: "सीबीएसई कक्षा 8 संस्कृत पाठ्यपुस्तक रुचिरा भाग-3।"
+    }
+  },
   "9": {
     maths: {
       chapters: [
@@ -72,6 +381,16 @@ export const CURRICULUM_DATA: Record<string, Record<string, SubjectCurriculum>> 
       ],
       notes: "CBSE Artificial Intelligence Subject Code 417 for Class 9."
     },
+    computer_applications: {
+      chapters: [
+        "Unit 1: Basics of Information Technology (CPU, RAM/ROM, Storage, I/O Devices, Software Types, Networks, Multimedia)",
+        "Unit 2: Cyber-safety (Browsing Safety, Password Hygiene, Privacy, Cyber Stalking, Reporting Cybercrimes, Malware)",
+        "Unit 3: Office Tools - Word Processor (Formatting, Images, Tables, Track Changes, Auto-Format)",
+        "Unit 3: Office Tools - Presentation Tool (Slide Layouts, Views, Background, Animations, Sound Effects)",
+        "Unit 3: Office Tools - Spreadsheets (Autofill, Formatting, Operators, Statistical Functions SUM/AVG/MAX/MIN/IF, Charts)"
+      ],
+      notes: "CBSE Computer Applications Subject Code 165 for Class 9. Theory: 50 Marks, Practical: 50 Marks."
+    },
     english: {
       chapters: [
         "Beehive (Prose): The Fun They Had, The Sound of Music, The Little Girl, A Truly Beautiful Mind, The Snake and the Mirror, My Childhood, Reach for the Top, Kathmandu, If I Were You",
@@ -129,6 +448,27 @@ export const CURRICULUM_DATA: Record<string, Record<string, SubjectCurriculum>> 
         "अपठित बोध: अपठित गद्यांश एवं काव्यांश"
       ],
       notes: "सीबीएसई कक्षा 9 हिन्दी पाठ्यक्रम। गद्य, काव्य, व्याकरण और रचनात्मक लेखन पर केंद्रित।"
+    },
+    sanskrit: {
+      chapters: [
+        "प्रथमः पाठः - भारतीवसन्तगीतिः",
+        "द्वितीयः पाठः - स्वर्णकाकः",
+        "तृतीयः पाठः - गोदोहनम्",
+        "चतुर्थः पाठः - कल्पतरुः",
+        "पञ्चमः पाठः - सूक्तिमौक्तिकम्",
+        "षष्ठः पाठः - भ्रान्तो बालः",
+        "सप्तमः पाठः - प्रत्यभिज्ञानम्",
+        "अष्टमः पाठः - लौहतुला",
+        "नवमः पाठः - सिकतासेतुः",
+        "दशमः पाठः - जटायोः शौर्यम्",
+        "एकादशः पाठः - पर्यावरणम्",
+        "द्वादशः पाठः - वाङ्मनःप्राणस्वरूपम्",
+        "खण्डः 'क' - अपठित-अवबोधनम्",
+        "खण्डः 'ख' - रचनात्मक-कार्यम् (पत्रम्, चित्रवर्णनम्, अनुवादः)",
+        "खण्डः 'ग' - अनुप्रयुक्त-व्याकरणम् (सन्धिः, शब्दरूपाणि, धातुरूपाणि, कारकम्)",
+        "खण्डः 'घ' - पठित-अवबोधनम् (शेमुषी भाग-1)"
+      ],
+      notes: "सीबीएसई कक्षा 9 संस्कृत पाठ्यक्रम (विषय कोड 122)। शेमुषी भाग-1 एवं व्याकरणम्।"
     }
   },
   "10": {
@@ -150,7 +490,27 @@ export const CURRICULUM_DATA: Record<string, Record<string, SubjectCurriculum>> 
         "Statistics",
         "Probability"
       ],
-      notes: "CBSE Class 10 Mathematics Code 041 curriculum."
+      notes: "CBSE Class 10 Mathematics Standard Code 041 curriculum."
+    },
+    mathsbasic: {
+      chapters: [
+        "Real Numbers",
+        "Polynomials",
+        "Pair of Linear Equations in Two Variables",
+        "Quadratic Equations",
+        "Arithmetic Progressions",
+        "Coordinate Geometry",
+        "Triangles",
+        "Circles",
+        "Introduction to Trigonometry",
+        "Trigonometric Identities",
+        "Heights and Distances",
+        "Areas Related to Circles",
+        "Surface Areas and Volumes",
+        "Statistics",
+        "Probability"
+      ],
+      notes: "CBSE Class 10 Mathematics Basic Code 241 curriculum. Focuses 75% on Remembering/Understanding."
     },
     science: {
       chapters: [
@@ -175,13 +535,17 @@ export const CURRICULUM_DATA: Record<string, Record<string, SubjectCurriculum>> 
     },
     it: {
       chapters: [
-        "Part A: Employability Skills (Communication, Self-Management, ICT, Entrepreneurial, Green Skills)",
-        "Part B: Digital Documentation (Advanced)",
-        "Electronic Spreadsheet (Advanced)",
-        "Database Management System",
-        "Web Applications and Security"
+        "Part A: Unit 1: Communication Skills-II",
+        "Part A: Unit 2: Self-Management Skills-II",
+        "Part A: Unit 3: Information and Communication Technology (ICT) Skills-II",
+        "Part A: Unit 4: Entrepreneurial Skills-II",
+        "Part A: Unit 5: Green Skills-II",
+        "Part B: Unit 1: Digital Documentation (Advanced) using LibreOffice Writer",
+        "Part B: Unit 2: Electronic Spreadsheet (Advanced) using LibreOffice Calc",
+        "Part B: Unit 3: Database Management System using LibreOffice Base",
+        "Part B: Unit 4: Maintain Healthy, Safe and Secure Working Environment"
       ],
-      notes: "CBSE Subject Code 402."
+      notes: "CBSE Information Technology Subject Code 402 for Class 10 (Domestic Data Entry Operator). Theory: 50 Marks, Practical: 50 Marks."
     },
     ai: {
       chapters: [
@@ -257,6 +621,45 @@ export const CURRICULUM_DATA: Record<string, Record<string, SubjectCurriculum>> 
         "अपठित बोध: अपठित गद्यांश एवं काव्यांश"
       ],
       notes: "सीबीएसई कक्षा 10 हिन्दी पाठ्यक्रम। बोर्ड परीक्षा पैटर्न और व्याकरण मानकों के अनुरूप।"
+    },
+    sanskrit: {
+      chapters: [
+        "प्रथमः पाठः - शुचिपर्यावरणम्",
+        "द्वितीयः पाठः - बुद्धिर्बलवती सदा",
+        "तृतीयः पाठः - शिशुलालनाम्",
+        "चतुर्थः पाठः - जननी तुल्यवत्सला",
+        "पञ्चमः पाठः - सुभाषितानि",
+        "षष्ठः पाठः - सौहार्दं प्रकृतेः शोभा",
+        "सप्तमः पाठः - विचित्रः साक्षी",
+        "अष्टमः पाठः - सूक्तयः",
+        "दशमः पाठः - अन्योक्तयः",
+        "खण्डः 'क' - अपठित-अवबोधनम् (गद्यांश 80-100 शब्द)",
+        "खण्डः 'ख' - रचनात्मक-कार्यम् (पत्र-लेखनम्, चित्रवर्णनम्/अनुच्छेदः, अनुवादः)",
+        "खण्डः 'ग' - अनुप्रयुक्त-व्याकरणम् (सन्धिः, समासः, प्रत्ययाः, वाच्यम्, समयः, अव्ययानि, संशोधनम्)",
+        "खण्डः 'घ' - पठित-अवबोधनम् (शेमुषी भाग-2 गद्यांश/पद्यांश/नाट्यांश, प्रश्ननिर्माणम्, अन्वयः/भावार्थः, कथाक्रमः, अर्थलेखनम्)"
+      ],
+      notes: "सीबीएसई कक्षा 10 संस्कृत पाठ्यक्रम (विषय-कोड 122)। शेमुषी भाग-2, अभ्यासवान् भव भाग-2, व्याकरणवीथि।"
+    },
+    englishcommunicative: {
+      chapters: [
+        "Literature Reader - Fiction: Two Gentlemen of Verona, Mrs. Packletide's Tiger, The Letter, A Shady Plot, Patol Babu, Film Star, Virtually True",
+        "Literature Reader - Poetry: The Frog and the Nightingale, Mirror, Not Marble nor the Gilded Monuments, Ozymandias, The Rime of the Ancient Mariner, Snake",
+        "Literature Reader - Drama: The Dear Departed, Julius Caesar",
+        "Main Course Book: Health and Medicine, Education, Science, Environment, Travel and Tourism, National Integration",
+        "Section A: Reading Skills (2 Unseen Passages - Factual & Discursive 750 words)",
+        "Section B: Writing Skills (Notice, Dialogue, Email, Application 3M, Description 4M, Formal Letter 7M, Article 8M)",
+        "Section C: Grammar (Gap filling 3M, Editing/Omission 4M, Sentence Transformation 3M)"
+      ],
+      notes: "CBSE English Communicative Subject Code 101 for Class 10. Theory: 80 Marks."
+    },
+    computer_applications: {
+      chapters: [
+        "Unit 1: Networking (Internet, WWW, Web Server/Client, HTML/CSS Basics, Cyber Protocols, E-commerce)",
+        "Unit 2: HTML (Head/Body tags, Font, Color, Images, Tables, Lists, Hyperlinks, Audio/Video embedding)",
+        "Unit 3: Cyber-ethics (Net Etiquettes, Software Licenses, Open Source, Digital Property, Privacy, Malware, Spam)",
+        "Unit 4: Lab Exercises (HTML Webpage Design with CSS & Multimedia)"
+      ],
+      notes: "CBSE Computer Applications Subject Code 165 for Class 10. Theory: 50 Marks, Practical: 50 Marks."
     }
   },
   "11": {
@@ -391,6 +794,57 @@ export const CURRICULUM_DATA: Record<string, Record<string, SubjectCurriculum>> 
         "Emerging Trends: Cloud Computing, IoT, Smart Cities & Blockchain"
       ],
       notes: "CBSE Subject Code 065. Comprehensive coverage of Computer Systems, Python, NumPy, SQL, and Emerging Trends."
+    },
+    englishcore: {
+      chapters: [
+        "Hornbill - Prose: The Portrait of a Lady",
+        "Hornbill - Prose: We're Not Afraid to Die... if We Can All Be Together",
+        "Hornbill - Prose: Discovering Tut: the Saga Continues",
+        "Hornbill - Prose: The Adventure",
+        "Hornbill - Prose: Silk Road",
+        "Hornbill - Poetry: A Photograph",
+        "Hornbill - Poetry: The Laburnum Top",
+        "Hornbill - Poetry: The Voice of the Rain",
+        "Hornbill - Poetry: Childhood",
+        "Hornbill - Poetry: Father to Son",
+        "Snapshots - Supplementary: The Summer of the Beautiful White Horse",
+        "Snapshots - Supplementary: The Address",
+        "Snapshots - Supplementary: Mother's Day",
+        "Snapshots - Supplementary: Birth",
+        "Snapshots - Supplementary: The Tale of Melon City",
+        "Grammar & Writing: Classified Advertisements & Posters",
+        "Grammar & Writing: Speech & Debate Writing",
+        "Reading Skills: Unseen Passages, Note-Making & Summarization"
+      ],
+      notes: "CBSE English Core Subject Code 301 for Class 11. Prescribed books: Hornbill & Snapshots."
+    },
+    englishelective: {
+      chapters: [
+        "Woven Words - Short Stories: The Lament",
+        "Woven Words - Short Stories: A Pair of Mustachios",
+        "Woven Words - Short Stories: The Rocking-horse Winner",
+        "Woven Words - Short Stories: The Adventure of the Three Garridebs",
+        "Woven Words - Short Stories: Pappachi's Moth",
+        "Woven Words - Short Stories: The Third and Final Continent",
+        "Woven Words - Poetry: The Peacock",
+        "Woven Words - Poetry: Let me Not to the Marriage of True Minds",
+        "Woven Words - Poetry: Coming",
+        "Woven Words - Poetry: Telephone Conversation",
+        "Woven Words - Poetry: The World is too Much with Us",
+        "Woven Words - Poetry: Mother Tongue",
+        "Woven Words - Poetry: Hawk Roosting",
+        "Woven Words - Poetry: Ode to a Nightingale",
+        "Woven Words - Essays: My Watch",
+        "Woven Words - Essays: My Three Passions",
+        "Woven Words - Essays: Patterns of Creativity",
+        "Woven Words - Essays: Tribal Verse",
+        "Woven Words - Essays: What is a Good Book?",
+        "Woven Words - Essays: The Story",
+        "Woven Words - Essays: Bridges",
+        "Drama: Arms and the Man (George Bernard Shaw)",
+        "Fiction: The Old Man and the Sea (Ernest Hemingway)"
+      ],
+      notes: "CBSE English Elective Subject Code 001 for Class 11. Prescribed books: Woven Words, Arms and the Man, The Old Man and the Sea."
     },
     hindi_core: {
       chapters: [
@@ -578,6 +1032,68 @@ export const CURRICULUM_DATA: Record<string, Record<string, SubjectCurriculum>> 
         "International Business"
       ],
       notes: "CBSE Business Studies Subject Code 054 for Class 11."
+    },
+    applied_maths: {
+      chapters: [
+        "Numbers, Quantification and Numerical Applications",
+        "Algebra (Complex Numbers, Sequences and Series, Permutations & Combinations)",
+        "Mathematical Reasoning & Logical Reasoning",
+        "Calculus (Limits, Continuity, Differentiation)",
+        "Probability",
+        "Descriptive Statistics",
+        "Basics of Financial Mathematics (Interest, Annuity, Taxation)",
+        "Coordinate Geometry"
+      ],
+      notes: "CBSE Applied Mathematics Subject Code 241 for Class 11."
+    },
+    psychology: {
+      chapters: [
+        "What is Psychology?",
+        "Methods of Enquiry in Psychology",
+        "Human Development",
+        "Sensory, Attentional and Perceptual Processes",
+        "Learning",
+        "Human Memory",
+        "Thinking",
+        "Motivation and Emotion"
+      ],
+      notes: "CBSE Psychology Subject Code 037 for Class 11."
+    },
+    sociology: {
+      chapters: [
+        "Introducing Sociology: Sociology and Society",
+        "Introducing Sociology: Terms, Concepts and their Use in Sociology",
+        "Introducing Sociology: Understanding Social Institutions",
+        "Introducing Sociology: Culture and Socialisation",
+        "Understanding Society: Social Structure, Stratification and Social Processes",
+        "Understanding Society: Social Change and Social Order in Rural and Urban Society",
+        "Understanding Society: Western Sociologists",
+        "Understanding Society: Indian Sociologists"
+      ],
+      notes: "CBSE Sociology Subject Code 039 for Class 11."
+    },
+    entrepreneurship: {
+      chapters: [
+        "Entrepreneurship: What, Why and How",
+        "An Entrepreneur",
+        "Entrepreneurial Journey",
+        "Entrepreneurship as Innovation and Problem Solving",
+        "Concept of Market",
+        "Business Finance and Arithmetic",
+        "Resource Mobilization"
+      ],
+      notes: "CBSE Entrepreneurship Subject Code 066 for Class 11."
+    },
+    sanskrit_core: {
+      chapters: [
+        "भास्वती भाग-1: प्रथमः पाठः - कुशलप्रशासनम्",
+        "भास्वती भाग-1: द्वितीयः पाठः - सौवर्णो नकुलः",
+        "भास्वती भाग-1: तृतीयः पाठः - सूक्तिसुधा",
+        "भास्वती भाग-1: चतुर्थः पाठः - कल्पतरुः",
+        "भास्वती भाग-1: पञ्चमः पाठः - सुवर्णकाकः",
+        "व्याकरणम् एवं संस्कृत साहित्य परिचयः"
+      ],
+      notes: "सीबीएसई संस्कृत कोर (विषय कोड 322) कक्षा 11।"
     }
   },
   "12": {
@@ -691,6 +1207,59 @@ export const CURRICULUM_DATA: Record<string, Record<string, SubjectCurriculum>> 
         "E-waste and Health Concerns Related to Technology"
       ],
       notes: "CBSE Subject Code 065. Data analysis with Pandas, SQL queries and joins, Computer Networks, and Societal Impacts."
+    },
+    englishcore: {
+      chapters: [
+        "Flamingo - Prose: The Last Lesson",
+        "Flamingo - Prose: Lost Spring",
+        "Flamingo - Prose: Deep Water",
+        "Flamingo - Prose: The Rattrap",
+        "Flamingo - Prose: Indigo",
+        "Flamingo - Prose: Poets and Pancakes",
+        "Flamingo - Prose: The Interview",
+        "Flamingo - Prose: Going Places",
+        "Flamingo - Poetry: My Mother at Sixty-Six",
+        "Flamingo - Poetry: Keeping Quiet",
+        "Flamingo - Poetry: A Thing of Beauty",
+        "Flamingo - Poetry: A Roadside Stand",
+        "Flamingo - Poetry: Aunt Jennifer's Tigers",
+        "Vistas - Supplementary: The Third Level",
+        "Vistas - Supplementary: The Tiger King",
+        "Vistas - Supplementary: Journey to the End of the Earth",
+        "Vistas - Supplementary: The Enemy",
+        "Vistas - Supplementary: On the Face of It",
+        "Vistas - Supplementary: Memories of Childhood",
+        "Creative Writing: Notice, Formal/Informal Invitations & Replies",
+        "Creative Writing: Job Application with Resume & Letter to Editor",
+        "Creative Writing: Article & Report Writing",
+        "Reading Skills: Discursive & Case-based Factual Passages"
+      ],
+      notes: "CBSE English Core Subject Code 301 for Class 12. Prescribed books: Flamingo & Vistas."
+    },
+    englishelective: {
+      chapters: [
+        "Kaleidoscope - Short Stories: I Sell my Dreams",
+        "Kaleidoscope - Short Stories: Eveline",
+        "Kaleidoscope - Short Stories: A Wedding in Brownsville",
+        "Kaleidoscope - Poetry: A Lecture Upon the Shadow",
+        "Kaleidoscope - Poetry: Poems by Milton",
+        "Kaleidoscope - Poetry: Poems by Blake",
+        "Kaleidoscope - Poetry: Kubla Khan",
+        "Kaleidoscope - Poetry: Trees",
+        "Kaleidoscope - Poetry: The Wild Swans of Coole",
+        "Kaleidoscope - Poetry: Time and Time Again",
+        "Kaleidoscope - Non-Fiction: Freedom",
+        "Kaleidoscope - Non-Fiction: The Mark on the Wall",
+        "Kaleidoscope - Non-Fiction: Film-making",
+        "Kaleidoscope - Non-Fiction: Why the Novel Matters",
+        "Kaleidoscope - Non-Fiction: The Argumentative Indian",
+        "Kaleidoscope - Drama: Chandalika (Rabindranath Tagore)",
+        "Fiction: A Tiger for Malgudi (R.K. Narayan)",
+        "Fiction: The Financial Expert (R.K. Narayan)",
+        "Applied Grammar: Sentence Transformation",
+        "Creative Writing: Discursive Writing & Essay Writing"
+      ],
+      notes: "CBSE English Elective Subject Code 001 for Class 12. Prescribed books: Kaleidoscope, A Tiger for Malgudi / The Financial Expert."
     },
     hindi_core: {
       chapters: [
@@ -884,6 +1453,67 @@ export const CURRICULUM_DATA: Record<string, Record<string, SubjectCurriculum>> 
         "Consumer Protection"
       ],
       notes: "CBSE Business Studies Subject Code 054 for Class 12."
+    },
+    applied_maths: {
+      chapters: [
+        "Numbers, Quantification and Numerical Applications",
+        "Algebra (Matrices and Determinants)",
+        "Calculus (Higher Order Derivatives, Application of Derivatives, Integrals, Differential Equations)",
+        "Probability Distributions (Binomial, Poisson, Normal)",
+        "Inferential Statistics",
+        "Index Numbers and Time-Based Data",
+        "Financial Mathematics (Perpetuity, Sinking Funds, CAGR, EMI, Returns)",
+        "Linear Programming"
+      ],
+      notes: "CBSE Applied Mathematics Subject Code 241 for Class 12."
+    },
+    psychology: {
+      chapters: [
+        "Variations in Psychological Attributes",
+        "Self and Personality",
+        "Meeting Life Challenges (Stress and Coping)",
+        "Psychological Disorders",
+        "Therapeutic Approaches",
+        "Attitude and Social Cognition",
+        "Social Influence and Group Processes"
+      ],
+      notes: "CBSE Psychology Subject Code 037 for Class 12."
+    },
+    sociology: {
+      chapters: [
+        "Indian Society: The Demographic Structure of the Indian Society",
+        "Indian Society: Social Institutions: Continuity and Change",
+        "Indian Society: Patterns of Social Inequality and Exclusion",
+        "Indian Society: The Challenges of Cultural Diversity",
+        "Social Change and Development in India: Structural Change",
+        "Social Change and Development in India: Cultural Change",
+        "Social Change and Development in India: Change and Development in Rural Society",
+        "Social Change and Development in India: Change and Development in Industrial Society",
+        "Social Change and Development in India: Social Movements"
+      ],
+      notes: "CBSE Sociology Subject Code 039 for Class 12."
+    },
+    entrepreneurship: {
+      chapters: [
+        "Entrepreneurial Opportunity",
+        "Entrepreneurial Planning",
+        "Enterprise Marketing",
+        "Enterprise Growth Strategies",
+        "Business Arithmetic",
+        "Resource Mobilization"
+      ],
+      notes: "CBSE Entrepreneurship Subject Code 066 for Class 12."
+    },
+    sanskrit_core: {
+      chapters: [
+        "भास्वती भाग-2: प्रथमः पाठः - अनुशासनम्",
+        "भास्वती भाग-2: द्वितीयः पाठः - न कापि क्षतिः",
+        "भास्वती भाग-2: तृतीयः पाठः - मातुराज्ञा गरीयसी",
+        "भास्वती भाग-2: चतुर्थः पाठः - प्रजानुरञ्जको नृपः",
+        "भास्वती भाग-2: पञ्चमः पाठः - दौवारिकस्य निष्ठा",
+        "व्याकरणम् एवं अपठित अवबोधनम्"
+      ],
+      notes: "सीबीएसई संस्कृत कोर (विषय कोड 322) कक्षा 12।"
     }
   }
 };

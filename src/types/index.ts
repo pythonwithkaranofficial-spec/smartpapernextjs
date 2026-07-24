@@ -37,6 +37,9 @@ export interface PaperConfig {
   customClass?: string;
   customSubject?: string;
   customChapters?: string;
+  blueprintId?: string;
+  isBlueprintMode?: boolean;
+  unitWeightage?: { unit: string; topic: string; marks: number }[];
 }
 
 export interface Question {

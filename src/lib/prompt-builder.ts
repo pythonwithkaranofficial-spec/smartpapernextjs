@@ -40,6 +40,13 @@ export function buildGeminiPrompt(config: PaperConfig): string {
     ? `For Short Answer (SA) and Long Answer (LA) questions, provide a choice option for at least 1 question in each section. Set the "orQuestion" field with the choice question text. If no choice is provided, set "orQuestion" to null.`
     : `Do not include any choice options. Set "orQuestion" to null for all questions.`;
 
+  const unitWeightagePrompt = config.unitWeightage && config.unitWeightage.length > 0
+    ? `--- OFFICIAL UNIT MARK ALLOCATION CONSTRAINT ---
+The question paper MUST strictly respect the following official CBSE Unit Mark Allocations:
+${config.unitWeightage.map((u) => `- Unit ${u.unit} (${u.topic}): ${u.marks} Marks`).join("\n")}
+Ensure the questions generated across all sections roughly total these exact mark weightages per unit topic!`
+    : "";
+
   const hindiConstraint = isHindiSubject
     ? `9. HINDI SUBJECT SPECIAL DIRECTIVE: The entire output MUST be generated in formal, standard CBSE Hindi (Devanagari script).
        - Section names MUST be in Devanagari (e.g. "खण्ड क", "खण्ड ख", "खण्ड ग", "खण्ड घ", "खण्ड ङ").
@@ -161,6 +168,13 @@ Your task is to generate a professional, curriculum-compliant question paper bas
 - Language: ${config.language}
 - Target Total Marks: ${config.totalMarks}
 
+--- HYBRID BLUEPRINT & CURRICULUM VERIFICATION DIRECTIVE ---
+You are acting as a Senior Board Examination Paper Setter for CBSE Class ${config.classId} (${config.subject}).
+1. FIRST, inspect the reference database blueprint and unit weightages provided below.
+2. SECOND, cross-verify this reference blueprint against your authoritative knowledge of the latest official CBSE 2026 curriculum, syllabus guidelines, and marking schemes for Class ${config.classId} ${config.subject} (${config.examType}).
+3. IF ANY REVISIONS OR UPDATES ARE DETECTED (e.g. deleted chapters, updated unit mark allocations, or revised section structures), AUTOMATICALLY ADAPT AND UPDATE THE BLUEPRINT ON THE FLY to ensure 100% compliance with the newest 2026 board guidelines.
+4. Ensure all generated questions strictly reflect the verified, up-to-date board standards.
+
 --- QUESTION DISTRIBUTION LIST ---
 ${distributionDetails}
 
@@ -179,6 +193,8 @@ ${languagePrompt}
 
 --- INTERNAL CHOICE OPTIONS ---
 ${internalChoicePrompt}
+
+${unitWeightagePrompt}
 
 --- CRITICAL CONSTRAINTS ---
 1. STRICT CHAPTER ALIGNMENT: Only generate questions from the chapters listed in the target chapters section above. Never generate questions from any other chapters or topics.

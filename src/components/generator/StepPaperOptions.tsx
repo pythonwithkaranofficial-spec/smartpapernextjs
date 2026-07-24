@@ -5,15 +5,27 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { PaperOptions } from "@/types";
+import { Sparkles, CheckCircle2 } from "lucide-react";
 
 interface StepPaperOptionsProps {
   value?: PaperOptions;
   options?: PaperOptions;
   onChange?: (val: PaperOptions) => void;
   onChangeOptions?: (val: PaperOptions) => void;
+  isBlueprintMode?: boolean;
+  unitWeightage?: { unit: string; topic: string; marks: number }[];
+  blueprintTitle?: string;
 }
 
-export function StepPaperOptions({ value, options, onChange, onChangeOptions }: StepPaperOptionsProps) {
+export function StepPaperOptions({
+  value,
+  options,
+  onChange,
+  onChangeOptions,
+  isBlueprintMode,
+  unitWeightage,
+  blueprintTitle,
+}: StepPaperOptionsProps) {
   const currentOptions = options || value || {
     includeSchoolName: false,
     schoolName: "",
@@ -56,6 +68,37 @@ export function StepPaperOptions({ value, options, onChange, onChangeOptions }: 
           Customize header metadata, school details, and general instructions on the generated paper.
         </p>
       </div>
+
+      {isBlueprintMode && (
+        <div className="p-5 rounded-2xl bg-gradient-to-r from-blue-500/10 via-indigo-500/10 to-purple-500/10 border border-indigo-500/30 text-card-foreground shadow-sm space-y-3">
+          <div className="flex items-center gap-2 text-indigo-500 font-heading font-bold text-sm">
+            <Sparkles className="w-4 h-4 text-indigo-400" />
+            <span>{blueprintTitle || "Official Exam Blueprint Applied"}</span>
+          </div>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            Chapter distribution, question counts, section marks, and instructions have been automatically set according to the official curriculum pattern.
+          </p>
+
+          {unitWeightage && unitWeightage.length > 0 && (
+            <div className="pt-2">
+              <h5 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                Unit Mark Allocations
+              </h5>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {unitWeightage.map((u, i) => (
+                  <div
+                    key={i}
+                    className="flex items-center justify-between p-2 rounded-xl bg-background/60 border border-border/50 text-[11px]"
+                  >
+                    <span className="truncate font-medium text-foreground">{u.topic}</span>
+                    <span className="ml-2 font-bold text-indigo-500">{u.marks}M</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="space-y-4">
         {/* School Name Option */}

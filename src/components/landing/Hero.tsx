@@ -101,6 +101,19 @@ export function Hero() {
                 </Link>
               </MagneticButton>
 
+              <MagneticButton>
+                <Link
+                  href="/syllabus"
+                  className={cn(
+                    buttonVariants({ variant: "outline" }),
+                    "rounded-full px-8 py-6 text-base font-heading font-medium tracking-wide border-indigo-500/40 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 hover:text-indigo-300 shadow-[0_4px_15px_rgba(99,102,241,0.2)] transition-all duration-300 w-full sm:w-auto inline-flex items-center justify-center gap-2"
+                  )}
+                >
+                  <span>📖 Browse Syllabus 2026</span>
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+              </MagneticButton>
+
               <Link
                 href="#features"
                 className={cn(

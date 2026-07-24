@@ -14,12 +14,14 @@ import { PaperConfig } from "@/types";
 import { useGeneratePaper } from "@/hooks/useGeneratePaper";
 import { AuthService } from "@/lib/firebase/auth-service";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ArrowRight, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, Sparkles, BookOpen } from "lucide-react";
 import { clientRateLimiter } from "@/lib/rate-limiter";
 import { isSuperAdminEmail } from "@/lib/auth/helpers";
 import { toast } from "sonner";
 import { GeneratingOverlay } from "../preview/GeneratingOverlay";
 import { DailyLimitModal } from "../auth/DailyLimitModal";
+import { SyllabusModal } from "../syllabus/SyllabusModal";
+import { getBlueprint, getOrGenerateBlueprint } from "@/lib/blueprints";
 
 const LOCAL_STORAGE_KEY = "smart_paper_form_config";
 
@@ -64,6 +66,7 @@ export function GeneratorWizard() {
 
   const [usageInfo, setUsageInfo] = useState<{ usedToday: number; dailyLimit: number; remainingToday: number; isAdmin?: boolean } | null>(null);
   const [showLimitModal, setShowLimitModal] = useState(false);
+  const [showSyllabusModal, setShowSyllabusModal] = useState(false);
 
   // Load usage details from API or local fallback
   useEffect(() => {
@@ -181,6 +184,11 @@ export function GeneratorWizard() {
   };
 
   const handleBack = () => {
+    if (step === 7 && config.isBlueprintMode) {
+      setDirection(-1);
+      setStep(4);
+      return;
+    }
     if (step > 1) {
       setDirection(-1);
       setStep((prev) => prev - 1);
@@ -232,17 +240,37 @@ export function GeneratorWizard() {
         usedToday={used}
         dailyLimit={limit}
       />
+      <SyllabusModal
+        open={showSyllabusModal}
+        onClose={() => setShowSyllabusModal(false)}
+        classId={config.classId || "10"}
+        subject={config.subject || "maths"}
+        onSelectSyllabus={(classId, subject) => {
+          updateConfig((prev) => ({ ...prev, classId, subject }));
+        }}
+      />
+
+      {/* Header Bar with Syllabus Explorer Trigger & Limits */}
+      <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground mb-6 font-heading font-medium">
+        <button
+          type="button"
+          onClick={() => setShowSyllabusModal(true)}
+          className="inline-flex items-center gap-1.5 text-xs text-indigo-400 hover:text-indigo-300 font-bold font-heading bg-indigo-500/10 hover:bg-indigo-500/20 px-3.5 py-1.5 rounded-full border border-indigo-500/30 shadow-[0_0_12px_rgba(99,102,241,0.15)] transition-all hover:scale-105"
+        >
+          <BookOpen className="w-3.5 h-3.5" />
+          <span>📖 View Subject Syllabus & Blueprint</span>
+        </button>
+
+        <div className="flex items-center gap-2">
+          <span>DAILY LIMIT:</span>
+          <span className={remaining <= 0 ? "text-rose-500 font-bold" : "text-blue-400 font-bold"}>
+            {remaining} OF {limit} REMAINING
+          </span>
+        </div>
+      </div>
 
       {/* Steps indicator bar */}
       <ProgressBar currentStep={step} totalSteps={7} />
-
-      {/* Limits indicator (no-print) */}
-      <div className="flex justify-between items-center text-xs text-muted-foreground mb-6 font-heading font-medium">
-        <span>DAILY GENERATIONS LIMIT</span>
-        <span className={remaining <= 0 ? "text-rose-500 font-bold" : "text-blue-400"}>
-          {remaining} OF {limit} REMAINING
-        </span>
-      </div>
 
       {/* Wizard Steps Container */}
       <div className="relative min-h-[460px] flex flex-col justify-between overflow-hidden p-1">
@@ -289,8 +317,30 @@ export function GeneratorWizard() {
               <StepExamType
                 selectedExamType={config.examType}
                 onSelectExamType={(examType) => {
-                  updateConfig((prev) => ({ ...prev, examType }));
-                  handleNext(undefined, undefined, examType);
+                  const bp = getOrGenerateBlueprint(config.classId, config.subject, examType);
+                  if (bp) {
+                    updateConfig((prev) => ({
+                      ...prev,
+                      examType,
+                      totalMarks: bp.totalMarks,
+                      duration: bp.duration,
+                      questionDistribution: bp.questionDistribution,
+                      selectedChapters: bp.selectedChapters,
+                      unitWeightage: bp.unitWeightage,
+                      blueprintId: bp.id,
+                      isBlueprintMode: true,
+                      options: {
+                        ...prev.options,
+                        instructionsText: bp.defaultInstructions,
+                      },
+                    }));
+                    toast.success(`Blueprint applied: ${bp.title}`);
+                    setDirection(1);
+                    setStep(7);
+                  } else {
+                    updateConfig((prev) => ({ ...prev, examType, isBlueprintMode: false }));
+                    handleNext(undefined, undefined, examType);
+                  }
                 }}
               />
             )}
@@ -331,6 +381,12 @@ export function GeneratorWizard() {
             {step === 7 && (
               <StepPaperOptions
                 options={config.options}
+                isBlueprintMode={config.isBlueprintMode}
+                unitWeightage={config.unitWeightage}
+                blueprintTitle={
+                  getOrGenerateBlueprint(config.classId, config.subject, config.examType)?.title ||
+                  "Official Exam Blueprint Applied"
+                }
                 onChangeOptions={(options) =>
                   updateConfig((prev) => ({ ...prev, options }))
                 }
