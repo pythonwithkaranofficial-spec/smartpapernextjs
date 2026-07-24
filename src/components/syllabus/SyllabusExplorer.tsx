@@ -22,7 +22,7 @@ import { cn } from "@/lib/utils";
 import { CURRICULUM_DATA } from "@/lib/curriculum-data";
 import { BLUEPRINTS, getOrGenerateBlueprint } from "@/lib/blueprints";
 
-const AVAILABLE_CLASSES = ["6", "7", "8", "9", "10", "11", "12"];
+const AVAILABLE_CLASSES = ["9", "10", "11", "12"];
 
 const SUBJECT_NAMES: Record<string, string> = {
   maths: "Mathematics Standard (Code 041)",
