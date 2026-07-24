@@ -135,7 +135,7 @@ export function SyllabusExplorer({
               className={cn(
                 "px-4 py-2 rounded-xl text-xs font-bold font-heading transition-all duration-250 border",
                 isSelected
-                  ? "bg-gradient-to-r from-blue-500 to-indigo-600 text-white border-transparent shadow-[0_4px_14px_rgba(59,130,246,0.3)] scale-105"
+                  ? "bg-gradient-to-r from-blue-500 to-indigo-600 text-white border-transparent shadow-[0_4px_14px_rgba(59,130,246,0.3)]"
                   : "bg-background/60 hover:bg-muted border-border/50 text-muted-foreground hover:text-foreground"
               )}
             >
@@ -146,23 +146,24 @@ export function SyllabusExplorer({
       </div>
 
       {/* Subject Selection Grid */}
-      <div className="flex flex-wrap items-center justify-center gap-2 max-w-4xl mx-auto">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 max-w-4xl mx-auto w-full">
         {availableSubjects.map((subKey) => {
           const isSelected = currentSubjectKey === subKey;
           const label = SUBJECT_NAMES[subKey] || subKey.toUpperCase();
           return (
             <button
               key={subKey}
+              type="button"
               onClick={() => setSelectedSubject(subKey)}
               className={cn(
-                "px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 border flex items-center gap-1.5",
+                "w-full h-10 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all duration-200 border flex items-center gap-2 min-w-0 justify-start text-left",
                 isSelected
-                  ? "bg-indigo-500/15 border-indigo-500/50 text-indigo-400 font-bold shadow-[0_0_12px_rgba(99,102,241,0.2)]"
-                  : "bg-background/40 hover:bg-muted border-border/40 text-muted-foreground"
+                  ? "bg-indigo-500/15 border-indigo-500/50 text-indigo-400 shadow-[0_0_12px_rgba(99,102,241,0.2)]"
+                  : "bg-background/40 hover:bg-muted/70 border-border/40 text-muted-foreground hover:text-foreground"
               )}
             >
-              <FileText className="w-3.5 h-3.5 opacity-70" />
-              <span>{label}</span>
+              <FileText className="w-3.5 h-3.5 opacity-70 shrink-0" />
+              <span className="truncate">{label}</span>
             </button>
           );
         })}
