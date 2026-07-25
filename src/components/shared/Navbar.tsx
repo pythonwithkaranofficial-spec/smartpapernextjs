@@ -66,7 +66,7 @@ export function Navbar() {
 
   const userDisplayName = firebaseUser?.displayName || dbUser?.name || firebaseUser?.email?.split('@')[0] || "User";
   const userInitials = userDisplayName.substring(0, 2).toUpperCase();
-  const userPhoto = dbUser?.photo_url || firebaseUser?.photoURL;
+  const userPhoto = dbUser?.photo_url || (typeof window !== "undefined" ? localStorage.getItem("smart_paper_user_avatar") : null) || firebaseUser?.photoURL;
 
   return (
     <header

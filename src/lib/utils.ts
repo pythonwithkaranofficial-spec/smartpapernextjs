@@ -13,9 +13,9 @@ export function formatTime(seconds: number): string {
 
 export function compressImageToBase64(
   file: File,
-  maxWidth = 150,
-  maxHeight = 150,
-  quality = 0.85
+  maxWidth = 120,
+  maxHeight = 120,
+  quality = 0.7
 ): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();

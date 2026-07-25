@@ -400,27 +400,39 @@ export default function ProfilePage() {
 
     setUploadingPhoto(true);
     try {
-      const base64Photo = await compressImageToBase64(file, 160, 160, 0.8);
+      const base64Photo = await compressImageToBase64(file, 120, 120, 0.7);
       const user = AuthService.getCurrentUser();
 
+      // Immediate client-side update
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem("smart_paper_user_avatar", base64Photo);
+        } catch (err) {
+          console.warn("LocalStorage avatar write warning:", err);
+        }
+      }
+
       if (user) {
-        // Attempt Firebase Auth profile update safely
+        // Safe attempt to update Firebase Auth profile
         try {
           const { updateProfile } = await import("firebase/auth");
           await updateProfile(user, { photoURL: base64Photo });
         } catch (fbErr) {
           console.warn("Firebase Auth photoURL limit caught:", fbErr);
         }
-
-        // Sync to Turso DB and update AuthProvider in real-time
-        await syncUserWithTurso(base64Photo);
-        toast.success("Profile photo updated & saved successfully!");
       }
+
+      // Sync to Turso DB & Auth Context
+      await syncUserWithTurso(base64Photo);
+      toast.success("Profile photo updated & saved successfully!");
     } catch (err) {
       console.error("Photo upload error:", err);
       toast.error("Failed to upload profile photo.");
     } finally {
       setUploadingPhoto(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
     }
   };
 
@@ -577,7 +589,7 @@ export default function ProfilePage() {
     }
   };
 
-  const userPhoto = dbUser?.photo_url || firebaseUser?.photoURL;
+  const userPhoto = dbUser?.photo_url || (typeof window !== "undefined" ? localStorage.getItem("smart_paper_user_avatar") : null) || firebaseUser?.photoURL;
   const currentPlan = dbUser?.plan || "FREE";
   const usedToday = usageInfo?.usedToday ?? 0;
   const dailyLimit = usageInfo?.dailyLimit ?? 5;

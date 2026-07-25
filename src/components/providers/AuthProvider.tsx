@@ -57,12 +57,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return null;
     }
 
+    const localPhoto = typeof window !== "undefined" ? localStorage.getItem("smart_paper_user_avatar") : null;
+    const targetPhoto = overridePhotoURL !== undefined && overridePhotoURL !== null
+      ? overridePhotoURL
+      : (localPhoto || dbUser?.photo_url || user.photoURL || null);
+
+    if (overridePhotoURL && typeof window !== "undefined") {
+      try {
+        localStorage.setItem("smart_paper_user_avatar", overridePhotoURL);
+      } catch (e) {
+        console.warn("Failed to save avatar to localStorage:", e);
+      }
+    }
+
+    // Immediate state update for instant UI feedback
+    if (targetPhoto) {
+      setDbUser((prev) => (prev ? { ...prev, photo_url: targetPhoto } : prev));
+    }
+
     try {
       const token = await user.getIdToken();
-      const payloadPhoto = overridePhotoURL !== undefined 
-        ? overridePhotoURL 
-        : (user.photoURL || dbUser?.photo_url || null);
-
       const res = await fetch("/api/auth/sync", {
         method: "POST",
         headers: {
@@ -71,7 +85,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         },
         body: JSON.stringify({
           displayName: user.displayName,
-          photoURL: payloadPhoto,
+          photoURL: targetPhoto,
           email: user.email,
           providerId: user.providerData[0]?.providerId || "email",
         }),
@@ -79,8 +93,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const json = await res.json();
       if (json.success && json.data) {
-        setDbUser(json.data);
-        return json.data;
+        const mergedUser = {
+          ...json.data,
+          photo_url: targetPhoto || json.data.photo_url || localPhoto || null,
+        };
+        setDbUser(mergedUser);
+        return mergedUser;
       }
     } catch (error) {
       console.error("[AuthProvider] Failed to sync user with Turso:", error);
