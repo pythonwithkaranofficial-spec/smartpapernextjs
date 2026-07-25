@@ -54,6 +54,7 @@ const initialConfig: PaperConfig = {
     includeInstructions: true,
     instructionsText: "1. All questions are compulsory.\n2. The question paper consists of standard sections.\n3. Section A contains 1 mark questions, Section B contains 2 marks questions.\n4. Write answers clearly and support with diagrams where needed.",
     includeInternalChoice: false,
+    includeAnswerKey: true,
   },
   selectedChapters: [],
 };
@@ -114,7 +115,7 @@ export function GeneratorWizard() {
   }, []);
 
 
-  // Load from localStorage on mount (Auto-save)
+  // Load from localStorage on mount (Auto-save) & Check preset step
   useEffect(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
@@ -125,6 +126,14 @@ export function GeneratorWizard() {
         } catch (e) {
           console.error("Failed to parse saved config", e);
         }
+      }
+
+      const presetStep = sessionStorage.getItem("preset_step");
+      const urlParams = new URLSearchParams(window.location.search);
+      if (presetStep === "7" || urlParams.get("preset") === "blueprint" || urlParams.get("step") === "7") {
+        setStep(7);
+        sessionStorage.removeItem("preset_step");
+        toast.success("Loaded official CBSE blueprint preset! Review options below to generate paper.");
       }
     }
   }, []);

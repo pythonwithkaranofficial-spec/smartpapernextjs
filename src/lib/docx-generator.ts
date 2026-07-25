@@ -292,6 +292,84 @@ export async function generateDOCX(paper: GeneratedPaper) {
     });
   });
 
+  // Check if any question contains a solution
+  const hasSolutions = paper.sections.some(sec => sec.questions.some(q => !!q.solution));
+
+  if (hasSolutions) {
+    addSpacing(250);
+
+    // Section Title for Answer Key
+    children.push(
+      new Paragraph({
+        spacing: { before: 200, after: 100 },
+        border: {
+          bottom: { color: "008080", space: 4, style: BorderStyle.SINGLE, size: 12 },
+        },
+        children: [
+          new TextRun({
+            text: isHindiSubject ? "उत्तरमाला एवं उत्तर अंकन योजना (ANSWER KEY & MARKING SCHEME)" : "OFFICIAL ANSWER KEY & MARKING SCHEME",
+            bold: true,
+            size: 22,
+            font: docFont,
+            color: "006666",
+          }),
+        ],
+      })
+    );
+
+    paper.sections.forEach((sec) => {
+      sec.questions.forEach((q) => {
+        if (!q.solution && !q.orSolution) return;
+
+        const solChildren: TextRun[] = [
+          new TextRun({
+            text: `Q${q.number}. `,
+            bold: true,
+            size: 19,
+            font: docFont,
+          }),
+        ];
+
+        if (q.solution) {
+          solChildren.push(
+            new TextRun({
+              text: q.solution,
+              size: 18,
+              font: docFont,
+            })
+          );
+        }
+
+        children.push(
+          new Paragraph({
+            spacing: { before: 60, after: 60 },
+            children: solChildren,
+          })
+        );
+
+        if (q.orSolution) {
+          children.push(
+            new Paragraph({
+              spacing: { before: 40, after: 60 },
+              indent: { left: 360 },
+              border: {
+                left: { color: "008080", space: 6, style: BorderStyle.SINGLE, size: 6 },
+              },
+              children: [
+                new TextRun({
+                  text: `OR Solution: ${q.orSolution}`,
+                  italics: true,
+                  size: 18,
+                  font: docFont,
+                }),
+              ],
+            })
+          );
+        }
+      });
+    });
+  }
+
   // Pack the document
   const doc = new Document({
     sections: [

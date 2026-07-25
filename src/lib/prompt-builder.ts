@@ -56,8 +56,15 @@ Ensure the questions generated across all sections roughly total these exact mar
          (A) A और R दोनों सत्य हैं और R, A की सही व्याख्या करता है।
          (B) A और R दोनों सत्य हैं लेकिन R, A की सही व्याख्या नहीं करता है।
          (C) A सत्य है लेकिन R असत्य है।
-         (D) A असत्य है लेकिन R सत्य है।`
+         (D) A असत्य है लेकिन R सत्य है。`
     : "";
+
+  const solutionDirective = config.options.includeAnswerKey !== false
+    ? `3. DETAILED SOLUTIONS & MARKING SCHEME: For EVERY question, you MUST populate the "solution" field with a complete, curriculum-compliant solution:
+       - For MCQs & Assertion-Reason: State the correct option letter (e.g. "(A) Option Text") followed by a 1-2 sentence explanation.
+       - For VSA, SA, LA, and Case Study: Provide step-by-step working/answers along with official CBSE marking scheme allocations (e.g. "[1 Mark for formula, 2 Marks for derivation, 1 Mark for final answer]").
+       - If an internal choice ("orQuestion") is present, also populate "orSolution" with the step-by-step solution for the choice question.`
+    : `3. ANSWERS INSTRUCTION: Do NOT generate answers. Set "solution" and "orSolution" to null.`;
 
   if (config.isCustom) {
     const customClassStr = config.customClass || config.classId;
@@ -126,7 +133,7 @@ ${languagePrompt}
 5. INTERNAL CHOICE OPTIONS:
 ${internalChoicePrompt}
 
-6. NO ANSWERS: Do NOT generate answers, solutions, or marking schemes. Only generate the questions.
+6. ${solutionDirective}
 7. MCQ FORMAT: MCQs must have exactly 4 plausible choices. Only generate choices for MCQs (the "choices" array must be null or empty for all other types).
 8. ASSERTION REASON FORMAT: Assertion-Reason questions must follow the standard 4 option structure. Set these 4 options in the "choices" array.
 9. JSON ESCAPING: Every backslash character (\\) in mathematical formulas or LaTeX MUST be double-escaped as (\\\\).
@@ -147,7 +154,9 @@ ${hindiConstraint}
           "marks": 1,
           "type": "mcq",
           "choices": ["Option 1", "Option 2", "Option 3", "Option 4"],
-          "orQuestion": null
+          "orQuestion": null,
+          "solution": "Step-by-step solution / correct option explanation and marking scheme breakdown",
+          "orSolution": null
         }
       ]
     }
@@ -199,7 +208,7 @@ ${unitWeightagePrompt}
 --- CRITICAL CONSTRAINTS ---
 1. STRICT CHAPTER ALIGNMENT: Only generate questions from the chapters listed in the target chapters section above. Never generate questions from any other chapters or topics.
 2. UNIQUE QUESTIONS: There must be no repetition of concepts or questions across sections.
-3. ANSWERS INSTRUCTION: Do NOT generate answers, marking schemes, or solutions. Only generate the questions.
+3. ${solutionDirective}
 4. MCQ FORMAT: MCQs must have exactly 4 plausible choices. Only generate choices for MCQs (the "choices" array must be null or empty for all other types).
 5. CASE STUDY FORMAT: Case Study / Source-based questions must consist of a reading passage (or description) followed by 2 sub-questions (2 marks each, totaling 4 marks). Compile the sub-questions directly into the text field (e.g. "Read the passage and answer... \n\n(i) Subquestion 1 \n(ii) Subquestion 2").
 6. JSON ESCAPING: Every backslash character (\) in mathematical formulas, LaTeX, or other texts MUST be double-escaped as (\\\\). For example, write \\\\theta instead of \\theta, and \\\\Delta instead of \\Delta. Failure to double-escape backslashes will break JSON parsing. Do not output invalid escape sequences like \\u unless followed by 4 hexadecimal digits.
@@ -227,7 +236,9 @@ ${hindiConstraint}
           "marks": 1,
           "type": "mcq", // "mcq" | "assertionReason" | "vsa" | "sa" | "caseStudy" | "la"
           "choices": ["Option 1", "Option 2", "Option 3", "Option 4"], // string[] for MCQs and ARs, null for others
-          "orQuestion": null // string if internal choice is enabled, null otherwise
+          "orQuestion": null, // string if internal choice is enabled, null otherwise
+          "solution": "Step-by-step solution / correct option explanation and marking scheme breakdown",
+          "orSolution": null
         }
       ]
     }

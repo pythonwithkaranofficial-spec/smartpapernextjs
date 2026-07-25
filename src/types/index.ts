@@ -20,6 +20,8 @@ export interface PaperOptions {
   includeInstructions: boolean;
   instructionsText: string;
   includeInternalChoice: boolean;
+  includeAnswerKey?: boolean;
+  numberOfSets?: number; // 1, 2, or 3 sets
 }
 
 export interface PaperConfig {
@@ -40,6 +42,7 @@ export interface PaperConfig {
   blueprintId?: string;
   isBlueprintMode?: boolean;
   unitWeightage?: { unit: string; topic: string; marks: number }[];
+  numberOfSets?: number;
 }
 
 export interface Question {
@@ -52,6 +55,8 @@ export interface Question {
   hint?: string;
   choices?: string[]; // For MCQ choices
   orQuestion?: string; // For internal choices
+  solution?: string; // Detailed step-by-step solution / answer & marking scheme
+  orSolution?: string; // Solution for internal choice question
 }
 
 export interface PaperSection {
@@ -73,4 +78,17 @@ export interface GeneratedPaper {
   sections: PaperSection[];
   totalQuestions: number;
   totalMarks: number;
+  hasAnswerKey?: boolean;
+  setName?: string; // e.g. "SET A", "SET B", "SET C"
+  sets?: GeneratedPaper[]; // Array of parallel paper variants if multi-set is enabled
+}
+
+export interface SchoolProfile {
+  id: string;
+  profileName: string;
+  schoolName: string;
+  teacherName: string;
+  instructionsText?: string;
+  logoUrl?: string;
+  isDefault?: boolean;
 }

@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   BookOpen,
@@ -92,6 +93,49 @@ export function SyllabusExplorer({
     () => getOrGenerateBlueprint(selectedClass, currentSubjectKey, "annual_exam"),
     [selectedClass, currentSubjectKey]
   );
+
+  const router = useRouter();
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleGenerateWithBlueprint = (activeBlueprint: any) => {
+    if (!activeBlueprint) return;
+
+    const prefilledConfig = {
+      classId: selectedClass,
+      subject: currentSubjectKey,
+      examType: "annual_exam",
+      difficulty: "Medium",
+      language: "English",
+      totalMarks: activeBlueprint.totalMarks || 80,
+      duration: activeBlueprint.duration || "3 Hours",
+      questionDistribution: activeBlueprint.questionDistribution,
+      blueprintId: activeBlueprint.id,
+      isBlueprintMode: true,
+      unitWeightage: activeBlueprint.unitWeightage,
+      options: {
+        includeSchoolName: false,
+        schoolName: "",
+        includeTeacherName: false,
+        teacherName: "",
+        includeSchoolLogo: false,
+        includeClass: true,
+        includeSubject: true,
+        includeTime: true,
+        includeMaxMarks: true,
+        includeInstructions: true,
+        instructionsText: activeBlueprint.defaultInstructions || "1. All questions are compulsory.",
+        includeInternalChoice: false,
+        includeAnswerKey: true,
+        numberOfSets: 1,
+      },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      selectedChapters: activeBlueprint.unitWeightage?.map((u: any) => u.topic) || [],
+    };
+
+    localStorage.setItem("smart_paper_form_config", JSON.stringify(prefilledConfig));
+    sessionStorage.setItem("preset_step", "7");
+    router.push("/generate?preset=blueprint&step=7");
+  };
 
   // Filter chapters by search query
   const filteredChapters = useMemo(() => {
@@ -298,6 +342,35 @@ export function SyllabusExplorer({
           >
             {blueprint ? (
               <div className="space-y-5">
+                {/* 1-Click Action Banner */}
+                <div className="p-4 rounded-2xl bg-gradient-to-r from-blue-600/20 via-indigo-600/20 to-purple-600/20 border border-indigo-500/30 flex flex-col sm:flex-row items-center justify-between gap-4 backdrop-blur-md">
+                  <div className="space-y-1 text-center sm:text-left">
+                    <div className="flex items-center justify-center sm:justify-start gap-2">
+                      <span className="text-xs font-extrabold uppercase font-heading text-indigo-300 tracking-wider">
+                        Official CBSE Board Blueprint
+                      </span>
+                      <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold border border-emerald-500/30 uppercase">
+                        Ready to Generate
+                      </span>
+                    </div>
+                    <h3 className="text-base font-extrabold text-foreground font-heading">
+                      Class {selectedClass} — {SUBJECT_NAMES[currentSubjectKey] || currentSubjectKey}
+                    </h3>
+                    <p className="text-xs text-muted-foreground">
+                      Includes official unit weightages ({blueprint.totalMarks} Marks, {blueprint.duration}) and board section breakdown.
+                    </p>
+                  </div>
+
+                  <Button
+                    onClick={() => handleGenerateWithBlueprint(blueprint)}
+                    className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold font-heading px-6 py-5 rounded-xl shadow-lg shadow-indigo-500/25 hover:scale-[1.03] transition-all cursor-pointer shrink-0"
+                  >
+                    <Sparkles className="w-4 h-4 mr-2 text-yellow-300 animate-pulse" />
+                    Generate Paper With This Blueprint
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                </div>
+
                 {/* Stats Summary */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   <div className="p-4 rounded-xl bg-background/60 border border-border/50 text-center">

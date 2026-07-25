@@ -2,25 +2,86 @@
 
 import React, { useState } from "react";
 import { GeneratedPaper } from "@/types";
-import { Trash2, Edit2, Check, ArrowUp, ArrowDown, ZoomIn, ZoomOut, Printer } from "lucide-react";
+import { Trash2, Edit2, Check, ArrowUp, ArrowDown, ZoomIn, ZoomOut, Printer, Key, FileText, RefreshCw, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { formatScientificText, cleanInstructionText } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface PaperPreviewProps {
   paper: GeneratedPaper;
   onChange: (updatedPaper: GeneratedPaper) => void;
+  onSelectSet?: (setIdx: number) => void;
+  activeSetIdx?: number;
 }
 
-export function PaperPreview({ paper, onChange }: PaperPreviewProps) {
+export function PaperPreview({ paper, onChange, onSelectSet, activeSetIdx = 0 }: PaperPreviewProps) {
   const [zoom, setZoom] = useState(100);
-  const [editingField, setEditingField] = useState<{ type: "header" | "instruction" | "question"; id?: string; index?: number } | null>(null);
+  const [viewMode, setViewMode] = useState<"paper" | "solutions">("paper");
+  const [editingField, setEditingField] = useState<{ type: "header" | "instruction" | "question" | "solution"; id?: string; index?: number } | null>(null);
   const [editValue, setEditValue] = useState("");
   const [editChoices, setEditChoices] = useState<string[]>([]);
+  const [swappingId, setSwappingId] = useState<string | null>(null);
 
-  const handleEditStart = (type: "header" | "instruction" | "question", initialVal: string, id?: string, index?: number, choices?: string[]) => {
+  const activePaper = (paper.sets && paper.sets.length > 0 && paper.sets[activeSetIdx]) ? paper.sets[activeSetIdx] : paper;
+
+  const handleSwapQuestion = async (qToSwap: any) => {
+    setSwappingId(qToSwap.id);
+    const toastId = toast.loading(`Generating replacement for Question #${qToSwap.number}...`);
+
+    try {
+      const excludeQuestionTexts: string[] = [];
+      activePaper.sections.forEach(sec => {
+        sec.questions.forEach(q => {
+          if (q.text) excludeQuestionTexts.push(q.text);
+        });
+      });
+
+      const res = await fetch("/api/swap-question", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          questionToReplace: qToSwap,
+          subject: activePaper.subject,
+          classText: activePaper.classText,
+          excludeQuestionTexts,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.question) {
+        throw new Error(data.error || "Failed to swap question.");
+      }
+
+      const newQuestion = data.question;
+
+      const updatedTarget = { ...activePaper };
+      updatedTarget.sections = updatedTarget.sections.map(sec => ({
+        ...sec,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        questions: sec.questions.map((q: any) => q.id === qToSwap.id ? newQuestion : q),
+      }));
+
+      if (paper.sets && paper.sets.length > 0) {
+        const newSets = [...paper.sets];
+        newSets[activeSetIdx] = updatedTarget;
+        onChange({ ...paper, sets: newSets });
+      } else {
+        onChange(updatedTarget);
+      }
+
+      toast.success(`Question #${qToSwap.number} replaced with new AI question!`, { id: toastId });
+    } catch (err: any) {
+      console.error("Swap error:", err);
+      toast.error(err.message || "Could not replace question.", { id: toastId });
+    } finally {
+      setSwappingId(null);
+    }
+  };
+
+  const handleEditStart = (type: "header" | "instruction" | "question" | "solution", initialVal: string, id?: string, index?: number, choices?: string[]) => {
     setEditingField({ type, id, index });
     setEditValue(initialVal);
     setEditChoices(choices ? [...choices] : []);
@@ -29,40 +90,62 @@ export function PaperPreview({ paper, onChange }: PaperPreviewProps) {
   const handleEditSave = () => {
     if (!editingField) return;
 
-    const updated = { ...paper };
+    // Work on active paper
+    const updatedTarget = { ...activePaper };
 
     if (editingField.type === "header") {
-      if (editingField.id === "schoolName") updated.schoolName = editValue.toUpperCase();
-      if (editingField.id === "examName") updated.examName = editValue.replace(/_/g, " ").toUpperCase();
-      if (editingField.id === "teacherName") updated.teacherName = editValue;
-      if (editingField.id === "subject") updated.subject = editValue;
-      if (editingField.id === "classText") updated.classText = editValue;
-      if (editingField.id === "timeText") updated.timeText = editValue;
-      if (editingField.id === "maxMarksText") updated.maxMarksText = editValue;
+      if (editingField.id === "schoolName") updatedTarget.schoolName = editValue.toUpperCase();
+      if (editingField.id === "examName") updatedTarget.examName = editValue.replace(/_/g, " ").toUpperCase();
+      if (editingField.id === "teacherName") updatedTarget.teacherName = editValue;
+      if (editingField.id === "subject") updatedTarget.subject = editValue;
+      if (editingField.id === "classText") updatedTarget.classText = editValue;
+      if (editingField.id === "timeText") updatedTarget.timeText = editValue;
+      if (editingField.id === "maxMarksText") updatedTarget.maxMarksText = editValue;
     } else if (editingField.type === "instruction" && typeof editingField.index === "number") {
-      updated.instructions[editingField.index] = formatScientificText(editValue);
+      updatedTarget.instructions[editingField.index] = formatScientificText(editValue);
     } else if (editingField.type === "question" && editingField.id) {
-      // Find question and update text & choices
-      updated.sections = updated.sections.map(section => {
-        return {
-          ...section,
-          questions: section.questions.map(q => {
-            if (q.id === editingField.id) {
-              return { 
-                ...q, 
-                text: formatScientificText(editValue), 
-                choices: q.choices && q.choices.length > 0 
-                  ? editChoices.map(c => formatScientificText(c)) 
-                  : undefined 
-              };
+      updatedTarget.sections = updatedTarget.sections.map(section => ({
+        ...section,
+        questions: section.questions.map(q => {
+          if (q.id === editingField.id) {
+            return { 
+              ...q, 
+              text: formatScientificText(editValue), 
+              choices: q.choices && q.choices.length > 0 
+                ? editChoices.map(c => formatScientificText(c)) 
+                : undefined 
+            };
+          }
+          return q;
+        })
+      }));
+    } else if (editingField.type === "solution" && editingField.id) {
+      const isOr = editingField.id.endsWith("_or");
+      const targetId = isOr ? editingField.id.replace("_or", "") : editingField.id;
+
+      updatedTarget.sections = updatedTarget.sections.map(section => ({
+        ...section,
+        questions: section.questions.map(q => {
+          if (q.id === targetId) {
+            if (isOr) {
+              return { ...q, orSolution: formatScientificText(editValue) };
+            } else {
+              return { ...q, solution: formatScientificText(editValue) };
             }
-            return q;
-          })
-        };
-      });
+          }
+          return q;
+        })
+      }));
     }
 
-    onChange(updated);
+    if (paper.sets && paper.sets.length > 0) {
+      const newSets = [...paper.sets];
+      newSets[activeSetIdx] = updatedTarget;
+      onChange({ ...paper, sets: newSets });
+    } else {
+      onChange(updatedTarget);
+    }
+
     setEditingField(null);
   };
 
@@ -121,45 +204,95 @@ export function PaperPreview({ paper, onChange }: PaperPreviewProps) {
 
   return (
     <div className="space-y-6">
-      {/* Zoom and print toolbar (no-print) */}
-      <div className="no-print flex items-center justify-between p-4 rounded-2xl border border-border/40 glass bg-card/45 backdrop-blur-sm max-w-5xl mx-auto">
-        <div className="flex items-center gap-3 w-full sm:w-auto">
-          <span className="text-xs font-bold text-muted-foreground font-heading">
-            ZOOM PREVIEW
+      {/* Mode Selector and Zoom/Print toolbar (no-print) */}
+      <div className="no-print flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-2xl border border-border/40 glass bg-card/45 backdrop-blur-sm max-w-5xl mx-auto">
+        
+        {/* Mode Switcher Pills */}
+        <div className="flex items-center gap-1.5 p-1 rounded-xl bg-background/80 border border-border/60 shadow-inner">
+          <button
+            onClick={() => setViewMode("paper")}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-heading font-semibold transition-all cursor-pointer ${
+              viewMode === "paper"
+                ? "bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <FileText className="w-3.5 h-3.5" />
+            <span>Question Paper</span>
+          </button>
+
+          <button
+            onClick={() => setViewMode("solutions")}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-heading font-semibold transition-all cursor-pointer ${
+              viewMode === "solutions"
+                ? "bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Key className="w-3.5 h-3.5" />
+            <span>Answer Key & Solutions</span>
+          </button>
+        </div>
+
+        {/* Set Selector Pills (if multi-set paper) */}
+        {paper.sets && paper.sets.length > 1 && (
+          <div className="flex items-center gap-1 p-1 rounded-xl bg-indigo-500/10 border border-indigo-500/20 shadow-inner">
+            <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider px-2 font-heading">
+              Paper Variant:
+            </span>
+            {paper.sets.map((setObj, idx) => {
+              const label = setObj.setName || `SET ${String.fromCharCode(65 + idx)}`;
+              const isSelected = activeSetIdx === idx;
+              return (
+                <button
+                  key={idx}
+                  onClick={() => onSelectSet && onSelectSet(idx)}
+                  className={`px-3 py-1 rounded-lg text-xs font-heading font-bold transition-all cursor-pointer ${
+                    isSelected
+                      ? "bg-indigo-600 text-white shadow-md scale-105"
+                      : "text-indigo-400 hover:bg-indigo-500/20"
+                  }`}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Zoom controls */}
+        <div className="flex items-center gap-3">
+          <span className="text-[10px] font-bold text-muted-foreground font-heading uppercase tracking-wider">
+            ZOOM
           </span>
-          <Button variant="ghost" size="icon" onClick={() => setZoom(prev => Math.max(50, prev - 10))} className="w-8 h-8 rounded-lg cursor-pointer">
-            <ZoomOut className="w-4 h-4" />
+          <Button variant="ghost" size="icon" onClick={() => setZoom(prev => Math.max(50, prev - 10))} className="w-7 h-7 rounded-lg cursor-pointer">
+            <ZoomOut className="w-3.5 h-3.5" />
           </Button>
-          <div className="w-32">
+          <div className="w-24">
             <Slider
               value={[zoom]}
               onValueChange={(val) => {
-                if (Array.isArray(val)) {
-                  setZoom(val[0]);
-                } else if (typeof val === "number") {
-                  setZoom(val);
-                }
+                if (Array.isArray(val)) setZoom(val[0]);
+                else if (typeof val === "number") setZoom(val);
               }}
               min={50}
               max={150}
               step={10}
             />
           </div>
-          <Button variant="ghost" size="icon" onClick={() => setZoom(prev => Math.min(150, prev + 10))} className="w-8 h-8 rounded-lg cursor-pointer">
-            <ZoomIn className="w-4 h-4" />
+          <Button variant="ghost" size="icon" onClick={() => setZoom(prev => Math.min(150, prev + 10))} className="w-7 h-7 rounded-lg cursor-pointer">
+            <ZoomIn className="w-3.5 h-3.5" />
           </Button>
-          <span className="text-xs font-semibold text-muted-foreground font-heading w-10">
+          <span className="text-xs font-semibold text-muted-foreground font-heading w-8">
             {zoom}%
           </span>
-        </div>
-        
-        <div className="hidden sm:flex items-center gap-2">
+          
           <Button 
             onClick={() => window.print()}
-            className="rounded-full bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 px-4 h-8 text-xs font-heading cursor-pointer"
+            className="rounded-full bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 px-3.5 h-7 text-xs font-heading cursor-pointer ml-2"
           >
-            <Printer className="w-3.5 h-3.5 mr-1.5" />
-            Quick Print
+            <Printer className="w-3.5 h-3.5 mr-1" />
+            Print
           </Button>
         </div>
       </div>
@@ -171,7 +304,7 @@ export function PaperPreview({ paper, onChange }: PaperPreviewProps) {
           style={zoomStyle}
         >
           {/* School Name */}
-          {paper.schoolName !== undefined && (
+          {activePaper.schoolName !== undefined && (
             <div className="text-center font-bold font-serif text-lg tracking-wide uppercase group relative pr-12 pl-12">
               {editingField?.type === "header" && editingField.id === "schoolName" ? (
                 <div className="flex gap-2 justify-center w-full">
@@ -184,10 +317,10 @@ export function PaperPreview({ paper, onChange }: PaperPreviewProps) {
                 </div>
               ) : (
                 <span 
-                  onClick={() => handleEditStart("header", paper.schoolName || "", "schoolName")}
+                  onClick={() => handleEditStart("header", activePaper.schoolName || "", "schoolName")}
                   className="cursor-pointer border-b border-dashed border-transparent hover:border-black/30 pb-0.5"
                 >
-                  {paper.schoolName ? paper.schoolName.toUpperCase() : "YOUR SCHOOL NAME HERE"}
+                  {activePaper.schoolName ? activePaper.schoolName.toUpperCase() : "YOUR SCHOOL NAME HERE"}
                 </span>
               )}
             </div>
@@ -201,8 +334,8 @@ export function PaperPreview({ paper, onChange }: PaperPreviewProps) {
                 <Button size="icon-xs" onClick={handleEditSave} className="bg-black hover:bg-black/85 text-white"><Check className="w-3 h-3" /></Button>
               </div>
             ) : (
-              <span onClick={() => handleEditStart("header", paper.examName, "examName")} className="cursor-pointer hover:underline decoration-dashed">
-                {paper.examName ? paper.examName.replace(/_/g, ' ').toUpperCase() : ""}
+              <span onClick={() => handleEditStart("header", activePaper.examName, "examName")} className="cursor-pointer hover:underline decoration-dashed">
+                {activePaper.examName ? activePaper.examName.replace(/_/g, ' ').toUpperCase() : ""}
               </span>
             )}
           </div>
@@ -215,8 +348,8 @@ export function PaperPreview({ paper, onChange }: PaperPreviewProps) {
                 <Button size="icon-xs" onClick={handleEditSave} className="bg-black hover:bg-black/85 text-white"><Check className="w-3 h-3" /></Button>
               </div>
             ) : (
-              <span onClick={() => handleEditStart("header", paper.subject, "subject")} className="cursor-pointer hover:underline decoration-dashed">
-                {paper.subject}
+              <span onClick={() => handleEditStart("header", activePaper.subject, "subject")} className="cursor-pointer hover:underline decoration-dashed">
+                {activePaper.subject}
               </span>
             )}
             {" | "}
@@ -227,11 +360,11 @@ export function PaperPreview({ paper, onChange }: PaperPreviewProps) {
                 <Button size="icon-xs" onClick={handleEditSave} className="bg-black hover:bg-black/85 text-white"><Check className="w-3 h-3" /></Button>
               </div>
             ) : (
-              <span onClick={() => handleEditStart("header", paper.classText, "classText")} className="cursor-pointer hover:underline decoration-dashed">
-                {paper.classText}
+              <span onClick={() => handleEditStart("header", activePaper.classText, "classText")} className="cursor-pointer hover:underline decoration-dashed">
+                {activePaper.classText}
               </span>
             )}
-            {paper.teacherName !== undefined && paper.teacherName.trim() !== "" && (
+            {activePaper.teacherName !== undefined && activePaper.teacherName.trim() !== "" && (
               <>
                 {" | "}
                 {editingField?.type === "header" && editingField.id === "teacherName" ? (
@@ -240,10 +373,10 @@ export function PaperPreview({ paper, onChange }: PaperPreviewProps) {
                     <Button size="icon-xs" onClick={handleEditSave} className="bg-black hover:bg-black/85 text-white"><Check className="w-3 h-3" /></Button>
                   </div>
                 ) : (
-                  <span onClick={() => handleEditStart("header", paper.teacherName || "", "teacherName")} className="cursor-pointer hover:underline decoration-dashed">
-                    {paper.teacherName.toLowerCase().startsWith("teacher") || paper.teacherName.toLowerCase().startsWith("prepared by")
-                      ? paper.teacherName
-                      : `Teacher: ${paper.teacherName}`}
+                  <span onClick={() => handleEditStart("header", activePaper.teacherName || "", "teacherName")} className="cursor-pointer hover:underline decoration-dashed">
+                    {activePaper.teacherName.toLowerCase().startsWith("teacher") || activePaper.teacherName.toLowerCase().startsWith("prepared by")
+                      ? activePaper.teacherName
+                      : `Teacher: ${activePaper.teacherName}`}
                   </span>
                 )}
               </>
@@ -260,8 +393,8 @@ export function PaperPreview({ paper, onChange }: PaperPreviewProps) {
                   <Button size="icon-xs" onClick={handleEditSave} className="bg-black hover:bg-black/85 text-white"><Check className="w-3 h-3" /></Button>
                 </div>
               ) : (
-                <span onClick={() => handleEditStart("header", paper.timeText, "timeText")} className="cursor-pointer hover:underline decoration-dashed">
-                  {paper.timeText}
+                <span onClick={() => handleEditStart("header", activePaper.timeText, "timeText")} className="cursor-pointer hover:underline decoration-dashed">
+                  {activePaper.timeText}
                 </span>
               )}
             </div>
@@ -273,19 +406,19 @@ export function PaperPreview({ paper, onChange }: PaperPreviewProps) {
                   <Button size="icon-xs" onClick={handleEditSave} className="bg-black hover:bg-black/85 text-white"><Check className="w-3 h-3" /></Button>
                 </div>
               ) : (
-                <span onClick={() => handleEditStart("header", paper.maxMarksText, "maxMarksText")} className="cursor-pointer hover:underline decoration-dashed">
-                  {paper.maxMarksText}
+                <span onClick={() => handleEditStart("header", activePaper.maxMarksText, "maxMarksText")} className="cursor-pointer hover:underline decoration-dashed">
+                  {activePaper.maxMarksText}
                 </span>
               )}
             </div>
           </div>
 
           {/* Instructions */}
-          {paper.instructions.length > 0 && (
+          {activePaper.instructions && activePaper.instructions.length > 0 && (
             <div className="mt-4 p-3 border border-black/40 rounded bg-slate-50/50 text-[11px] font-sans space-y-1">
               <h4 className="font-bold uppercase tracking-wider text-[11px] font-serif">General Instructions:</h4>
               <ol className="list-decimal pl-4 space-y-1">
-                {paper.instructions.map((inst, index) => {
+                {activePaper.instructions.map((inst, index) => {
                   const displayInst = cleanInstructionText(inst);
                   return (
                     <li key={index} className="group relative">
@@ -317,7 +450,7 @@ export function PaperPreview({ paper, onChange }: PaperPreviewProps) {
 
           {/* Sections List */}
           <div className="mt-6 space-y-6">
-            {paper.sections.map((section, sIdx) => {
+            {activePaper.sections && activePaper.sections.map((section, sIdx) => {
               if (section.questions.length === 0) return null;
               
               return (
@@ -409,6 +542,69 @@ export function PaperPreview({ paper, onChange }: PaperPreviewProps) {
                                   <p className="whitespace-pre-wrap">{question.orQuestion}</p>
                                 </div>
                               )}
+
+                              {/* Solution & Marking Scheme Box */}
+                              {viewMode === "solutions" && (
+                                <div className="mt-3 p-3 rounded-lg bg-emerald-50/80 border border-emerald-500/40 text-emerald-950 text-xs font-sans space-y-1.5 shadow-xs">
+                                  <div className="flex items-center justify-between text-[11px] font-bold font-heading text-emerald-900 border-b border-emerald-500/20 pb-1">
+                                    <span className="flex items-center gap-1.5">
+                                      <Key className="w-3.5 h-3.5 text-emerald-600" />
+                                      Official Solution & Marking Scheme:
+                                    </span>
+                                    <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-mono border border-emerald-300">
+                                      [{question.marks} Marks Allocation]
+                                    </span>
+                                  </div>
+
+                                  {editingField?.type === "solution" && editingField.id === question.id ? (
+                                    <div className="flex gap-2 pt-1">
+                                      <Textarea
+                                        value={editValue}
+                                        onChange={(e) => setEditValue(e.target.value)}
+                                        className="flex-grow text-xs text-black border-emerald-600 bg-white"
+                                      />
+                                      <Button size="icon-xs" onClick={handleEditSave} className="bg-emerald-700 hover:bg-emerald-800 text-white shrink-0">
+                                        <Check className="w-3.5 h-3.5" />
+                                      </Button>
+                                    </div>
+                                  ) : (
+                                    <p 
+                                      onClick={() => handleEditStart("solution", question.solution || "", question.id)}
+                                      className="cursor-pointer hover:bg-emerald-100/60 p-1 rounded whitespace-pre-wrap leading-relaxed"
+                                    >
+                                      {question.solution || "No detailed solution recorded for this question. Click to add solution."}
+                                    </p>
+                                  )}
+
+                                  {/* OR Question Solution if applicable */}
+                                  {question.orQuestion && (
+                                    <div className="mt-2 pt-2 border-t border-emerald-500/20 space-y-1">
+                                      <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider block font-heading">
+                                        OR CHOICE SOLUTION:
+                                      </span>
+                                      {editingField?.type === "solution" && editingField.id === `${question.id}_or` ? (
+                                        <div className="flex gap-2 pt-1">
+                                          <Textarea
+                                            value={editValue}
+                                            onChange={(e) => setEditValue(e.target.value)}
+                                            className="flex-grow text-xs text-black border-emerald-600 bg-white"
+                                          />
+                                          <Button size="icon-xs" onClick={handleEditSave} className="bg-emerald-700 hover:bg-emerald-800 text-white shrink-0">
+                                            <Check className="w-3.5 h-3.5" />
+                                          </Button>
+                                        </div>
+                                      ) : (
+                                        <p 
+                                          onClick={() => handleEditStart("solution", question.orSolution || "", `${question.id}_or`)}
+                                          className="cursor-pointer hover:bg-emerald-100/60 p-1 rounded whitespace-pre-wrap leading-relaxed italic"
+                                        >
+                                          {question.orSolution || "No detailed solution recorded for internal choice question. Click to add solution."}
+                                        </p>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
                             </div>
                           )}
                         </div>
@@ -421,10 +617,24 @@ export function PaperPreview({ paper, onChange }: PaperPreviewProps) {
                         {/* Action buttons (no-print) */}
                         <div className="no-print opacity-0 group-hover:opacity-100 absolute right-0 top-0 flex flex-col gap-1 items-center bg-white border border-border rounded-lg p-1 shadow-md z-10">
                           <button 
+                            title="Edit Question"
                             onClick={() => handleEditStart("question", question.text, question.id, undefined, question.choices || undefined)} 
                             className="p-1 text-muted-foreground hover:text-indigo-500 cursor-pointer"
                           >
                             <Edit2 className="w-3.5 h-3.5" />
+                          </button>
+
+                          <button 
+                            title="AI Re-roll / Swap Question"
+                            onClick={() => handleSwapQuestion(question)} 
+                            disabled={swappingId === question.id}
+                            className="p-1 text-muted-foreground hover:text-purple-600 disabled:opacity-40 cursor-pointer"
+                          >
+                            {swappingId === question.id ? (
+                              <Loader2 className="w-3.5 h-3.5 animate-spin text-purple-600" />
+                            ) : (
+                              <RefreshCw className="w-3.5 h-3.5" />
+                            )}
                           </button>
                           
                           <button onClick={() => handleMoveQuestion(sIdx, qIdx, "up")} disabled={qIdx === 0} className="p-1 text-muted-foreground hover:text-indigo-500 disabled:opacity-30 cursor-pointer">

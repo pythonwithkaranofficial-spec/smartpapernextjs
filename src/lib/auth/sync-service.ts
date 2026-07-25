@@ -23,7 +23,6 @@ export class UserSyncService {
     const uid = 'uid' in firebaseUser ? firebaseUser.uid : (firebaseUser as DecodedIdToken).uid;
     const email = overrideData?.email || ('email' in firebaseUser ? firebaseUser.email : null) || '';
     const displayName = overrideData?.displayName || ('displayName' in firebaseUser ? firebaseUser.displayName : null) || null;
-    const photoURL = overrideData?.photoURL || ('photoURL' in firebaseUser ? firebaseUser.photoURL : null) || null;
     const emailVerified = ('emailVerified' in firebaseUser ? firebaseUser.emailVerified : false) || Boolean(('email_verified' in firebaseUser ? firebaseUser.email_verified : false));
 
     let provider = overrideData?.providerId || 'password';
@@ -37,6 +36,15 @@ export class UserSyncService {
 
     const isSuperAdmin = isSuperAdminEmail(email);
     const existingUser = await UserRepository.findUserByFirebaseUid(uid);
+
+    let photoURL: string | null = null;
+    if (overrideData?.photoURL !== undefined && overrideData.photoURL !== null) {
+      photoURL = overrideData.photoURL;
+    } else if ('photoURL' in firebaseUser && firebaseUser.photoURL) {
+      photoURL = firebaseUser.photoURL;
+    } else if (existingUser?.photo_url) {
+      photoURL = existingUser.photo_url;
+    }
 
     if (!existingUser) {
       const initialRole: UserRole = isSuperAdmin ? 'ADMIN' : 'USER';

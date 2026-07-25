@@ -122,8 +122,8 @@ const PLANS: PlanCardData[] = [
     price: "₹0",
     billingText: "Forever Free",
     icon: UserIcon,
-    gradient: "from-slate-500/20 to-zinc-500/10 border-border/50",
-    badgeGradient: "bg-slate-500/20 text-slate-300 border-slate-500/30",
+    gradient: "from-slate-500/10 via-zinc-500/5 to-slate-500/10 border-border/60 shadow-sm",
+    badgeGradient: "bg-slate-200 dark:bg-slate-500/20 text-slate-800 dark:text-slate-200 border-slate-300 dark:border-slate-500/30 font-bold",
     features: [
       "5 Question Papers per day",
       "Standard Board Curriculum",
@@ -400,7 +400,7 @@ export default function ProfilePage() {
 
     setUploadingPhoto(true);
     try {
-      const base64Photo = await compressImageToBase64(file, 120, 120, 0.7);
+      const base64Photo = await compressImageToBase64(file, 160, 160, 0.8);
       const user = AuthService.getCurrentUser();
 
       if (user) {
@@ -412,22 +412,8 @@ export default function ProfilePage() {
           console.warn("Firebase Auth photoURL limit caught:", fbErr);
         }
 
-        // Direct Sync to Turso DB user profile record
-        const token = await user.getIdToken();
-        await fetch("/api/auth/sync", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            displayName: user.displayName || displayName,
-            photoURL: base64Photo,
-            email: user.email,
-          }),
-        });
-
-        await syncUserWithTurso();
+        // Sync to Turso DB and update AuthProvider in real-time
+        await syncUserWithTurso(base64Photo);
         toast.success("Profile photo updated & saved successfully!");
       }
     } catch (err) {
@@ -591,7 +577,7 @@ export default function ProfilePage() {
     }
   };
 
-  const userPhoto = firebaseUser?.photoURL || dbUser?.photo_url;
+  const userPhoto = dbUser?.photo_url || firebaseUser?.photoURL;
   const currentPlan = dbUser?.plan || "FREE";
   const usedToday = usageInfo?.usedToday ?? 0;
   const dailyLimit = usageInfo?.dailyLimit ?? 5;
@@ -820,7 +806,7 @@ export default function ProfilePage() {
                             </div>
                             <div>
                               <h3 className="text-lg font-extrabold font-heading text-foreground">{plan.name}</h3>
-                              <p className="text-xs font-bold text-amber-400">{plan.limit}</p>
+                              <p className="text-xs font-bold text-amber-600 dark:text-amber-400">{plan.limit}</p>
                             </div>
                           </div>
 

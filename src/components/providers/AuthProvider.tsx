@@ -26,7 +26,7 @@ interface AuthContextType {
   sendVerificationEmail: () => Promise<void>;
   forgotPassword: (email: string) => Promise<void>;
   resetPassword: (code: string, newPassword: string) => Promise<void>;
-  syncUserWithTurso: () => Promise<DatabaseUser | null>;
+  syncUserWithTurso: (overridePhotoURL?: string | null) => Promise<DatabaseUser | null>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -50,7 +50,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   /**
    * Synchronize authenticated user record with Turso DB
    */
-  const syncUserWithTurso = useCallback(async (): Promise<DatabaseUser | null> => {
+  const syncUserWithTurso = useCallback(async (overridePhotoURL?: string | null): Promise<DatabaseUser | null> => {
     const user = AuthService.getCurrentUser();
     if (!user) {
       setDbUser(null);
@@ -59,6 +59,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     try {
       const token = await user.getIdToken();
+      const payloadPhoto = overridePhotoURL !== undefined 
+        ? overridePhotoURL 
+        : (user.photoURL || dbUser?.photo_url || null);
+
       const res = await fetch("/api/auth/sync", {
         method: "POST",
         headers: {
@@ -67,7 +71,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         },
         body: JSON.stringify({
           displayName: user.displayName,
-          photoURL: user.photoURL,
+          photoURL: payloadPhoto,
           email: user.email,
           providerId: user.providerData[0]?.providerId || "email",
         }),
@@ -82,7 +86,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error("[AuthProvider] Failed to sync user with Turso:", error);
     }
     return null;
-  }, []);
+  }, [dbUser?.photo_url]);
 
   // Listen to Firebase Auth state updates
   useEffect(() => {

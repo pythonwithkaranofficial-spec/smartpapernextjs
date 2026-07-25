@@ -66,7 +66,7 @@ export function Navbar() {
 
   const userDisplayName = firebaseUser?.displayName || dbUser?.name || firebaseUser?.email?.split('@')[0] || "User";
   const userInitials = userDisplayName.substring(0, 2).toUpperCase();
-  const userPhoto = firebaseUser?.photoURL || dbUser?.photo_url;
+  const userPhoto = dbUser?.photo_url || firebaseUser?.photoURL;
 
   return (
     <header

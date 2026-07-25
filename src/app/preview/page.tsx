@@ -18,6 +18,7 @@ import { formatScientificText, cleanInstructionText } from "@/lib/utils";
 export default function PreviewPage() {
   const router = useRouter();
   const [paper, setPaper] = useState<GeneratedPaper | null>(null);
+  const [activeSetIdx, setActiveSetIdx] = useState<number>(0);
   const [lastConfig, setLastConfig] = useState<PaperConfig | null>(null);
   const { generatePaper, loading } = useGeneratePaper();
 
@@ -54,6 +55,28 @@ export default function PreviewPage() {
                   : null,
               }))
             }));
+
+            // Format multi-sets if present
+            if (parsed.sets && Array.isArray(parsed.sets)) {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              parsed.sets = parsed.sets.map((setObj: any) => ({
+                ...setObj,
+                instructions: (setObj.instructions || []).map((ins: string) => cleanInstructionText(formatScientificText(ins))),
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                sections: (setObj.sections || []).map((section: any) => ({
+                  ...section,
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  questions: (section.questions || []).map((q: any) => ({
+                    ...q,
+                    text: formatScientificText(q.text || ""),
+                    orQuestion: q.orQuestion ? formatScientificText(q.orQuestion) : null,
+                    choices: (q.choices && q.choices.length > 0)
+                      ? q.choices.map((choice: string) => formatScientificText(choice || ""))
+                      : null,
+                  }))
+                }))
+              }));
+            }
             
             // eslint-disable-next-line react-hooks/set-state-in-effect
             setPaper(parsed);
@@ -90,6 +113,10 @@ export default function PreviewPage() {
     return <GeneratingOverlay />;
   }
 
+  const activePaperDisplay = (paper && paper.sets && paper.sets.length > 0 && paper.sets[activeSetIdx]) 
+    ? paper.sets[activeSetIdx] 
+    : paper;
+
   return (
     <>
       <AnimatedBackground />
@@ -102,23 +129,35 @@ export default function PreviewPage() {
               <div className="no-print space-y-3">
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-semibold uppercase tracking-wider">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  <span>AI Generation Complete</span>
+                  <span>
+                    {paper.sets && paper.sets.length > 1
+                      ? `Multi-Set Generation Complete (${paper.sets.length} Sets Created)`
+                      : "AI Generation Complete"}
+                  </span>
                 </div>
                 <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold font-heading tracking-tight">
                   Preview Question Paper
                 </h2>
                 <p className="text-muted-foreground text-sm max-w-md mx-auto">
-                  Review the questions below. Click on any text (school name, instruction, question body) to edit details inline before downloading.
+                  Review the questions below. Click on any text to edit details inline before downloading.
                 </p>
               </div>
 
               {/* Render paper sheet */}
               <div className="relative pt-6">
-                <PaperPreview paper={paper} onChange={handlePaperChange} />
+                <PaperPreview 
+                  paper={paper} 
+                  onChange={handlePaperChange} 
+                  activeSetIdx={activeSetIdx}
+                  onSelectSet={(idx) => setActiveSetIdx(idx)}
+                />
               </div>
 
               {/* Sticky download actions bar */}
-              <DownloadBar paper={paper} onRegenerate={handleRegenerate} />
+              <DownloadBar 
+                paper={activePaperDisplay || paper} 
+                onRegenerate={handleRegenerate} 
+              />
             </div>
           ) : (
             <div className="container mx-auto px-4 max-w-md text-center py-20 space-y-6">

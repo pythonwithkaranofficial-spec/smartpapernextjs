@@ -52,6 +52,80 @@ function cleanJsonString(str: string): string {
   return cleaned;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function shuffleArray<T>(array: T[], seed: number): T[] {
+  const arr = [...array];
+  let m = arr.length;
+  let t: T;
+  let i: number;
+  let pseudoRandom = seed;
+
+  while (m) {
+    pseudoRandom = (pseudoRandom * 9301 + 49297) % 233280;
+    i = Math.floor((pseudoRandom / 233280) * m--);
+    t = arr[m];
+    arr[m] = arr[i];
+    arr[i] = t;
+  }
+  return arr;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function generatePaperSets(basePaper: any, numberOfSets: number): any[] {
+  const setNames = ["SET A", "SET B", "SET C"];
+  const sets: any[] = [];
+
+  for (let s = 0; s < numberOfSets; s++) {
+    const setName = setNames[s];
+    let globalQNum = 1;
+
+    const baseExamName = basePaper.examName
+      ? basePaper.examName.replace(/\s*\((SET|CODE)\s*[A-Z0-9-]+\)/gi, "").trim()
+      : "EXAMINATION";
+    const setExamName = numberOfSets > 1 ? `${baseExamName} (${setName})` : baseExamName;
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const setSections = basePaper.sections.map((sec: any, secIdx: number) => {
+      // Shuffle questions within section for Set B (seed=2) and Set C (seed=3)
+      let questions = [...(sec.questions || [])];
+      if (s > 0) {
+        questions = shuffleArray(questions, s * 100 + secIdx * 10);
+      }
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const updatedQuestions = questions.map((q: any) => {
+        const qNum = globalQNum++;
+        let choices = q.choices ? [...q.choices] : null;
+
+        // Shuffle choices for MCQs in Set B and Set C
+        if (s > 0 && choices && choices.length === 4 && q.type === "mcq") {
+          choices = shuffleArray(choices, s * 50 + qNum);
+        }
+
+        return {
+          ...q,
+          number: qNum,
+          choices,
+        };
+      });
+
+      return {
+        ...sec,
+        questions: updatedQuestions,
+      };
+    });
+
+    sets.push({
+      ...basePaper,
+      examName: setExamName,
+      setName,
+      sections: setSections,
+    });
+  }
+
+  return sets;
+}
+
 export async function POST(request: NextRequest) {
   try {
     // 1. IP Rate Limiting Check
@@ -215,6 +289,8 @@ export async function POST(request: NextRequest) {
                   choices: (q.choices && q.choices.length > 0)
                     ? q.choices.map((choice: string) => formatScientificText(choice || ""))
                     : null,
+                  solution: q.solution ? formatScientificText(q.solution) : null,
+                  orSolution: q.orSolution ? formatScientificText(q.orSolution) : null,
                 };
               })
             };
@@ -222,7 +298,18 @@ export async function POST(request: NextRequest) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           totalQuestions: parsedPaper.sections.reduce((acc: number, sec: any) => acc + (sec.questions || []).length, 0),
           totalMarks: config.totalMarks,
+          hasAnswerKey: config.options.includeAnswerKey !== false,
         };
+
+        // If multi-set generation is requested (2 or 3 sets)
+        const requestedSets = config.options?.numberOfSets || (config as Record<string, unknown>).numberOfSets || 1;
+        if (typeof requestedSets === "number" && requestedSets > 1) {
+          const generatedSets = generatePaperSets(finalPaper, requestedSets);
+          finalPaper = {
+            ...generatedSets[0],
+            sets: generatedSets,
+          };
+        }
 
         break;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
