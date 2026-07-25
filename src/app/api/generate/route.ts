@@ -75,6 +75,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const validation = paperConfigSchema.safeParse(body);
     if (!validation.success) {
+      console.error("Paper config validation failed:", JSON.stringify(validation.error.format(), null, 2));
       return NextResponse.json(
         { error: "Invalid paper configuration.", details: validation.error.format() },
         { status: 400 }

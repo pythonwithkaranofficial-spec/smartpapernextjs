@@ -20,7 +20,7 @@ export const paperOptionsSchema = z.object({
   includeTime: z.boolean().default(true),
   includeMaxMarks: z.boolean().default(true),
   includeInstructions: z.boolean().default(true),
-  instructionsText: z.string().max(500, "Instructions are too long").default(""),
+  instructionsText: z.string().max(3000, "Instructions are too long").default(""),
   includeInternalChoice: z.boolean().default(false),
 });
 
@@ -39,6 +39,17 @@ export const paperConfigSchema = z.object({
   customClass: z.string().optional(),
   customSubject: z.string().optional(),
   customChapters: z.string().optional(),
+  blueprintId: z.string().optional(),
+  isBlueprintMode: z.boolean().optional(),
+  unitWeightage: z
+    .array(
+      z.object({
+        unit: z.string(),
+        topic: z.string(),
+        marks: z.number(),
+      })
+    )
+    .optional(),
 });
 
 export type PaperConfigInput = z.infer<typeof paperConfigSchema>;
