@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { formatScientificText } from "@/lib/utils";
+import { formatScientificText, cleanInstructionText } from "@/lib/utils";
 
 interface PaperPreviewProps {
   paper: GeneratedPaper;
@@ -285,29 +285,32 @@ export function PaperPreview({ paper, onChange }: PaperPreviewProps) {
             <div className="mt-4 p-3 border border-black/40 rounded bg-slate-50/50 text-[11px] font-sans space-y-1">
               <h4 className="font-bold uppercase tracking-wider text-[11px] font-serif">General Instructions:</h4>
               <ol className="list-decimal pl-4 space-y-1">
-                {paper.instructions.map((inst, index) => (
-                  <li key={index} className="group relative">
-                    {editingField?.type === "instruction" && editingField.index === index ? (
-                      <div className="flex gap-2 w-full pt-1">
-                        <Textarea value={editValue} onChange={(e) => setEditValue(e.target.value)} className="flex-grow text-[11px] h-12 text-black border-black" />
-                        <Button size="icon-xs" onClick={handleEditSave} className="bg-black hover:bg-black/85 text-white shrink-0"><Check className="w-3 h-3" /></Button>
-                      </div>
-                    ) : (
-                      <div className="flex items-center justify-between pr-8">
-                        <span onClick={() => handleEditStart("instruction", inst, undefined, index)} className="cursor-pointer flex-grow hover:bg-slate-100/50">
-                          {inst}
-                        </span>
-                        
-                        {/* Editor triggers (no-print) */}
-                        <div className="no-print opacity-0 group-hover:opacity-100 flex gap-1 shrink-0 absolute right-0 top-1/2 -translate-y-1/2">
-                          <button onClick={() => handleEditStart("instruction", inst, undefined, index)} className="p-0.5 text-muted-foreground hover:text-black cursor-pointer">
-                            <Edit2 className="w-3 h-3" />
-                          </button>
+                {paper.instructions.map((inst, index) => {
+                  const displayInst = cleanInstructionText(inst);
+                  return (
+                    <li key={index} className="group relative">
+                      {editingField?.type === "instruction" && editingField.index === index ? (
+                        <div className="flex gap-2 w-full pt-1">
+                          <Textarea value={editValue} onChange={(e) => setEditValue(e.target.value)} className="flex-grow text-[11px] h-12 text-black border-black" />
+                          <Button size="icon-xs" onClick={handleEditSave} className="bg-black hover:bg-black/85 text-white shrink-0"><Check className="w-3 h-3" /></Button>
                         </div>
-                      </div>
-                    )}
-                  </li>
-                ))}
+                      ) : (
+                        <div className="flex items-center justify-between pr-8">
+                          <span onClick={() => handleEditStart("instruction", displayInst, undefined, index)} className="cursor-pointer flex-grow hover:bg-slate-100/50">
+                            {displayInst}
+                          </span>
+                          
+                          {/* Editor triggers (no-print) */}
+                          <div className="no-print opacity-0 group-hover:opacity-100 flex gap-1 shrink-0 absolute right-0 top-1/2 -translate-y-1/2">
+                            <button onClick={() => handleEditStart("instruction", displayInst, undefined, index)} className="p-0.5 text-muted-foreground hover:text-black cursor-pointer">
+                              <Edit2 className="w-3 h-3" />
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </li>
+                  );
+                })}
               </ol>
             </div>
           )}

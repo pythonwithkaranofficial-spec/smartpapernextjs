@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { AlertCircle, ArrowLeft } from "lucide-react";
 import { useGeneratePaper } from "@/hooks/useGeneratePaper";
 import { GeneratingOverlay } from "@/components/preview/GeneratingOverlay";
-import { formatScientificText } from "@/lib/utils";
+import { formatScientificText, cleanInstructionText } from "@/lib/utils";
 
 export default function PreviewPage() {
   const router = useRouter();
@@ -39,7 +39,7 @@ export default function PreviewPage() {
             parsed.timeText = parsed.timeText || "";
             parsed.maxMarksText = parsed.maxMarksText || "";
             
-            parsed.instructions = (parsed.instructions || []).map((ins: string) => formatScientificText(ins));
+            parsed.instructions = (parsed.instructions || []).map((ins: string) => cleanInstructionText(formatScientificText(ins)));
             
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             parsed.sections = parsed.sections.map((section: any) => ({

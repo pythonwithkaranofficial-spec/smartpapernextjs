@@ -58,6 +58,16 @@ export function compressImageToBase64(
   });
 }
 
+// Helper to clean pre-baked leading numbers (e.g., "1.", "1)", "1. 1.", "1.\t") from instruction strings
+export function cleanInstructionText(text: string): string {
+  if (!text) return "";
+  let cleaned = text.trim();
+  while (/^\s*\d+[\.\)\:\t]\s*/.test(cleaned)) {
+    cleaned = cleaned.replace(/^\s*\d+[\.\)\:\t]\s*/, "").trim();
+  }
+  return cleaned;
+}
+
 export function formatScientificText(text: string): string {
   if (!text) return "";
   

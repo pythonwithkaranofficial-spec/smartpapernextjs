@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { generatePDF } from "@/lib/pdf-generator";
 import { generateDOCX } from "@/lib/docx-generator";
 import Link from "next/link";
-import { cn } from "@/lib/utils";
+import { cn, cleanInstructionText } from "@/lib/utils";
 
 interface DownloadBarProps {
   paper: GeneratedPaper;
@@ -67,8 +67,8 @@ export function DownloadBar({ paper, onRegenerate }: DownloadBarProps) {
 
       if (paper.instructions.length > 0) {
         text += `General Instructions:\n`;
-        paper.instructions.forEach((ins) => {
-          text += `- ${ins}\n`;
+        paper.instructions.forEach((ins, idx) => {
+          text += `${idx + 1}. ${cleanInstructionText(ins)}\n`;
         });
         text += `\n`;
       }

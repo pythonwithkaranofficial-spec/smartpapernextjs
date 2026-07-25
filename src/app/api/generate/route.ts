@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenAI } from "@google/genai";
 import { buildGeminiPrompt } from "@/lib/prompt-builder";
 import { paperConfigSchema } from "@/lib/validations";
-import { formatScientificText } from "@/lib/utils";
+import { formatScientificText, cleanInstructionText } from "@/lib/utils";
 import { EXAM_TYPES } from "@/lib/exam-types";
 
 // Initialize Gemini Client
@@ -175,7 +175,7 @@ export async function POST(request: NextRequest) {
           timeText: config.duration,
           maxMarksText: isHindiSubject ? `${config.totalMarks} अंक` : `${config.totalMarks} Marks`,
           instructions: config.options.includeInstructions
-            ? config.options.instructionsText
+            ? (config.options.instructionsText
               ? config.options.instructionsText.split("\n").filter(line => line.trim().length > 0)
               : isHindiSubject
                 ? [
@@ -198,6 +198,7 @@ export async function POST(request: NextRequest) {
                     "Section E contains long answer questions carrying 5 marks each.",
                     "Use of calculators or cellphones is strictly prohibited."
                   ]
+              ).map(line => cleanInstructionText(line))
             : [],
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           sections: parsedPaper.sections.map((section: any) => {

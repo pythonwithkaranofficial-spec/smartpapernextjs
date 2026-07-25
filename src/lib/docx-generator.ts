@@ -11,6 +11,7 @@ import {
 } from "docx";
 import { saveAs } from "file-saver";
 import { GeneratedPaper } from "@/types";
+import { cleanInstructionText } from "@/lib/utils";
 
 export async function generateDOCX(paper: GeneratedPaper) {
   // Check if subject is Hindi
@@ -159,13 +160,14 @@ export async function generateDOCX(paper: GeneratedPaper) {
     ];
 
     paper.instructions.forEach((ins, idx) => {
+      const cleanIns = cleanInstructionText(ins);
       instructionParagraphs.push(
         new Paragraph({
           spacing: { before: 30, after: 30 },
           indent: { left: 360, hanging: 360 },
           children: [
             new TextRun({
-              text: `${idx + 1}.\t${ins}`,
+              text: `${idx + 1}.\t${cleanIns}`,
               size: 18, // 9pt
               font: docFont,
             }),
