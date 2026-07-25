@@ -125,7 +125,7 @@ export function SyllabusExplorer({
         includeInstructions: true,
         instructionsText: activeBlueprint.defaultInstructions || "1. All questions are compulsory.",
         includeInternalChoice: false,
-        includeAnswerKey: true,
+        includeAnswerKey: false,
         numberOfSets: 1,
       },
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

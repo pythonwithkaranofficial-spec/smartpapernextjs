@@ -58,7 +58,7 @@ const initialConfig: PaperConfig = {
     includeInstructions: true,
     instructionsText: "1. All questions are compulsory.\n2. The question paper consists of standard sections.\n3. Section A contains 1 mark questions, Section B contains 2 marks questions.\n4. Write answers clearly and support with diagrams where needed.",
     includeInternalChoice: false,
-    includeAnswerKey: true,
+    includeAnswerKey: false,
   },
   selectedChapters: [],
 };

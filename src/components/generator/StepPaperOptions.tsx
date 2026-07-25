@@ -268,7 +268,7 @@ export function StepPaperOptions({
               </p>
             </div>
             <Switch
-              checked={currentOptions.includeAnswerKey !== false}
+              checked={Boolean(currentOptions.includeAnswerKey)}
               onCheckedChange={() => handleToggle("includeAnswerKey")}
             />
           </div>

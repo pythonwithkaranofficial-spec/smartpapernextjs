@@ -22,7 +22,7 @@ export const paperOptionsSchema = z.object({
   includeInstructions: z.boolean().default(true),
   instructionsText: z.string().max(3000, "Instructions are too long").default(""),
   includeInternalChoice: z.boolean().default(false),
-  includeAnswerKey: z.boolean().default(true),
+  includeAnswerKey: z.boolean().default(false),
   numberOfSets: z.number().min(1).max(3).default(1),
 });
 
