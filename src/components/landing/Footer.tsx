@@ -49,20 +49,24 @@ export function Footer() {
           {/* Links Column 2 */}
           <div className="md:col-span-4">
             <h4 className="font-heading font-bold text-sm mb-4 tracking-wide uppercase text-foreground/90">Contact & Legal</h4>
-            <ul className="space-y-3 text-sm text-muted-foreground">
+            <ul className="space-y-2.5 text-sm text-muted-foreground">
               <li className="flex items-center gap-2">
                 <Mail className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
                 <a href="mailto:tpaofficial1999@gmail.com" className="hover:text-indigo-400 transition-colors">
                   tpaofficial1999@gmail.com
                 </a>
               </li>
-              <li className="flex items-center gap-2">
-                <Shield className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
-                <span>Daily Paper Limits: 5 papers/day</span>
+              <li>
+                <Link href="/privacy" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors flex items-center gap-2">
+                  <Shield className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
+                  <span>Privacy Policy</span>
+                </Link>
               </li>
-              <li className="flex items-center gap-2">
-                <BookOpen className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
-                <span>CBSE Class 9, 10, 11, 12 Support</span>
+              <li>
+                <Link href="/terms" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors flex items-center gap-2">
+                  <BookOpen className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
+                  <span>Terms & Conditions</span>
+                </Link>
               </li>
             </ul>
           </div>
@@ -71,10 +75,17 @@ export function Footer() {
 
         {/* Bottom Area */}
         <div className="pt-8 border-t border-border/20 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted-foreground text-center">
-          <div>
-            &copy; {currentYear} Smart Paper Generator AI. All rights reserved.
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
+            <span>&copy; {currentYear} Smart Paper Generator AI. All rights reserved.</span>
+            <Link href="/privacy" className="hover:text-indigo-400 transition-colors underline underline-offset-4">
+              Privacy Policy
+            </Link>
+            <span>•</span>
+            <Link href="/terms" className="hover:text-indigo-400 transition-colors underline underline-offset-4">
+              Terms & Conditions
+            </Link>
           </div>
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 shrink-0">
             <span>Made with</span>
             <Heart className="w-3.5 h-3.5 text-red-500 fill-red-500 animate-pulse" />
             <span>by</span>
