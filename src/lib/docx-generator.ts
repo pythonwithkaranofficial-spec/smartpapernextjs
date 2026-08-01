@@ -119,34 +119,45 @@ export async function generateDOCX(paper: GeneratedPaper) {
   }
 
   // 4. Time and Maximum Marks subheader with Tab Stop alignment (single border-bottom)
-  children.push(
-    new Paragraph({
-      spacing: { before: 120, after: 120 },
-      border: {
-        bottom: { color: "000000", space: 5, style: BorderStyle.SINGLE, size: 6 },
-      },
-      tabStops: [
-        {
-          type: TabStopType.RIGHT,
-          position: TabStopPosition.MAX,
-        },
-      ],
-      children: [
+  if ((paper.timeText && paper.timeText.trim()) || (paper.maxMarksText && paper.maxMarksText.trim())) {
+    const timeMarksChildren: TextRun[] = [];
+    if (paper.timeText && paper.timeText.trim()) {
+      timeMarksChildren.push(
         new TextRun({
           text: `Time Allowed: ${paper.timeText}`,
           bold: true,
           size: 19, // 9.5pt
           font: docFont,
-        }),
+        })
+      );
+    }
+    if (paper.maxMarksText && paper.maxMarksText.trim()) {
+      timeMarksChildren.push(
         new TextRun({
-          text: `\tMaximum Marks: ${paper.maxMarksText}`,
+          text: paper.timeText && paper.timeText.trim() ? `\tMaximum Marks: ${paper.maxMarksText}` : `Maximum Marks: ${paper.maxMarksText}`,
           bold: true,
           size: 19,
           font: docFont,
-        }),
-      ],
-    })
-  );
+        })
+      );
+    }
+
+    children.push(
+      new Paragraph({
+        spacing: { before: 120, after: 120 },
+        border: {
+          bottom: { color: "000000", space: 5, style: BorderStyle.SINGLE, size: 6 },
+        },
+        tabStops: [
+          {
+            type: TabStopType.RIGHT,
+            position: TabStopPosition.MAX,
+          },
+        ],
+        children: timeMarksChildren,
+      })
+    );
+  }
 
   // Add small spacer
   addSpacing(100);

@@ -307,7 +307,7 @@ export function PaperPreview({ paper, onChange, onSelectSet, activeSetIdx = 0, i
           style={zoomStyle}
         >
           {/* School Name */}
-          {activePaper.schoolName !== undefined && (
+          {activePaper.schoolName && activePaper.schoolName.trim() !== "" && (
             <div className="text-center font-bold font-serif text-lg tracking-wide uppercase group relative pr-12 pl-12">
               {editingField?.type === "header" && editingField.id === "schoolName" ? (
                 <div className="flex gap-2 justify-center w-full">
@@ -323,7 +323,7 @@ export function PaperPreview({ paper, onChange, onSelectSet, activeSetIdx = 0, i
                   onClick={() => handleEditStart("header", activePaper.schoolName || "", "schoolName")}
                   className="cursor-pointer border-b border-dashed border-transparent hover:border-black/30 pb-0.5"
                 >
-                  {activePaper.schoolName ? activePaper.schoolName.toUpperCase() : "YOUR SCHOOL NAME HERE"}
+                  {activePaper.schoolName.toUpperCase()}
                 </span>
               )}
             </div>
@@ -401,34 +401,41 @@ export function PaperPreview({ paper, onChange, onSelectSet, activeSetIdx = 0, i
           )}
 
           {/* Subheader: Time & Marks */}
-          <div className="flex justify-between items-center border-b border-black pb-2 mt-4 text-xs font-bold font-serif">
-            <div>
-              Time Allowed:{" "}
-              {editingField?.type === "header" && editingField.id === "timeText" ? (
-                <div className="inline-flex gap-2">
-                  <Input value={editValue} onChange={(e) => setEditValue(e.target.value)} className="w-28 h-6 text-xs text-black border-black px-1" />
-                  <Button size="icon-xs" onClick={handleEditSave} className="bg-black hover:bg-black/85 text-white"><Check className="w-3 h-3" /></Button>
+          {(activePaper.timeText || activePaper.maxMarksText) && (
+            <div className="flex justify-between items-center border-b border-black pb-2 mt-4 text-xs font-bold font-serif">
+              {activePaper.timeText ? (
+                <div>
+                  Time Allowed:{" "}
+                  {editingField?.type === "header" && editingField.id === "timeText" ? (
+                    <div className="inline-flex gap-2">
+                      <Input value={editValue} onChange={(e) => setEditValue(e.target.value)} className="w-28 h-6 text-xs text-black border-black px-1" />
+                      <Button size="icon-xs" onClick={handleEditSave} className="bg-black hover:bg-black/85 text-white"><Check className="w-3 h-3" /></Button>
+                    </div>
+                  ) : (
+                    <span onClick={() => handleEditStart("header", activePaper.timeText, "timeText")} className="cursor-pointer hover:underline decoration-dashed">
+                      {activePaper.timeText}
+                    </span>
+                  )}
                 </div>
-              ) : (
-                <span onClick={() => handleEditStart("header", activePaper.timeText, "timeText")} className="cursor-pointer hover:underline decoration-dashed">
-                  {activePaper.timeText}
-                </span>
-              )}
-            </div>
-            <div>
-              Maximum Marks:{" "}
-              {editingField?.type === "header" && editingField.id === "maxMarksText" ? (
-                <div className="inline-flex gap-2">
-                  <Input value={editValue} onChange={(e) => setEditValue(e.target.value)} className="w-20 h-6 text-xs text-black border-black px-1" />
-                  <Button size="icon-xs" onClick={handleEditSave} className="bg-black hover:bg-black/85 text-white"><Check className="w-3 h-3" /></Button>
+              ) : <div />}
+
+              {activePaper.maxMarksText ? (
+                <div>
+                  Maximum Marks:{" "}
+                  {editingField?.type === "header" && editingField.id === "maxMarksText" ? (
+                    <div className="inline-flex gap-2">
+                      <Input value={editValue} onChange={(e) => setEditValue(e.target.value)} className="w-20 h-6 text-xs text-black border-black px-1" />
+                      <Button size="icon-xs" onClick={handleEditSave} className="bg-black hover:bg-black/85 text-white"><Check className="w-3 h-3" /></Button>
+                    </div>
+                  ) : (
+                    <span onClick={() => handleEditStart("header", activePaper.maxMarksText, "maxMarksText")} className="cursor-pointer hover:underline decoration-dashed">
+                      {activePaper.maxMarksText}
+                    </span>
+                  )}
                 </div>
-              ) : (
-                <span onClick={() => handleEditStart("header", activePaper.maxMarksText, "maxMarksText")} className="cursor-pointer hover:underline decoration-dashed">
-                  {activePaper.maxMarksText}
-                </span>
-              )}
+              ) : <div />}
             </div>
-          </div>
+          )}
 
           {/* Instructions */}
           {activePaper.instructions && activePaper.instructions.length > 0 && (
