@@ -119,7 +119,18 @@ export default function GetAnswerKeyPage() {
         body: formData,
       });
 
-      const data = await res.json();
+      const responseText = await res.text();
+      let data: any;
+      try {
+        data = JSON.parse(responseText);
+      } catch (parseErr) {
+        console.error("Non-JSON Server Response:", responseText);
+        throw new Error(
+          !res.ok 
+            ? `Server error (${res.status}): Please check input or file formatting.` 
+            : "Server returned invalid data format."
+        );
+      }
 
       if (!res.ok || data.error) {
         throw new Error(data.error || "Failed to generate answer key.");

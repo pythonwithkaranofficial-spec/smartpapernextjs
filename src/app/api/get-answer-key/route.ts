@@ -2,15 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenAI } from "@google/genai";
 import { formatScientificText, cleanInstructionText } from "@/lib/utils";
 import mammoth from "mammoth";
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const pdfParse = require("pdf-parse");
 
 const apiKey = process.env.GEMINI_API_KEY;
 const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
 
 // Server-side rate limiting
 const rateLimitMap = new Map<string, number[]>();
-const DAILY_LIMIT = 15;
+const DAILY_LIMIT = 25;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 function isRateLimited(ip: string): boolean {
@@ -43,14 +41,14 @@ export async function POST(request: NextRequest) {
     const ip = request.headers.get("x-forwarded-for") || "127.0.0.1";
     if (isRateLimited(ip)) {
       return NextResponse.json(
-        { error: "Daily limit reached. You can generate up to 15 answer keys per 24 hours." },
+        { error: "Daily limit reached. You can generate up to 25 answer keys per 24 hours." },
         { status: 429 }
       );
     }
 
     if (!ai) {
       return NextResponse.json(
-        { error: "AI API key is not configured on the server." },
+        { error: "AI API key (GEMINI_API_KEY) is not configured on the server." },
         { status: 500 }
       );
     }
@@ -68,7 +66,7 @@ export async function POST(request: NextRequest) {
 
     if (contentType.includes("multipart/form-data")) {
       const formData = await request.formData();
-      const textInput = formData.get("textInput") as string || "";
+      const textInput = (formData.get("textInput") as string || "").trim();
       outputMode = (formData.get("outputMode") as "questions_and_answers" | "answers_only") || "questions_and_answers";
       schoolName = (formData.get("schoolName") as string || "").trim();
       examName = (formData.get("examName") as string || "ANSWER KEY & SOLUTIONS").trim();
@@ -82,24 +80,36 @@ export async function POST(request: NextRequest) {
         const fileName = file.name.toLowerCase();
 
         if (fileName.endsWith(".pdf")) {
+          // Send PDF directly as base64 inlineData for Gemini 2.5 Flash multimodal vision/document parsing
+          fileBase64Pdf = fileBuffer.toString("base64");
+          
+          // Also attempt text extraction as backup
           try {
+            // eslint-disable-next-line @typescript-eslint/no-require-imports
+            const pdfParse = require("pdf-parse");
             const parsedPdf = await pdfParse(fileBuffer);
-            rawQuestionsText = parsedPdf.text || "";
+            if (parsedPdf && parsedPdf.text && parsedPdf.text.trim()) {
+              rawQuestionsText = parsedPdf.text.trim();
+            }
           } catch (e) {
-            console.warn("pdf-parse fallback to inline base64 for Gemini:", e);
-            fileBase64Pdf = fileBuffer.toString("base64");
+            console.log("PDF parse fallback to Gemini native inline document reader:", e);
           }
         } else if (fileName.endsWith(".docx") || fileName.endsWith(".doc")) {
-          const parsedDoc = await mammoth.extractRawText({ buffer: fileBuffer });
-          rawQuestionsText = parsedDoc.value || "";
+          try {
+            const parsedDoc = await mammoth.extractRawText({ buffer: fileBuffer });
+            rawQuestionsText = parsedDoc.value || "";
+          } catch (e) {
+            console.error("DOCX extraction error:", e);
+            rawQuestionsText = fileBuffer.toString("utf-8");
+          }
         } else {
           // Plain text or fallback
           rawQuestionsText = fileBuffer.toString("utf-8");
         }
       }
 
-      if (textInput.trim()) {
-        rawQuestionsText = (rawQuestionsText + "\n\n" + textInput).trim();
+      if (textInput) {
+        rawQuestionsText = (rawQuestionsText ? `${rawQuestionsText}\n\n${textInput}` : textInput).trim();
       }
     } else {
       const body = await request.json();
@@ -119,17 +129,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const systemPrompt = `You are an expert CBSE/Academic Teacher and Exam Evaluator.
-Your task is to analyze the provided set of questions (which can be typed text, pasted questions, or document contents) and generate complete, accurate, step-by-step answers and detailed marking schemes for EVERY single question.
+    const systemPrompt = `You are an expert CBSE & Competitive Academic Teacher and Exam Evaluator.
+Your task is to analyze the provided questions and generate complete, accurate, step-by-step answers and detailed marking schemes for EVERY single question.
 
 RULES FOR THE AI:
-1. Parse every question provided in the input text accurately.
-2. Group the questions into logical sections (e.g. "Section A - Objective & MCQs", "Section B - Short Answer Questions", "Section C - Long Answer & Detailed Solutions", etc.). If no clear sections exist, create appropriate logical sections.
+1. Parse every question provided in the input text or document accurately.
+2. Group the questions into logical sections (e.g. "Section A - Objective & MCQs", "Section B - Short Answer Questions", "Section C - Long Answer & Detailed Solutions").
 3. For EVERY question, write a comprehensive, accurate, step-by-step solution ("solution") with full explanation and marking breakdown.
-4. If a question is an MCQ, extract all 4 options into the "choices" array and explicitly state the correct option + detailed reason in "solution".
+4. If a question is an MCQ, extract all choices into the "choices" array and explicitly state the correct option + detailed reason in "solution".
 5. If a question contains internal choices ("OR"), include the secondary question in "orQuestion" and its solution in "orSolution".
 6. Format mathematical formulas using standard LaTeX notation ($...$ or \\(...\\)).
-7. Return strictly a JSON object with this exact structure:
+7. Return strictly a JSON object matching this exact structure:
 
 {
   "sections": [
@@ -152,21 +162,20 @@ RULES FOR THE AI:
   ]
 }
 
-DO NOT wrap the JSON in extra text outside the JSON object. Return raw JSON.`;
+Return raw JSON only. Do not wrap in markdown or introductory text outside JSON.`;
 
-    // Prepare contents array for Gemini
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const contents: any[] = [];
+    const parts: any[] = [];
     if (fileBase64Pdf) {
-      contents.push({
+      parts.push({
         inlineData: {
           mimeType: "application/pdf",
           data: fileBase64Pdf,
         },
       });
     }
-    contents.push({
-      text: `${systemPrompt}\n\nUSER PROVIDED QUESTIONS DATA:\n${rawQuestionsText || "Please read the attached PDF document above and answer all questions."}`,
+    parts.push({
+      text: `${systemPrompt}\n\nUSER PROVIDED QUESTIONS DATA:\n${rawQuestionsText || "Please read the attached PDF document and generate complete answers and marking scheme for all questions contained within it."}`,
     });
 
     let finalPaper: Record<string, unknown> | null = null;
@@ -176,7 +185,7 @@ DO NOT wrap the JSON in extra text outside the JSON object. Return raw JSON.`;
       try {
         const response = await ai.models.generateContent({
           model: "gemini-2.5-flash",
-          contents,
+          contents: [{ role: "user", parts }],
           config: {
             responseMimeType: "application/json",
             temperature: 0.3,
@@ -184,19 +193,18 @@ DO NOT wrap the JSON in extra text outside the JSON object. Return raw JSON.`;
         });
 
         const responseText = response.text;
-        if (!responseText) throw new Error("Empty response from AI.");
+        if (!responseText) throw new Error("Empty response from AI model.");
 
         const cleanedJson = cleanJsonString(responseText);
         const parsedPaper = JSON.parse(cleanedJson);
 
-        if (!parsedPaper || !parsedPaper.sections || !Array.isArray(parsedPaper.sections)) {
-          throw new Error("Invalid paper structure generated.");
+        if (!parsedPaper || !parsedPaper.sections || !Array.isArray(parsedPaper.sections) || parsedPaper.sections.length === 0) {
+          throw new Error("Invalid paper structure generated by AI.");
         }
 
         const isAnswersOnly = outputMode === "answers_only";
         let questionCounter = 1;
 
-        // Structure into GeneratedPaper layout
         finalPaper = {
           schoolName: schoolName ? schoolName.toUpperCase() : undefined,
           teacherName: teacherName ? teacherName : undefined,
@@ -257,14 +265,14 @@ DO NOT wrap the JSON in extra text outside the JSON object. Return raw JSON.`;
     }
 
     if (!finalPaper) {
-      throw new Error(lastError?.message || "Failed to generate answer key from AI.");
+      throw new Error(lastError?.message || "Failed to generate answer key after multiple AI attempts.");
     }
 
     recordRequest(ip);
     return NextResponse.json(finalPaper);
   } catch (error: unknown) {
     const err = error instanceof Error ? error : new Error(String(error));
-    console.error("Get Answer Key API error:", err);
+    console.error("Get Answer Key API Error:", err);
     return NextResponse.json(
       { error: "Failed to generate answer key.", details: err.message },
       { status: 500 }
