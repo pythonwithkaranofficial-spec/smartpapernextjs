@@ -20,10 +20,16 @@ export default function PreviewPage() {
   const [paper, setPaper] = useState<GeneratedPaper | null>(null);
   const [activeSetIdx, setActiveSetIdx] = useState<number>(0);
   const [lastConfig, setLastConfig] = useState<PaperConfig | null>(null);
+  const [initialMode, setInitialMode] = useState<"paper" | "solutions" | undefined>(undefined);
   const { generatePaper, loading } = useGeneratePaper();
 
   useEffect(() => {
     if (typeof window !== "undefined") {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get("mode") === "solutions") {
+        setInitialMode("solutions");
+      }
+
       const savedPaper = sessionStorage.getItem("generated_paper");
       const savedConfig = sessionStorage.getItem("last_paper_config");
 
@@ -150,6 +156,7 @@ export default function PreviewPage() {
                   onChange={handlePaperChange} 
                   activeSetIdx={activeSetIdx}
                   onSelectSet={(idx) => setActiveSetIdx(idx)}
+                  initialViewMode={initialMode}
                 />
               </div>
 

@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowRight, Sparkles, FileText, CheckCircle2 } from "lucide-react";
+import { ArrowRight, Sparkles, FileText, CheckCircle2, Key } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { MagneticButton } from "../shared/MagneticButton";
 import { cn } from "@/lib/utils";
@@ -75,6 +75,20 @@ export function Hero() {
               variants={itemVariants}
               className="flex flex-wrap items-center gap-4 mb-10 w-full sm:w-auto"
             >
+              <MagneticButton>
+                <Link
+                  href="/get-answer-key"
+                  className={cn(
+                    buttonVariants({ variant: "default" }),
+                    "rounded-full px-8 py-6 text-base font-heading font-medium tracking-wide bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-[0_4px_20px_rgba(16,185,129,0.35)] hover:shadow-[0_6px_25px_rgba(16,185,129,0.5)] transition-all duration-300 border-none w-full sm:w-auto inline-flex items-center justify-center gap-2"
+                  )}
+                >
+                  <Key className="w-4 h-4" />
+                  Get Answer Key
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+              </MagneticButton>
+
               <MagneticButton>
                 <Link
                   href="/generate"

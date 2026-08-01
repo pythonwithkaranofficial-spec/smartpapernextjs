@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import { ThemeToggle } from "./ThemeToggle";
 import { buttonVariants } from "@/components/ui/button";
-import { Sparkles, Menu, User as UserIcon, LogOut, ShieldCheck, AlertCircle, History, Shield } from "lucide-react";
+import { Sparkles, Menu, User as UserIcon, LogOut, ShieldCheck, AlertCircle, History, Shield, Key } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/components/providers/AuthProvider";
@@ -230,6 +230,17 @@ export function Navbar() {
             </button>
           )}
 
+          <Link
+            href="/get-answer-key"
+            className={cn(
+              buttonVariants({ variant: "outline" }),
+              "rounded-full px-4 py-2.5 font-heading font-medium tracking-wide border-emerald-500/40 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 hover:text-emerald-300 shadow-[0_4px_14px_rgba(16,185,129,0.15)] transition-all duration-300 inline-flex items-center justify-center text-xs sm:text-sm gap-1.5"
+            )}
+          >
+            <Key className="w-3.5 h-3.5" />
+            Get Answer Key
+          </Link>
+
           {!isGeneratePage ? (
             <Link
               href="/generate"
@@ -356,6 +367,18 @@ export function Navbar() {
                     Sign In / Register
                   </button>
                 )}
+
+                <Link
+                  href="/get-answer-key"
+                  onClick={() => setIsOpen(false)}
+                  className={cn(
+                    buttonVariants({ variant: "outline" }),
+                    "w-full rounded-xl py-5 border-emerald-500/40 bg-emerald-500/10 text-emerald-400 font-heading font-medium inline-flex items-center justify-center gap-2"
+                  )}
+                >
+                  <Key className="w-4 h-4" />
+                  Get Answer Key
+                </Link>
 
                 {!isGeneratePage ? (
                   <Link

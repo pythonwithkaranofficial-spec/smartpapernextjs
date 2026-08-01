@@ -15,11 +15,14 @@ interface PaperPreviewProps {
   onChange: (updatedPaper: GeneratedPaper) => void;
   onSelectSet?: (setIdx: number) => void;
   activeSetIdx?: number;
+  initialViewMode?: "paper" | "solutions";
 }
 
-export function PaperPreview({ paper, onChange, onSelectSet, activeSetIdx = 0 }: PaperPreviewProps) {
+export function PaperPreview({ paper, onChange, onSelectSet, activeSetIdx = 0, initialViewMode }: PaperPreviewProps) {
   const [zoom, setZoom] = useState(100);
-  const [viewMode, setViewMode] = useState<"paper" | "solutions">("paper");
+  const [viewMode, setViewMode] = useState<"paper" | "solutions">(
+    initialViewMode || (paper.hasAnswerKey && (paper.examName?.includes("ANSWER KEY") || (paper as unknown as Record<string, unknown>).outputMode === "answers_only") ? "solutions" : "paper")
+  );
   const [editingField, setEditingField] = useState<{ type: "header" | "instruction" | "question" | "solution"; id?: string; index?: number } | null>(null);
   const [editValue, setEditValue] = useState("");
   const [editChoices, setEditChoices] = useState<string[]>([]);
