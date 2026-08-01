@@ -45,8 +45,8 @@ export default function GetAnswerKeyPage() {
   // Optional paper headers
   const [schoolName, setSchoolName] = useState("");
   const [examName, setExamName] = useState("ANSWER KEY & SOLUTIONS");
-  const [subject, setSubject] = useState("General / Custom");
-  const [classText, setClassText] = useState("Class X");
+  const [subject, setSubject] = useState("");
+  const [classText, setClassText] = useState("");
   const [teacherName, setTeacherName] = useState("");
   const [showAdvancedHeaders, setShowAdvancedHeaders] = useState(false);
 

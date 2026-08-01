@@ -201,15 +201,16 @@ Return raw JSON only. Do not wrap in markdown or introductory text outside JSON.
 
         let questionCounter = 1;
 
-        // Default exam header title is strictly "ANSWER KEY" unless user specified custom exam title
-        const finalExamName = examName ? examName.toUpperCase() : "ANSWER KEY";
+        const cleanSubject = (subject && subject !== "General / Custom") ? subject : "";
+        const cleanClass = (classText && classText !== "Class X") ? (classText.toLowerCase().startsWith("class") ? classText : `Class ${classText}`) : "";
+        const finalExamName = examName ? examName.toUpperCase() : "ANSWER KEY & SOLUTIONS";
 
         finalPaper = {
           schoolName: schoolName ? schoolName.toUpperCase() : undefined,
           teacherName: teacherName ? teacherName : undefined,
           examName: finalExamName,
-          subject: subject ? subject : "",
-          classText: classText ? (classText.toLowerCase().startsWith("class") ? classText : `Class ${classText}`) : "",
+          subject: cleanSubject,
+          classText: cleanClass,
           timeText: "",
           maxMarksText: "",
           instructions: [],
