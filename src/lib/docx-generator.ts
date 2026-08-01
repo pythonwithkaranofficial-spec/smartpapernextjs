@@ -87,28 +87,36 @@ export async function generateDOCX(paper: GeneratedPaper) {
   );
 
   // 3. Subject & Class Standard Info (plus Teacher Name if present)
-  let subjectInfoText = `Subject: ${paper.subject}   |   Class: ${paper.classText}`;
+  const subjectInfoParts: string[] = [];
+  if (paper.subject && paper.subject.trim()) {
+    subjectInfoParts.push(`Subject: ${paper.subject}`);
+  }
+  if (paper.classText && paper.classText.trim()) {
+    subjectInfoParts.push(`Class: ${paper.classText}`);
+  }
   if (paper.teacherName && paper.teacherName.trim()) {
     const formattedTeacher = paper.teacherName.toLowerCase().startsWith("teacher") || paper.teacherName.toLowerCase().startsWith("prepared by")
       ? paper.teacherName
       : `Teacher: ${paper.teacherName}`;
-    subjectInfoText += `   |   ${formattedTeacher}`;
+    subjectInfoParts.push(formattedTeacher);
   }
 
-  children.push(
-    new Paragraph({
-      alignment: AlignmentType.CENTER,
-      spacing: { after: 150 },
-      children: [
-        new TextRun({
-          text: subjectInfoText,
-          bold: true,
-          size: 20, // 10pt
-          font: docFont,
-        }),
-      ],
-    })
-  );
+  if (subjectInfoParts.length > 0) {
+    children.push(
+      new Paragraph({
+        alignment: AlignmentType.CENTER,
+        spacing: { after: 150 },
+        children: [
+          new TextRun({
+            text: subjectInfoParts.join("   |   "),
+            bold: true,
+            size: 20, // 10pt
+            font: docFont,
+          }),
+        ],
+      })
+    );
+  }
 
   // 4. Time and Maximum Marks subheader with Tab Stop alignment (single border-bottom)
   children.push(

@@ -54,14 +54,19 @@ export function DownloadBar({ paper, onRegenerate }: DownloadBarProps) {
       let text = "";
       if (paper.schoolName) text += `${paper.schoolName.toUpperCase()}\n`;
       text += `${(paper.examName || "").replace(/_/g, " ").toUpperCase()}\n`;
-      let infoLine = `Subject: ${paper.subject} | Class: ${paper.classText}`;
+      const infoParts: string[] = [];
+      if (paper.subject && paper.subject.trim()) infoParts.push(`Subject: ${paper.subject}`);
+      if (paper.classText && paper.classText.trim()) infoParts.push(`Class: ${paper.classText}`);
       if (paper.teacherName && paper.teacherName.trim()) {
         const formattedTeacher = paper.teacherName.toLowerCase().startsWith("teacher") || paper.teacherName.toLowerCase().startsWith("prepared by")
           ? paper.teacherName
           : `Teacher: ${paper.teacherName}`;
-        infoLine += ` | ${formattedTeacher}`;
+        infoParts.push(formattedTeacher);
       }
-      text += `${infoLine}\n`;
+      if (infoParts.length > 0) {
+        text += `${infoParts.join(" | ")}\n`;
+      }
+
       text += `Time Allowed: ${paper.timeText} | Max Marks: ${paper.maxMarksText}\n`;
       text += `-----------------------------------------------\n\n`;
 
@@ -102,6 +107,11 @@ export function DownloadBar({ paper, onRegenerate }: DownloadBarProps) {
     }
   };
 
+  const summaryParts: string[] = [];
+  if (paper.subject && paper.subject.trim()) summaryParts.push(paper.subject);
+  if (paper.classText && paper.classText.trim()) summaryParts.push(paper.classText);
+  summaryParts.push(`${paper.totalQuestions} Questions`);
+
   return (
     <div className="no-print fixed bottom-0 left-0 right-0 py-4 border-t border-border/40 glass bg-background/55 backdrop-blur-lg z-30 shadow-[0_-5px_25px_-10px_rgba(0,0,0,0.15)]">
       <div className="container mx-auto px-4 max-w-7xl flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -112,7 +122,7 @@ export function DownloadBar({ paper, onRegenerate }: DownloadBarProps) {
             Previewing Document
           </span>
           <span className="text-sm font-bold block mt-0.5">
-            {paper.subject} | {paper.classText} Standard ({paper.totalQuestions} Questions)
+            {summaryParts.join(" | ")}
           </span>
         </div>
 

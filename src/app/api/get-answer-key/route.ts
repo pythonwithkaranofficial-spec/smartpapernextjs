@@ -57,9 +57,9 @@ export async function POST(request: NextRequest) {
     let fileBase64Pdf: string | null = null;
     let outputMode: "questions_and_answers" | "answers_only" = "questions_and_answers";
     let schoolName = "";
-    let examName = "ANSWER KEY & SOLUTIONS";
-    let subject = "General / Custom";
-    let classText = "Class X";
+    let examName = "";
+    let subject = "";
+    let classText = "";
     let teacherName = "";
 
     const contentType = request.headers.get("content-type") || "";
@@ -69,9 +69,9 @@ export async function POST(request: NextRequest) {
       const textInput = (formData.get("textInput") as string || "").trim();
       outputMode = (formData.get("outputMode") as "questions_and_answers" | "answers_only") || "questions_and_answers";
       schoolName = (formData.get("schoolName") as string || "").trim();
-      examName = (formData.get("examName") as string || "ANSWER KEY & SOLUTIONS").trim();
-      subject = (formData.get("subject") as string || "General / Custom").trim();
-      classText = (formData.get("classText") as string || "Class X").trim();
+      examName = (formData.get("examName") as string || "").trim();
+      subject = (formData.get("subject") as string || "").trim();
+      classText = (formData.get("classText") as string || "").trim();
       teacherName = (formData.get("teacherName") as string || "").trim();
 
       const file = formData.get("file") as File | null;
@@ -83,7 +83,6 @@ export async function POST(request: NextRequest) {
           // Send PDF directly as base64 inlineData for Gemini 2.5 Flash multimodal vision/document parsing
           fileBase64Pdf = fileBuffer.toString("base64");
           
-          // Also attempt text extraction as backup
           try {
             // eslint-disable-next-line @typescript-eslint/no-require-imports
             const pdfParse = require("pdf-parse");
@@ -103,7 +102,6 @@ export async function POST(request: NextRequest) {
             rawQuestionsText = fileBuffer.toString("utf-8");
           }
         } else {
-          // Plain text or fallback
           rawQuestionsText = fileBuffer.toString("utf-8");
         }
       }
@@ -116,9 +114,9 @@ export async function POST(request: NextRequest) {
       rawQuestionsText = (body.textInput || "").trim();
       outputMode = body.outputMode || "questions_and_answers";
       schoolName = (body.schoolName || "").trim();
-      examName = (body.examName || "ANSWER KEY & SOLUTIONS").trim();
-      subject = (body.subject || "General / Custom").trim();
-      classText = (body.classText || "Class X").trim();
+      examName = (body.examName || "").trim();
+      subject = (body.subject || "").trim();
+      classText = (body.classText || "").trim();
       teacherName = (body.teacherName || "").trim();
     }
 
@@ -129,8 +127,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const systemPrompt = `You are an expert CBSE & Competitive Academic Teacher and Exam Evaluator.
-Your task is to analyze the provided questions and generate complete, accurate, step-by-step answers and detailed marking schemes for EVERY single question.
+    const systemPrompt = `You are an expert CBSE & Academic Teacher and Exam Evaluator.
+Your task is to analyze the provided set of questions (typed text or uploaded question paper document) and generate complete, accurate, step-by-step answers and detailed marking schemes for EVERY single question.
 
 RULES FOR THE AI:
 1. Parse every question provided in the input text or document accurately.
@@ -139,9 +137,19 @@ RULES FOR THE AI:
 4. If a question is an MCQ, extract all choices into the "choices" array and explicitly state the correct option + detailed reason in "solution".
 5. If a question contains internal choices ("OR"), include the secondary question in "orQuestion" and its solution in "orSolution".
 6. Format mathematical formulas using standard LaTeX notation ($...$ or \\(...\\)).
-7. Return strictly a JSON object matching this exact structure:
+7. INSPECT THE QUESTION PAPER HEADER & TEXT TO AUTOMATICALLY EXTRACT:
+   - "detectedSubject": The exact subject name (e.g. "Mathematics", "Science", "Physics", "Chemistry", "Biology", "Social Science", "English", "Hindi") ONLY if explicitly present or clearly identifiable in the paper. If ambiguous or not present, set to null.
+   - "detectedClass": The exact class/grade (e.g. "Class 10", "Class 12", "Class 9") ONLY if explicitly present in paper header/title. If not present in paper, set to null.
+   - "detectedSchoolName": School name if explicitly present in paper header, else null.
+   - "detectedExamName": Specific exam title if present in paper header, else null.
+
+Return strictly a JSON object matching this exact structure:
 
 {
+  "detectedSubject": "Subject Name or null",
+  "detectedClass": "Class 10 or null",
+  "detectedSchoolName": "School Name or null",
+  "detectedExamName": "Exam Title or null",
   "sections": [
     {
       "name": "SECTION A",
@@ -188,7 +196,7 @@ Return raw JSON only. Do not wrap in markdown or introductory text outside JSON.
           contents: [{ role: "user", parts }],
           config: {
             responseMimeType: "application/json",
-            temperature: 0.3,
+            temperature: 0.2,
           },
         });
 
@@ -205,12 +213,37 @@ Return raw JSON only. Do not wrap in markdown or introductory text outside JSON.
         const isAnswersOnly = outputMode === "answers_only";
         let questionCounter = 1;
 
+        // Resolve branding fields without hardcoding wrong defaults
+        const finalSchoolName = schoolName
+          ? schoolName.toUpperCase()
+          : (parsedPaper.detectedSchoolName ? String(parsedPaper.detectedSchoolName).toUpperCase() : undefined);
+
+        const finalSubject = subject
+          ? subject
+          : (parsedPaper.detectedSubject && String(parsedPaper.detectedSubject).toLowerCase() !== "null" ? String(parsedPaper.detectedSubject) : "");
+
+        let finalClassText = classText
+          ? (classText.toLowerCase().startsWith("class") ? classText : `Class ${classText}`)
+          : (parsedPaper.detectedClass && String(parsedPaper.detectedClass).toLowerCase() !== "null"
+              ? (String(parsedPaper.detectedClass).toLowerCase().startsWith("class") ? String(parsedPaper.detectedClass) : `Class ${parsedPaper.detectedClass}`)
+              : "");
+
+        const defaultTitle = isAnswersOnly
+          ? "OFFICIAL ANSWER KEY & DETAILED SOLUTIONS"
+          : "QUESTION PAPER WITH ANSWER KEY & SOLUTIONS";
+
+        const finalExamName = examName
+          ? examName.toUpperCase()
+          : (parsedPaper.detectedExamName && String(parsedPaper.detectedExamName).toLowerCase() !== "null"
+              ? String(parsedPaper.detectedExamName).toUpperCase()
+              : defaultTitle);
+
         finalPaper = {
-          schoolName: schoolName ? schoolName.toUpperCase() : undefined,
+          schoolName: finalSchoolName,
           teacherName: teacherName ? teacherName : undefined,
-          examName: examName ? examName.toUpperCase() : "ANSWER KEY & SOLUTIONS",
-          subject: subject,
-          classText: classText.toLowerCase().startsWith("class") ? classText : `Class ${classText}`,
+          examName: finalExamName,
+          subject: finalSubject,
+          classText: finalClassText,
           timeText: "Flexible",
           maxMarksText: "As Assigned",
           instructions: isAnswersOnly

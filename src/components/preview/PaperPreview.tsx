@@ -343,48 +343,62 @@ export function PaperPreview({ paper, onChange, onSelectSet, activeSetIdx = 0, i
             )}
           </div>
 
-          <div className="text-center font-semibold font-serif text-sm tracking-wide mt-1 group">
-            Subject:{" "}
-            {editingField?.type === "header" && editingField.id === "subject" ? (
-              <div className="inline-flex gap-2">
-                <Input value={editValue} onChange={(e) => setEditValue(e.target.value)} className="w-40 h-7 text-black border-black" />
-                <Button size="icon-xs" onClick={handleEditSave} className="bg-black hover:bg-black/85 text-white"><Check className="w-3 h-3" /></Button>
-              </div>
-            ) : (
-              <span onClick={() => handleEditStart("header", activePaper.subject, "subject")} className="cursor-pointer hover:underline decoration-dashed">
-                {activePaper.subject}
-              </span>
-            )}
-            {" | "}
-            Class:{" "}
-            {editingField?.type === "header" && editingField.id === "classText" ? (
-              <div className="inline-flex gap-2">
-                <Input value={editValue} onChange={(e) => setEditValue(e.target.value)} className="w-20 h-7 text-black border-black" />
-                <Button size="icon-xs" onClick={handleEditSave} className="bg-black hover:bg-black/85 text-white"><Check className="w-3 h-3" /></Button>
-              </div>
-            ) : (
-              <span onClick={() => handleEditStart("header", activePaper.classText, "classText")} className="cursor-pointer hover:underline decoration-dashed">
-                {activePaper.classText}
-              </span>
-            )}
-            {activePaper.teacherName !== undefined && activePaper.teacherName.trim() !== "" && (
-              <>
-                {" | "}
-                {editingField?.type === "header" && editingField.id === "teacherName" ? (
-                  <div className="inline-flex gap-2">
-                    <Input value={editValue} onChange={(e) => setEditValue(e.target.value)} className="w-40 h-7 text-black border-black" />
-                    <Button size="icon-xs" onClick={handleEditSave} className="bg-black hover:bg-black/85 text-white"><Check className="w-3 h-3" /></Button>
-                  </div>
-                ) : (
-                  <span onClick={() => handleEditStart("header", activePaper.teacherName || "", "teacherName")} className="cursor-pointer hover:underline decoration-dashed">
-                    {activePaper.teacherName.toLowerCase().startsWith("teacher") || activePaper.teacherName.toLowerCase().startsWith("prepared by")
-                      ? activePaper.teacherName
-                      : `Teacher: ${activePaper.teacherName}`}
-                  </span>
-                )}
-              </>
-            )}
-          </div>
+          {(activePaper.subject || activePaper.classText || (activePaper.teacherName && activePaper.teacherName.trim() !== "")) && (
+            <div className="text-center font-semibold font-serif text-sm tracking-wide mt-1 group flex flex-wrap items-center justify-center gap-x-2">
+              {activePaper.subject && (
+                <span>
+                  Subject:{" "}
+                  {editingField?.type === "header" && editingField.id === "subject" ? (
+                    <div className="inline-flex gap-2">
+                      <Input value={editValue} onChange={(e) => setEditValue(e.target.value)} className="w-40 h-7 text-black border-black" />
+                      <Button size="icon-xs" onClick={handleEditSave} className="bg-black hover:bg-black/85 text-white"><Check className="w-3 h-3" /></Button>
+                    </div>
+                  ) : (
+                    <span onClick={() => handleEditStart("header", activePaper.subject, "subject")} className="cursor-pointer hover:underline decoration-dashed">
+                      {activePaper.subject}
+                    </span>
+                  )}
+                </span>
+              )}
+
+              {activePaper.subject && activePaper.classText && <span className="text-black/50">|</span>}
+
+              {activePaper.classText && (
+                <span>
+                  Class:{" "}
+                  {editingField?.type === "header" && editingField.id === "classText" ? (
+                    <div className="inline-flex gap-2">
+                      <Input value={editValue} onChange={(e) => setEditValue(e.target.value)} className="w-20 h-7 text-black border-black" />
+                      <Button size="icon-xs" onClick={handleEditSave} className="bg-black hover:bg-black/85 text-white"><Check className="w-3 h-3" /></Button>
+                    </div>
+                  ) : (
+                    <span onClick={() => handleEditStart("header", activePaper.classText, "classText")} className="cursor-pointer hover:underline decoration-dashed">
+                      {activePaper.classText}
+                    </span>
+                  )}
+                </span>
+              )}
+
+              {(activePaper.subject || activePaper.classText) && activePaper.teacherName && activePaper.teacherName.trim() !== "" && <span className="text-black/50">|</span>}
+
+              {activePaper.teacherName !== undefined && activePaper.teacherName.trim() !== "" && (
+                <span>
+                  {editingField?.type === "header" && editingField.id === "teacherName" ? (
+                    <div className="inline-flex gap-2">
+                      <Input value={editValue} onChange={(e) => setEditValue(e.target.value)} className="w-40 h-7 text-black border-black" />
+                      <Button size="icon-xs" onClick={handleEditSave} className="bg-black hover:bg-black/85 text-white"><Check className="w-3 h-3" /></Button>
+                    </div>
+                  ) : (
+                    <span onClick={() => handleEditStart("header", activePaper.teacherName || "", "teacherName")} className="cursor-pointer hover:underline decoration-dashed">
+                      {activePaper.teacherName.toLowerCase().startsWith("teacher") || activePaper.teacherName.toLowerCase().startsWith("prepared by")
+                        ? activePaper.teacherName
+                        : `Teacher: ${activePaper.teacherName}`}
+                    </span>
+                  )}
+                </span>
+              )}
+            </div>
+          )}
 
           {/* Subheader: Time & Marks */}
           <div className="flex justify-between items-center border-b border-black pb-2 mt-4 text-xs font-bold font-serif">
