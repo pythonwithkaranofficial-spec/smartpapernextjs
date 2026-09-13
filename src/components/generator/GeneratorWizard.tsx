@@ -246,6 +246,23 @@ export function GeneratorWizard() {
   const limit = usageInfo?.dailyLimit ?? 5;
   const used = usageInfo?.usedToday ?? 0;
 
+  const handleStepClick = (targetStep: number) => {
+    if (targetStep === step || loading) return;
+
+    // Prerequisite validation when jumping forward:
+    if (targetStep > 1 && !config.classId) {
+      toast.error("Please select a target class first.");
+      return;
+    }
+    if (targetStep > 2 && !config.subject) {
+      toast.error("Please select a subject first.");
+      return;
+    }
+
+    setDirection(targetStep > step ? 1 : -1);
+    setStep(targetStep);
+  };
+
   return (
     <div className="w-full max-w-5xl mx-auto px-4 py-8">
       {loading && <GeneratingOverlay />}
@@ -285,7 +302,7 @@ export function GeneratorWizard() {
       </div>
 
       {/* Steps indicator bar */}
-      <ProgressBar currentStep={step} totalSteps={7} />
+      <ProgressBar currentStep={step} totalSteps={7} onStepClick={handleStepClick} />
 
       {/* Wizard Steps Container */}
       <div className="relative min-h-[460px] flex flex-col justify-between overflow-hidden p-1">

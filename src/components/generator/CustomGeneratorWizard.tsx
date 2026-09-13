@@ -266,6 +266,12 @@ export function CustomGeneratorWizard() {
   const limit = usageInfo?.dailyLimit ?? 5;
   const used = usageInfo?.usedToday ?? 0;
 
+  const handleStepClick = (targetStep: number) => {
+    if (targetStep === step || generating) return;
+    setDirection(targetStep > step ? 1 : -1);
+    setStep(targetStep);
+  };
+
   return (
     <div className="w-full max-w-5xl mx-auto px-4 py-8">
       {generating && <GeneratingOverlay />}
@@ -306,7 +312,7 @@ export function CustomGeneratorWizard() {
       </div>
 
       {/* Steps indicator bar */}
-      <CustomProgressBar currentStep={step} totalSteps={7} />
+      <CustomProgressBar currentStep={step} totalSteps={7} onStepClick={handleStepClick} />
 
       {/* Wizard Steps Container */}
       <div className="relative min-h-[460px] flex flex-col justify-between overflow-hidden p-1">
