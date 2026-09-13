@@ -217,42 +217,42 @@ export function SyllabusExplorer({
       </div>
 
       {/* Selected Subject Banner Card */}
-      <GlassCard className="p-5 border-indigo-200/80 dark:border-indigo-500/30 bg-gradient-to-r from-blue-500/5 via-indigo-500/5 to-purple-500/5 dark:from-blue-500/5 dark:via-indigo-500/5 dark:to-purple-500/5">
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
+      <GlassCard className="p-4 sm:p-5 border-indigo-200/80 dark:border-indigo-500/30 bg-gradient-to-r from-blue-500/5 via-indigo-500/5 to-purple-500/5 dark:from-blue-500/5 dark:via-indigo-500/5 dark:to-purple-500/5 overflow-hidden">
+        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+          <div className="min-w-0 flex-1 space-y-1">
+            <div className="flex flex-wrap items-center gap-2 mb-1">
               <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
                 Class {selectedClass} • {SUBJECT_NAMES[currentSubjectKey] || currentSubjectKey}
               </span>
-              <span className="text-[10px] px-2 py-0.5 rounded-md bg-indigo-500/10 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 font-bold border border-indigo-200 dark:border-indigo-500/20">
+              <span className="text-[10px] px-2 py-0.5 rounded-md bg-indigo-500/10 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 font-bold border border-indigo-200 dark:border-indigo-500/20 whitespace-nowrap shrink-0">
                 CBSE 2026 Pattern
               </span>
             </div>
-            <h3 className="text-lg font-bold font-heading text-slate-900 dark:text-foreground">
+            <h3 className="text-base sm:text-lg font-bold font-heading text-slate-900 dark:text-foreground leading-snug">
               {blueprint?.title || `Class ${selectedClass} ${SUBJECT_NAMES[currentSubjectKey] || currentSubjectKey} Official Curriculum`}
             </h3>
             {currentCurriculum?.notes && (
-              <p className="text-xs text-slate-600 dark:text-muted-foreground mt-1 font-medium">{currentCurriculum.notes}</p>
+              <p className="text-xs text-slate-600 dark:text-muted-foreground mt-1 font-medium leading-relaxed">{currentCurriculum.notes}</p>
             )}
           </div>
 
-          <div className="flex items-center gap-3 w-full md:w-auto">
+          <div className="w-full lg:w-auto shrink-0 flex items-center">
             {onSelectSyllabus ? (
               <Button
                 onClick={() => onSelectSyllabus(selectedClass, currentSubjectKey)}
-                className="w-full md:w-auto rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-heading font-bold text-xs px-5 py-2.5 shadow-md hover:scale-[1.02] transition-all"
+                className="w-full sm:w-auto rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-heading font-bold text-xs px-5 py-2.5 shadow-md hover:scale-[1.02] transition-all cursor-pointer whitespace-nowrap"
               >
-                <Sparkles className="w-4 h-4 mr-1.5" />
+                <Sparkles className="w-4 h-4 mr-1.5 shrink-0" />
                 Apply To Paper Generator
               </Button>
             ) : (
               <Link
                 href={`/generate?classId=${selectedClass}&subject=${currentSubjectKey}`}
-                className="w-full md:w-auto inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-heading font-bold text-xs px-5 py-2.5 shadow-md hover:scale-[1.02] transition-all"
+                className="w-full sm:w-auto inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-heading font-bold text-xs px-5 py-2.5 shadow-md hover:scale-[1.02] transition-all whitespace-nowrap"
               >
-                <Sparkles className="w-4 h-4 mr-1.5" />
+                <Sparkles className="w-4 h-4 mr-1.5 shrink-0" />
                 Generate Paper From Syllabus
-                <ArrowRight className="w-4 h-4 ml-1.5" />
+                <ArrowRight className="w-4 h-4 ml-1.5 shrink-0" />
               </Link>
             )}
           </div>
@@ -346,32 +346,34 @@ export function SyllabusExplorer({
             {blueprint ? (
               <div className="space-y-5">
                 {/* 1-Click Action Banner */}
-                <div className="p-4 rounded-2xl bg-gradient-to-r from-blue-500/10 via-indigo-500/10 to-purple-500/10 dark:from-blue-600/20 dark:via-indigo-600/20 dark:to-purple-600/20 border border-indigo-200/80 dark:border-indigo-500/30 flex flex-col sm:flex-row items-center justify-between gap-4 backdrop-blur-md shadow-xs">
-                  <div className="space-y-1 text-center sm:text-left">
-                    <div className="flex items-center justify-center sm:justify-start gap-2">
-                      <span className="text-xs font-extrabold uppercase font-heading text-indigo-700 dark:text-indigo-300 tracking-wider">
+                <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-blue-500/10 via-indigo-500/10 to-purple-500/10 dark:from-blue-600/20 dark:via-indigo-600/20 dark:to-purple-600/20 border border-indigo-200/80 dark:border-indigo-500/30 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 backdrop-blur-md shadow-xs overflow-hidden">
+                  <div className="min-w-0 flex-1 space-y-1 text-left">
+                    <div className="flex flex-wrap items-center gap-2 mb-1">
+                      <span className="text-xs font-extrabold uppercase font-heading text-indigo-700 dark:text-indigo-300 tracking-wider whitespace-nowrap">
                         Official CBSE Board Blueprint
                       </span>
-                      <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/15 dark:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 text-[10px] font-bold border border-emerald-500/30 uppercase">
+                      <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/15 dark:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 text-[10px] font-bold border border-emerald-500/30 uppercase whitespace-nowrap shrink-0">
                         Ready to Generate
                       </span>
                     </div>
-                    <h3 className="text-base font-extrabold text-slate-900 dark:text-foreground font-heading">
+                    <h3 className="text-base sm:text-lg font-extrabold text-slate-900 dark:text-foreground font-heading leading-snug">
                       Class {selectedClass} — {SUBJECT_NAMES[currentSubjectKey] || currentSubjectKey}
                     </h3>
-                    <p className="text-xs text-slate-600 dark:text-muted-foreground font-medium">
+                    <p className="text-xs text-slate-600 dark:text-muted-foreground font-medium leading-relaxed">
                       Includes official unit weightages ({blueprint.totalMarks} Marks, {blueprint.duration}) and board section breakdown.
                     </p>
                   </div>
 
-                  <Button
-                    onClick={() => handleGenerateWithBlueprint(blueprint)}
-                    className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold font-heading px-6 py-5 rounded-xl shadow-lg shadow-indigo-500/25 hover:scale-[1.03] transition-all cursor-pointer shrink-0"
-                  >
-                    <Sparkles className="w-4 h-4 mr-2 text-yellow-300 animate-pulse" />
-                    Generate Paper With This Blueprint
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </Button>
+                  <div className="w-full lg:w-auto shrink-0">
+                    <Button
+                      onClick={() => handleGenerateWithBlueprint(blueprint)}
+                      className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold font-heading px-5 py-3 rounded-xl shadow-lg shadow-indigo-500/25 hover:scale-[1.02] transition-all cursor-pointer whitespace-nowrap text-xs sm:text-sm flex items-center justify-center"
+                    >
+                      <Sparkles className="w-4 h-4 mr-2 text-yellow-300 animate-pulse shrink-0" />
+                      Generate Paper With This Blueprint
+                      <ArrowRight className="w-4 h-4 ml-2 shrink-0" />
+                    </Button>
+                  </div>
                 </div>
 
                 {/* Stats Summary */}
