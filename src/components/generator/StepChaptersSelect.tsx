@@ -30,21 +30,37 @@ export function StepChaptersSelect({
     return typeof chap === "string" ? chap : chap.title;
   };
 
+  // Only consider chapters that actually belong to the current subject curriculum
+  const validChapterTitles = React.useMemo(() => {
+    return new Set(rawChapters.map(getChapterTitle));
+  }, [rawChapters]);
+
+  const validSelectedChapters = React.useMemo(() => {
+    return selectedChapters.filter((c) => validChapterTitles.has(c));
+  }, [selectedChapters, validChapterTitles]);
+
   const updateSelected = (newChapters: string[]) => {
     if (onChange) onChange(newChapters);
     if (onChaptersChange) onChaptersChange(newChapters);
   };
 
+  // Clean out any stale or non-existent chapters (e.g. from previous subjects or "all")
+  React.useEffect(() => {
+    if (selectedChapters.some((c) => !validChapterTitles.has(c))) {
+      updateSelected(validSelectedChapters);
+    }
+  }, [selectedChapters, validSelectedChapters, validChapterTitles]);
+
   const handleToggleChapter = (chapterTitle: string) => {
-    if (selectedChapters.includes(chapterTitle)) {
-      updateSelected(selectedChapters.filter((c) => c !== chapterTitle));
+    if (validSelectedChapters.includes(chapterTitle)) {
+      updateSelected(validSelectedChapters.filter((c) => c !== chapterTitle));
     } else {
-      updateSelected([...selectedChapters, chapterTitle]);
+      updateSelected([...validSelectedChapters, chapterTitle]);
     }
   };
 
   const handleSelectAll = () => {
-    if (selectedChapters.length === rawChapters.length) {
+    if (validSelectedChapters.length === rawChapters.length) {
       updateSelected([]);
     } else {
       updateSelected(rawChapters.map(getChapterTitle));
@@ -68,7 +84,7 @@ export function StepChaptersSelect({
           <div className="flex items-center gap-2 text-xs text-muted-foreground font-heading">
             <Layers className="w-4 h-4 text-blue-500" />
             <span>
-              Selected: <strong className="text-foreground">{selectedChapters.length}</strong> of {rawChapters.length} Chapters
+              Selected: <strong className="text-foreground">{validSelectedChapters.length}</strong> of {rawChapters.length} Chapters
             </span>
           </div>
 
@@ -78,7 +94,7 @@ export function StepChaptersSelect({
             onClick={handleSelectAll}
             className="text-xs text-blue-500 hover:text-blue-600 hover:bg-blue-500/10 rounded-xl"
           >
-            {selectedChapters.length === rawChapters.length ? "Deselect All" : "Select All"}
+            {validSelectedChapters.length === rawChapters.length ? "Deselect All" : "Select All"}
           </Button>
         </div>
 
@@ -86,7 +102,7 @@ export function StepChaptersSelect({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {rawChapters.map((chap, index) => {
             const title = getChapterTitle(chap);
-            const isSelected = selectedChapters.includes(title);
+            const isSelected = validSelectedChapters.includes(title);
             return (
               <GlassCard
                 key={index}

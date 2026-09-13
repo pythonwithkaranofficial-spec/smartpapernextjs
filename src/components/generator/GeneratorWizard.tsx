@@ -122,7 +122,10 @@ export function GeneratorWizard() {
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
-          setConfig(parsed);
+          setConfig({
+            ...parsed,
+            selectedChapters: [],
+          });
         } catch (e) {
           console.error("Failed to parse saved config", e);
         }
@@ -209,6 +212,9 @@ export function GeneratorWizard() {
       setShowLimitModal(true);
       return;
     }
+    // Clean up selectedChapters in localStorage so next session starts with 0 selected
+    const cleanedConfig = { ...config, selectedChapters: [] };
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(cleanedConfig));
     generatePaper(config);
   };
 
@@ -255,7 +261,7 @@ export function GeneratorWizard() {
         classId={config.classId || "10"}
         subject={config.subject || "maths"}
         onSelectSyllabus={(classId, subject) => {
-          updateConfig((prev) => ({ ...prev, classId, subject }));
+          updateConfig((prev) => ({ ...prev, classId, subject, selectedChapters: [] }));
         }}
       />
 
@@ -297,7 +303,7 @@ export function GeneratorWizard() {
               <StepClassSelect
                 selectedClass={config.classId}
                 onSelectClass={(classId) => {
-                  updateConfig((prev) => ({ ...prev, classId }));
+                  updateConfig((prev) => ({ ...prev, classId, selectedChapters: [] }));
                   handleNext(classId, undefined, undefined);
                 }}
               />
@@ -307,7 +313,7 @@ export function GeneratorWizard() {
                 classId={config.classId}
                 selectedSubject={config.subject}
                 onSelectSubject={(subject) => {
-                  updateConfig((prev) => ({ ...prev, subject }));
+                  updateConfig((prev) => ({ ...prev, subject, selectedChapters: [] }));
                   handleNext(undefined, subject, undefined);
                 }}
               />
@@ -334,7 +340,9 @@ export function GeneratorWizard() {
                       totalMarks: bp.totalMarks,
                       duration: bp.duration,
                       questionDistribution: bp.questionDistribution,
-                      selectedChapters: bp.selectedChapters,
+                      selectedChapters: prev.selectedChapters && prev.selectedChapters.length > 0 && !prev.selectedChapters.includes("all")
+                        ? prev.selectedChapters
+                        : [],
                       unitWeightage: bp.unitWeightage,
                       blueprintId: bp.id,
                       isBlueprintMode: true,
