@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "409345118113",
+    "project_id": "smartpapergenwebsite",
+    "storage_bucket": "smartpapergenwebsite.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:409345118113:android:c02b0c1d6216272af145e0",
+        "android_client_info": {
+          "package_name": "com.smartpaper.generator"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA4YjyiwCOZbYv555GYyYYPdXNy09K2SWc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
