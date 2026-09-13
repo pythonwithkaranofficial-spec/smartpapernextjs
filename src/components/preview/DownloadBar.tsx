@@ -113,7 +113,7 @@ export function DownloadBar({ paper, onRegenerate }: DownloadBarProps) {
   summaryParts.push(`${paper.totalQuestions} Questions`);
 
   return (
-    <div className="no-print fixed bottom-0 left-0 right-0 py-4 border-t border-border/40 glass bg-background/55 backdrop-blur-lg z-30 shadow-[0_-5px_25px_-10px_rgba(0,0,0,0.15)]">
+    <div className="no-print fixed bottom-0 left-0 right-0 py-4 border-t border-slate-200/80 dark:border-slate-800/80 bg-white/95 dark:bg-[#070B14]/95 backdrop-blur-xl z-30 shadow-[0_-5px_25px_-10px_rgba(0,0,0,0.15)]">
       <div className="container mx-auto px-4 max-w-7xl flex flex-col sm:flex-row items-center justify-between gap-4">
         
         {/* Paper details summary */}
@@ -130,31 +130,31 @@ export function DownloadBar({ paper, onRegenerate }: DownloadBarProps) {
         <div className="flex flex-wrap items-center justify-center gap-3">
           
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
             onClick={handleCopyText}
-            className="rounded-full border-border/60 hover:bg-muted/40 cursor-pointer h-9 px-4 text-xs font-heading font-medium"
+            className="rounded-full bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white cursor-pointer h-9 px-4 text-xs font-heading font-medium shadow-xs transition-all"
           >
             {copied ? (
               <>
-                <Check className="w-3.5 h-3.5 mr-1.5 text-emerald-400" />
+                <Check className="w-3.5 h-3.5 mr-1.5 text-emerald-600 dark:text-emerald-400" />
                 Copied
               </>
             ) : (
               <>
-                <Clipboard className="w-3.5 h-3.5 mr-1.5" />
+                <Clipboard className="w-3.5 h-3.5 mr-1.5 text-slate-500 dark:text-slate-400" />
                 Copy Text
               </>
             )}
           </Button>
 
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
             onClick={() => window.print()}
-            className="rounded-full border-border/60 hover:bg-muted/40 cursor-pointer h-9 px-4 text-xs font-heading font-medium"
+            className="rounded-full bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white cursor-pointer h-9 px-4 text-xs font-heading font-medium shadow-xs transition-all"
           >
-            <Printer className="w-3.5 h-3.5 mr-1.5" />
+            <Printer className="w-3.5 h-3.5 mr-1.5 text-slate-500 dark:text-slate-400" />
             Print Paper
           </Button>
 
@@ -182,7 +182,7 @@ export function DownloadBar({ paper, onRegenerate }: DownloadBarProps) {
             variant="ghost"
             size="sm"
             onClick={onRegenerate}
-            className="rounded-full text-muted-foreground hover:text-foreground cursor-pointer h-9 px-3.5 text-xs font-heading font-medium"
+            className="rounded-full text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer h-9 px-3.5 text-xs font-heading font-medium"
           >
             <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
             Re-generate
@@ -192,7 +192,7 @@ export function DownloadBar({ paper, onRegenerate }: DownloadBarProps) {
             href="/"
             className={cn(
               buttonVariants({ variant: "ghost", size: "sm" }),
-              "rounded-full text-muted-foreground hover:text-foreground cursor-pointer h-9 px-3.5 text-xs font-heading font-medium inline-flex items-center justify-center gap-1.5"
+              "rounded-full text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer h-9 px-3.5 text-xs font-heading font-medium inline-flex items-center justify-center gap-1.5"
             )}
           >
             <Home className="w-3.5 h-3.5" />

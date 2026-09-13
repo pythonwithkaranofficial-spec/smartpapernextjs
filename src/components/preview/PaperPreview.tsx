@@ -459,7 +459,7 @@ export function PaperPreview({ paper, onChange, onSelectSet, activeSetIdx = 0, i
                           
                           {/* Editor triggers (no-print) */}
                           <div className="no-print opacity-0 group-hover:opacity-100 flex gap-1 shrink-0 absolute right-0 top-1/2 -translate-y-1/2">
-                            <button onClick={() => handleEditStart("instruction", displayInst, undefined, index)} className="p-0.5 text-muted-foreground hover:text-black cursor-pointer">
+                            <button onClick={() => handleEditStart("instruction", displayInst, undefined, index)} className="p-0.5 text-slate-500 hover:text-slate-900 cursor-pointer">
                               <Edit2 className="w-3 h-3" />
                             </button>
                           </div>
@@ -517,7 +517,7 @@ export function PaperPreview({ paper, onChange, onSelectSet, activeSetIdx = 0, i
                                 <div className="grid grid-cols-2 gap-3 pl-3">
                                   {editChoices.map((choice, oIdx) => (
                                     <div key={oIdx} className="flex items-center gap-2 text-xs">
-                                      <span className="font-semibold font-sans text-muted-foreground">({String.fromCharCode(97 + oIdx)})</span>
+                                      <span className="font-semibold font-sans text-slate-500">({String.fromCharCode(97 + oIdx)})</span>
                                       <Input
                                         value={choice}
                                         onChange={(e) => {
@@ -560,7 +560,7 @@ export function PaperPreview({ paper, onChange, onSelectSet, activeSetIdx = 0, i
                               {/* OR optional question if enabled */}
                               {question.orQuestion && (
                                 <div className="mt-2.5 pl-3 border-l border-black/30 italic space-y-1 text-[11px]">
-                                  <span className="font-bold uppercase tracking-wider block text-[9px] text-muted-foreground font-sans">
+                                  <span className="font-bold uppercase tracking-wider block text-[9px] text-slate-500 font-sans">
                                     OR
                                   </span>
                                   <p className="whitespace-pre-wrap">{question.orQuestion}</p>
@@ -639,11 +639,11 @@ export function PaperPreview({ paper, onChange, onSelectSet, activeSetIdx = 0, i
                         </span>
  
                         {/* Action buttons (no-print) */}
-                        <div className="no-print opacity-0 group-hover:opacity-100 absolute right-0 top-0 flex flex-col gap-1 items-center bg-white border border-border rounded-lg p-1 shadow-md z-10">
+                        <div className="no-print opacity-0 group-hover:opacity-100 absolute right-0 top-0 flex flex-col gap-1 items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-1 shadow-md dark:shadow-xl z-10 transition-all duration-150">
                           <button 
                             title="Edit Question"
                             onClick={() => handleEditStart("question", question.text, question.id, undefined, question.choices || undefined)} 
-                            className="p-1 text-muted-foreground hover:text-indigo-500 cursor-pointer"
+                            className="p-1 text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded cursor-pointer transition-colors"
                           >
                             <Edit2 className="w-3.5 h-3.5" />
                           </button>
@@ -652,24 +652,38 @@ export function PaperPreview({ paper, onChange, onSelectSet, activeSetIdx = 0, i
                             title="AI Re-roll / Swap Question"
                             onClick={() => handleSwapQuestion(question)} 
                             disabled={swappingId === question.id}
-                            className="p-1 text-muted-foreground hover:text-purple-600 disabled:opacity-40 cursor-pointer"
+                            className="p-1 text-slate-600 dark:text-slate-300 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/50 rounded disabled:opacity-40 cursor-pointer transition-colors"
                           >
                             {swappingId === question.id ? (
-                              <Loader2 className="w-3.5 h-3.5 animate-spin text-purple-600" />
+                              <Loader2 className="w-3.5 h-3.5 animate-spin text-purple-600 dark:text-purple-400" />
                             ) : (
                               <RefreshCw className="w-3.5 h-3.5" />
                             )}
                           </button>
                           
-                          <button onClick={() => handleMoveQuestion(sIdx, qIdx, "up")} disabled={qIdx === 0} className="p-1 text-muted-foreground hover:text-indigo-500 disabled:opacity-30 cursor-pointer">
+                          <button 
+                            title="Move Question Up"
+                            onClick={() => handleMoveQuestion(sIdx, qIdx, "up")} 
+                            disabled={qIdx === 0} 
+                            className="p-1 text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded disabled:opacity-30 cursor-pointer transition-colors"
+                          >
                             <ArrowUp className="w-3.5 h-3.5" />
                           </button>
                           
-                          <button onClick={() => handleMoveQuestion(sIdx, qIdx, "down")} disabled={qIdx === section.questions.length - 1} className="p-1 text-muted-foreground hover:text-indigo-500 disabled:opacity-30 cursor-pointer">
+                          <button 
+                            title="Move Question Down"
+                            onClick={() => handleMoveQuestion(sIdx, qIdx, "down")} 
+                            disabled={qIdx === section.questions.length - 1} 
+                            className="p-1 text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded disabled:opacity-30 cursor-pointer transition-colors"
+                          >
                             <ArrowDown className="w-3.5 h-3.5" />
                           </button>
                           
-                          <button onClick={() => handleDeleteQuestion(sIdx, question.id)} className="p-1 text-muted-foreground hover:text-red-500 cursor-pointer border-t border-border mt-1 pt-1">
+                          <button 
+                            title="Delete Question"
+                            onClick={() => handleDeleteQuestion(sIdx, question.id)} 
+                            className="p-1 text-slate-600 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/50 rounded cursor-pointer border-t border-slate-200 dark:border-slate-800 mt-0.5 pt-1 transition-colors"
+                          >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
