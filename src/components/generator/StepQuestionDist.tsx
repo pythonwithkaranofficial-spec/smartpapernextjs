@@ -99,20 +99,20 @@ export function StepQuestionDist({
       <div className={cn(
         "p-4 rounded-2xl border flex flex-col sm:flex-row items-center justify-between gap-4 transition-all duration-300",
         isBalanced 
-          ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
-          : "bg-amber-500/10 border-amber-500/30 text-amber-400"
+          ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-800 dark:text-emerald-400"
+          : "bg-amber-500/10 border-amber-500/30 text-amber-800 dark:text-amber-400"
       )}>
         <div className="flex items-center gap-3">
           {isBalanced ? (
-            <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+            <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
           ) : (
-            <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0" />
+            <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0" />
           )}
           <div>
-            <h4 className="text-xs font-bold font-heading">
+            <h4 className="text-xs font-bold font-heading text-emerald-900 dark:text-emerald-400">
               Allocated Marks: {currentMarks} / {effectiveTotalMarks} Marks
             </h4>
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-[11px] text-emerald-800/80 dark:text-muted-foreground font-medium dark:font-normal">
               {isBalanced
                 ? "Allocated questions perfectly match your total target marks!"
                 : `Marks mismatch by ${Math.abs(effectiveTotalMarks - currentMarks)} marks. Adjust counts below.`}
@@ -125,9 +125,9 @@ export function StepQuestionDist({
           variant="outline"
           size="sm"
           onClick={handleAutoBalance}
-          className="rounded-xl border-border/60 text-xs font-heading font-medium shrink-0 flex items-center gap-1.5"
+          className="rounded-xl border-border/60 bg-card/80 hover:bg-card text-foreground shadow-xs text-xs font-heading font-medium shrink-0 flex items-center gap-1.5"
         >
-          <Sparkles className="w-3.5 h-3.5 text-blue-400" />
+          <Sparkles className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
           Auto Balance Counts
         </Button>
       </div>
@@ -136,14 +136,14 @@ export function StepQuestionDist({
       <div className="space-y-3">
         <div className="flex items-center justify-between px-1">
           <div className="flex items-center gap-2">
-            <h4 className="text-xs font-bold uppercase tracking-wider font-heading text-blue-400">
+            <h4 className="text-xs font-bold uppercase tracking-wider font-heading text-blue-600 dark:text-blue-400">
               1 Mark Questions Category
             </h4>
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 font-semibold">
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-500/30 font-semibold">
               1 Mark Each
             </span>
           </div>
-          <span className="text-[10px] text-muted-foreground">
+          <span className="text-[10px] text-slate-600 dark:text-muted-foreground font-medium">
             Subtotal: {((currentDistribution.mcq || 0) + (currentDistribution.assertionReason || 0))} Marks
           </span>
         </div>
@@ -156,18 +156,18 @@ export function StepQuestionDist({
             return (
               <div
                 key={q.field}
-                className="p-4 rounded-2xl border border-blue-500/20 bg-blue-500/5 backdrop-blur-sm flex items-center justify-between gap-4"
+                className="p-4 rounded-2xl border border-blue-500/30 dark:border-blue-500/20 bg-blue-50/60 dark:bg-blue-500/5 shadow-xs backdrop-blur-sm flex items-center justify-between gap-4 transition-colors"
               >
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <h4 className="text-xs font-bold font-heading">{q.title}</h4>
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300 font-semibold">
+                    <h4 className="text-xs font-bold font-heading text-slate-900 dark:text-foreground">{q.title}</h4>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-transparent font-semibold">
                       1 Mark
                     </span>
                   </div>
-                  <p className="text-[10px] text-muted-foreground">{q.desc}</p>
+                  <p className="text-[10px] text-slate-600 dark:text-muted-foreground">{q.desc}</p>
                   {count > 0 && (
-                    <p className="text-[10px] text-blue-400 font-semibold pt-1">
+                    <p className="text-[10px] text-blue-600 dark:text-blue-400 font-semibold pt-1">
                       Subtotal: {subtotal} Marks
                     </p>
                   )}
@@ -180,7 +180,7 @@ export function StepQuestionDist({
                     max={50}
                     value={count}
                     onChange={(e) => handleCountChange(q.field, Number(e.target.value))}
-                    className="text-center font-bold text-sm bg-background/80 rounded-xl border-border/60"
+                    className="text-center font-bold text-sm bg-white dark:bg-background/80 rounded-xl border-slate-300 dark:border-border/60 shadow-xs text-foreground focus-visible:ring-blue-500/40"
                   />
                 </div>
               </div>
@@ -192,10 +192,10 @@ export function StepQuestionDist({
       {/* Subjective & Multi-Mark Questions Section */}
       <div className="space-y-3 pt-2">
         <div className="flex items-center justify-between px-1">
-          <h4 className="text-xs font-bold uppercase tracking-wider font-heading text-muted-foreground">
+          <h4 className="text-xs font-bold uppercase tracking-wider font-heading text-slate-700 dark:text-muted-foreground">
             Short, Long & Case Study Questions
           </h4>
-          <span className="text-[10px] text-muted-foreground">
+          <span className="text-[10px] text-slate-600 dark:text-muted-foreground font-medium">
             Subtotal: {currentMarks - ((currentDistribution.mcq || 0) + (currentDistribution.assertionReason || 0))} Marks
           </span>
         </div>
@@ -208,18 +208,18 @@ export function StepQuestionDist({
             return (
               <div
                 key={q.field}
-                className="p-4 rounded-2xl border border-border/40 bg-background/50 backdrop-blur-sm flex items-center justify-between gap-4"
+                className="p-4 rounded-2xl border border-slate-200 dark:border-border/40 bg-white/80 dark:bg-background/50 shadow-xs backdrop-blur-sm flex items-center justify-between gap-4 transition-colors"
               >
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <h4 className="text-xs font-bold font-heading">{q.title}</h4>
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-semibold">
+                    <h4 className="text-xs font-bold font-heading text-slate-900 dark:text-foreground">{q.title}</h4>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-muted text-slate-700 dark:text-muted-foreground border border-slate-200 dark:border-transparent font-semibold">
                       {q.marksEach} Marks each
                     </span>
                   </div>
-                  <p className="text-[10px] text-muted-foreground">{q.desc}</p>
+                  <p className="text-[10px] text-slate-600 dark:text-muted-foreground">{q.desc}</p>
                   {count > 0 && (
-                    <p className="text-[10px] text-blue-400 font-semibold pt-1">
+                    <p className="text-[10px] text-blue-600 dark:text-blue-400 font-semibold pt-1">
                       Subtotal: {subtotal} Marks
                     </p>
                   )}
@@ -232,7 +232,7 @@ export function StepQuestionDist({
                     max={50}
                     value={count}
                     onChange={(e) => handleCountChange(q.field, Number(e.target.value))}
-                    className="text-center font-bold text-sm bg-background/80 rounded-xl border-border/60"
+                    className="text-center font-bold text-sm bg-white dark:bg-background/80 rounded-xl border-slate-300 dark:border-border/60 shadow-xs text-foreground focus-visible:ring-blue-500/40"
                   />
                 </div>
               </div>

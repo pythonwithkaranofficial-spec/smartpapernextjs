@@ -16,20 +16,20 @@ export function CTA() {
 
       <div className="container mx-auto px-4 max-w-5xl relative z-10">
         <ScrollReveal>
-          <div className="relative rounded-3xl overflow-hidden border border-border/50 bg-gradient-to-tr from-indigo-500/5 via-purple-500/5 to-slate-500/5 dark:from-indigo-950/40 dark:via-purple-950/20 dark:to-slate-900/30 backdrop-blur-xl p-12 md:p-16 text-center shadow-2xl">
+          <div className="relative rounded-3xl overflow-hidden border border-slate-200 dark:border-border/50 bg-gradient-to-tr from-white/95 via-indigo-50/50 to-purple-50/50 dark:from-indigo-950/40 dark:via-purple-950/20 dark:to-slate-900/30 backdrop-blur-xl p-12 md:p-16 text-center shadow-xl dark:shadow-2xl">
             {/* Top decorative badge */}
-            <div className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full border border-indigo-500/30 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 text-[10px] md:text-xs font-semibold tracking-wide shadow-lg mb-6">
+            <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-indigo-200 dark:border-indigo-500/30 bg-indigo-100/90 dark:bg-indigo-500/10 text-indigo-800 dark:text-indigo-300 text-[10px] md:text-xs font-bold tracking-wide shadow-xs mb-6">
               <Sparkles className="w-3.5 h-3.5" />
               <span>START SAVING MANUAL PREPARATION HOURS</span>
             </div>
 
             {/* Title */}
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold font-heading mb-6 tracking-tight leading-tight max-w-2xl mx-auto">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold font-heading mb-6 tracking-tight leading-tight max-w-2xl mx-auto text-slate-900 dark:text-foreground">
               Ready to Generate Your First CBSE Paper?
             </h2>
 
             {/* Subheading */}
-            <p className="text-muted-foreground text-base sm:text-lg max-w-xl mx-auto mb-8 leading-relaxed">
+            <p className="text-slate-600 dark:text-slate-300 text-base sm:text-lg max-w-xl mx-auto mb-8 leading-relaxed font-medium">
               No registration required. Get 5 free high-quality paper generations per day directly in your browser.
             </p>
 

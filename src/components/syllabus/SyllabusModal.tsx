@@ -24,8 +24,8 @@ export function SyllabusModal({
     <Sheet open={open} onOpenChange={(val) => !val && onClose()}>
       <SheetContent side="right" className="w-full sm:max-w-4xl overflow-y-auto p-4 sm:p-6 bg-background/95 backdrop-blur-xl border-l border-border/50">
         <SheetHeader className="mb-4 pb-3 border-b border-border/40 text-left">
-          <SheetTitle className="text-xl font-bold font-heading flex items-center gap-2">
-            <BookOpen className="w-5 h-5 text-indigo-400" />
+          <SheetTitle className="text-xl font-bold font-heading flex items-center gap-2 text-foreground">
+            <BookOpen className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
             Official CBSE Syllabus & Blueprint Explorer
           </SheetTitle>
         </SheetHeader>
