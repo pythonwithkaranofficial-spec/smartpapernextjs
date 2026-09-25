@@ -79,9 +79,23 @@ export function SyllabusExplorer({
   const [activeTab, setActiveTab] = useState<"syllabus" | "blueprint">("syllabus");
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Get available subjects for selected class
+  // Get available subjects for selected class with deduplication of aliases
   const classCurriculum = CURRICULUM_DATA[selectedClass] || {};
-  const availableSubjects = Object.keys(classCurriculum);
+  const rawSubjects = Object.keys(classCurriculum);
+  const availableSubjects = rawSubjects.filter((subKey) => {
+    if (subKey === "englishcore" && rawSubjects.includes("english")) return false;
+    return true;
+  });
+
+  const getSubjectLabel = (subKey: string) => {
+    if (subKey === "english" && (selectedClass === "12" || selectedClass === "11")) {
+      return "English Core (Code 301)";
+    }
+    if (subKey === "hindi" && selectedClass === "10") {
+      return "Hindi 'A' / हिन्दी 'अ' (Code 002)";
+    }
+    return SUBJECT_NAMES[subKey] || subKey.toUpperCase();
+  };
 
   // If selected subject is not in current class subjects, fallback to first available
   const currentSubjectKey = availableSubjects.includes(selectedSubject)
@@ -100,12 +114,14 @@ export function SyllabusExplorer({
   const handleGenerateWithBlueprint = (activeBlueprint: any) => {
     if (!activeBlueprint) return;
 
+    const isHindi = currentSubjectKey.toLowerCase().includes("hindi") || currentSubjectKey.includes("हिन्दी");
+
     const prefilledConfig = {
       classId: selectedClass,
       subject: currentSubjectKey,
       examType: "annual_exam",
       difficulty: "Medium",
-      language: "English",
+      language: isHindi ? "Hindi" : "English",
       totalMarks: activeBlueprint.totalMarks || 80,
       duration: activeBlueprint.duration || "3 Hours",
       questionDistribution: activeBlueprint.questionDistribution,
@@ -193,7 +209,7 @@ export function SyllabusExplorer({
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 max-w-4xl mx-auto w-full">
         {availableSubjects.map((subKey) => {
           const isSelected = currentSubjectKey === subKey;
-          const label = SUBJECT_NAMES[subKey] || subKey.toUpperCase();
+          const label = getSubjectLabel(subKey);
           return (
             <button
               key={subKey}
@@ -222,14 +238,14 @@ export function SyllabusExplorer({
           <div className="min-w-0 flex-1 space-y-1">
             <div className="flex flex-wrap items-center gap-2 mb-1">
               <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
-                Class {selectedClass} • {SUBJECT_NAMES[currentSubjectKey] || currentSubjectKey}
+                Class {selectedClass} • {getSubjectLabel(currentSubjectKey)}
               </span>
               <span className="text-[10px] px-2 py-0.5 rounded-md bg-indigo-500/10 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 font-bold border border-indigo-200 dark:border-indigo-500/20 whitespace-nowrap shrink-0">
                 CBSE 2026 Pattern
               </span>
             </div>
             <h3 className="text-base sm:text-lg font-bold font-heading text-slate-900 dark:text-foreground leading-snug">
-              {blueprint?.title || `Class ${selectedClass} ${SUBJECT_NAMES[currentSubjectKey] || currentSubjectKey} Official Curriculum`}
+              {blueprint?.title || `Class ${selectedClass} ${getSubjectLabel(currentSubjectKey)} Official Curriculum`}
             </h3>
             {currentCurriculum?.notes && (
               <p className="text-xs text-slate-600 dark:text-muted-foreground mt-1 font-medium leading-relaxed">{currentCurriculum.notes}</p>
@@ -319,8 +335,19 @@ export function SyllabusExplorer({
                     <div className="w-6 h-6 rounded-lg bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-heading font-bold text-xs shrink-0 mt-0.5">
                       {idx + 1}
                     </div>
-                    <div>
-                      <h4 className="text-xs font-semibold text-slate-900 dark:text-foreground leading-snug">{ch}</h4>
+                    <div className="min-w-0">
+                      {ch.includes(":") ? (
+                        <>
+                          <span className="inline-block text-[10px] px-2 py-0.5 rounded-md font-semibold bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 mb-1">
+                            {ch.split(":")[0].trim()}
+                          </span>
+                          <h4 className="text-xs font-semibold text-slate-900 dark:text-foreground leading-snug">
+                            {ch.split(":").slice(1).join(":").trim()}
+                          </h4>
+                        </>
+                      ) : (
+                        <h4 className="text-xs font-semibold text-slate-900 dark:text-foreground leading-snug">{ch}</h4>
+                      )}
                       <span className="text-[10px] text-slate-500 dark:text-muted-foreground font-medium flex items-center gap-1 mt-1">
                         <CheckCircle2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
                         In CBSE 2026 Official Syllabus

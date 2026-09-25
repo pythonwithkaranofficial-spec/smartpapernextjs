@@ -64,35 +64,37 @@ export const BLUEPRINTS: Blueprint[] = [
     classId: "12",
     subject: "physics",
     examType: ["annual_exam", "pre_board", "sample_paper", "half_yearly"],
-    title: "CBSE Class 12 Physics Official Blueprint 2026",
+    title: "CBSE Class 12 Physics (Code 042) Official Blueprint 2025-26",
     board: "CBSE",
     year: 2026,
     totalMarks: 70,
     duration: "3 Hours",
     questionDistribution: {
-      mcq: 16,
-      assertionReason: 0,
+      mcq: 12,
+      assertionReason: 4,
       vsa: 5,
       sa: 7,
-      la: 3,
       caseStudy: 2,
+      la: 3,
     },
     selectedChapters: ["all"],
     unitWeightage: [
-      { unit: "I", topic: "Electrostatics", marks: 16 },
-      { unit: "II", topic: "Magnetic Effects of Current", marks: 17 },
-      { unit: "III", topic: "Electromagnetic Waves & Optics", marks: 18 },
-      { unit: "IV", topic: "Dual Nature of Radiation", marks: 12 },
-      { unit: "V", topic: "Electronic Devices", marks: 7 },
+      { unit: "Unit I & II", topic: "Electrostatics & Current Electricity (Chapters 1, 2, 3)", marks: 16 },
+      { unit: "Unit III & IV", topic: "Magnetic Effects of Current, Magnetism, EMI & AC (Chapters 4, 5, 6, 7)", marks: 17 },
+      { unit: "Unit V & VI", topic: "Electromagnetic Waves & Optics (Chapters 8, 9, 10)", marks: 18 },
+      { unit: "Unit VII & VIII", topic: "Dual Nature of Radiation, Atoms & Nuclei (Chapters 11, 12, 13)", marks: 12 },
+      { unit: "Unit IX", topic: "Electronic Devices: Semiconductor Electronics (Chapter 14)", marks: 7 },
     ],
-    defaultInstructions: `1. This question paper contains 33 questions divided into 5 Sections: A, B, C, D and E.
-2. Section A comprises 16 MCQs of 1 mark each.
-3. Section B comprises 5 Very Short Answer (VSA) type questions of 2 marks each.
-4. Section C comprises 7 Short Answer (SA) type questions of 3 marks each.
-5. Section D comprises 2 Case-Based questions of 4 marks each.
-6. Section E comprises 3 Long Answer (LA) type questions of 5 marks each.
-7. All questions are compulsory. Internal choices are provided in some questions.
-8. Use of log tables and calculators is strictly prohibited.`,
+    defaultInstructions: `1. There are 33 questions in all. All questions are compulsory.
+2. This question paper has five sections: Section A, Section B, Section C, Section D and Section E.
+3. All the sections are compulsory.
+4. Section A contains sixteen questions: twelve MCQs and four Assertion-Reasoning questions of 1 mark each (Q1 to Q16).
+5. Section B contains five questions of 2 marks each (Q17 to Q21).
+6. Section C contains seven questions of 3 marks each (Q22 to Q28).
+7. Section D contains two case study based questions of 4 marks each with sub-parts (Q29 and Q30).
+8. Section E contains three long answer questions of 5 marks each (Q31 to Q33).
+9. There is no overall choice. However, an internal choice has been provided in one question in Section B, one question in Section C, one question in each CBQ in Section D and all three questions in Section E.
+10. Use of calculators is not permitted. You may use mathematical log tables if necessary.`,
   },
   {
     id: "cbse-12-chemistry-2026",
@@ -139,42 +141,43 @@ export const BLUEPRINTS: Blueprint[] = [
     classId: "12",
     subject: "biology",
     examType: ["annual_exam", "pre_board", "sample_paper", "half_yearly"],
-    title: "CBSE Class 12 Biology Official Blueprint 2026",
+    title: "CBSE Class 12 Biology (Code 044) Official Blueprint 2025-26",
     board: "CBSE",
     year: 2026,
     totalMarks: 70,
     duration: "3 Hours",
     questionDistribution: {
-      mcq: 16,
-      assertionReason: 0,
+      mcq: 12,
+      assertionReason: 4,
       vsa: 5,
       sa: 7,
-      la: 3,
       caseStudy: 2,
+      la: 3,
     },
     selectedChapters: ["all"],
     unitWeightage: [
-      { unit: "VI", topic: "Reproduction", marks: 16 },
-      { unit: "VII", topic: "Genetics & Evolution", marks: 20 },
-      { unit: "VIII", topic: "Biology & Human Welfare", marks: 12 },
-      { unit: "IX", topic: "Biotechnology", marks: 12 },
-      { unit: "X", topic: "Ecology & Environment", marks: 10 },
+      { unit: "Unit I", topic: "Reproduction (Chapters 1, 2, 3)", marks: 15 },
+      { unit: "Unit II", topic: "Genetics and Evolution (Chapters 4, 5, 6)", marks: 20 },
+      { unit: "Unit III", topic: "Biology and Human Welfare (Chapters 7, 8)", marks: 14 },
+      { unit: "Unit IV", topic: "Biotechnology and its Applications (Chapters 9, 10)", marks: 11 },
+      { unit: "Unit V", topic: "Ecology and Environment (Chapters 11, 12, 13)", marks: 10 },
     ],
-    defaultInstructions: `1. This question paper contains 33 questions divided into 5 Sections: A, B, C, D and E.
-2. Section A comprises 16 MCQs of 1 mark each.
-3. Section B comprises 5 Very Short Answer (VSA) type questions of 2 marks each.
-4. Section C comprises 7 Short Answer (SA) type questions of 3 marks each.
-5. Section D comprises 2 Case-Based questions of 4 marks each.
-6. Section E comprises 3 Long Answer (LA) type questions of 5 marks each.
-7. All questions are compulsory. Internal choices are provided in some questions.
-8. Diagrams should be drawn neatly and labeled clearly wherever required.`,
+    defaultInstructions: `1. All questions are compulsory.
+2. The question paper has five sections and 33 questions: Section A, Section B, Section C, Section D and Section E.
+3. Section A has 16 questions of 1 mark each: 12 MCQs and 4 Assertion-Reasoning questions (Q1 to Q16).
+4. Section B has 5 Very Short Answer (VSA) questions of 2 marks each (Q17 to Q21).
+5. Section C has 7 Short Answer (SA) questions of 3 marks each (Q22 to Q28).
+6. Section D has 2 Case-Based questions of 4 marks each with sub-parts (Q29 and Q30).
+7. Section E has 3 Long Answer (LA) questions of 5 marks each (Q31 to Q33).
+8. There is no overall choice. However, internal choices have been provided in some questions. A student has to attempt only one of the alternatives in such questions.
+9. Wherever necessary, neat and properly labeled diagrams should be drawn.`,
   },
   {
     id: "cbse-12-geography-2026",
     classId: "12",
     subject: "geography",
     examType: ["annual_exam", "pre_board", "sample_paper", "half_yearly"],
-    title: "CBSE Class 12 Geography Official Blueprint 2026",
+    title: "CBSE Class 12 Geography (Code 029) Official Blueprint 2025-26",
     board: "CBSE",
     year: 2026,
     totalMarks: 70,
@@ -182,23 +185,34 @@ export const BLUEPRINTS: Blueprint[] = [
     questionDistribution: {
       mcq: 17,
       assertionReason: 0,
-      vsa: 2,
+      vsa: 0,
       sa: 4,
-      la: 5,
       caseStudy: 2,
+      la: 7,
     },
     selectedChapters: ["all"],
     unitWeightage: [
-      { unit: "A", topic: "Fundamentals of Human Geography", marks: 30 },
-      { unit: "B", topic: "India: People and Economy", marks: 30 },
-      { unit: "C", topic: "Map Work (World & India)", marks: 10 },
+      { unit: "Fundamentals of Human Geography", topic: "Unit I: Human Geography (Nature and Scope)", marks: 3 },
+      { unit: "Fundamentals of Human Geography", topic: "Unit II: Population & Human Development (Chapters 2, 3)", marks: 8 },
+      { unit: "Fundamentals of Human Geography", topic: "Unit III: Human Activities, Transport, Trade (Chapters 4-8)", marks: 19 },
+      { unit: "Fundamentals of Human Geography", topic: "Map Work (World Political Map - Identification)", marks: 5 },
+      { unit: "India: People and Economy", topic: "Unit I: Population Distribution, Density, Growth & Composition", marks: 5 },
+      { unit: "India: People and Economy", topic: "Unit II: Human Settlements", marks: 3 },
+      { unit: "India: People and Economy", topic: "Unit III: Resources and Development (Chapters 3-6)", marks: 10 },
+      { unit: "India: People and Economy", topic: "Unit IV: Transport, Communication & International Trade (Chapters 7, 8)", marks: 7 },
+      { unit: "India: People and Economy", topic: "Unit V: Geographical Perspective on Selected Issues and Problems", marks: 5 },
+      { unit: "India: People and Economy", topic: "Map Work (India Political Map - Locating & Labelling)", marks: 5 },
     ],
     defaultInstructions: `1. This question paper contains 30 questions. All questions are compulsory.
-2. Question Nos. 1 to 17 are Multiple Choice Questions of 1 mark each.
-3. Question Nos. 18 and 19 are Source-based questions of 3 marks each.
-4. Question Nos. 20 to 23 are Short Answer Type questions of 3 marks each.
-5. Question Nos. 24 to 28 are Long Answer Type questions of 5 marks each.
-6. Question Nos. 29 & 30 are Map-based questions carrying 5 marks each.`,
+2. The question paper is divided into 5 Sections: Section A, Section B, Section C, Section D, and Section E.
+3. Section A comprises Questions 1 to 17, which are Multiple Choice Questions of 1 mark each.
+4. Section B comprises Questions 18 and 19, which are Source-based questions of 3 marks each.
+5. Section C comprises Questions 20 to 23, which are Short Answer Type questions of 3 marks each. Answers to these questions should normally not exceed 80 to 100 words.
+6. Section D comprises Questions 24 to 28, which are Long Answer Type questions of 5 marks each. Answers to these questions should normally not exceed 120 to 150 words.
+7. Section E comprises Questions 29 and 30, which are Map-based questions of 5 marks each:
+   - Question 29 is based on the outline physical/political map of the World (identification of features).
+   - Question 30 is based on the outline political map of India (locating and labelling of features).
+8. There is no overall choice. However, an internal choice has been provided in some questions. A student has to attempt only one of the alternatives in such questions.`,
   },
   {
     id: "cbse-12-english-2026",
@@ -213,22 +227,60 @@ export const BLUEPRINTS: Blueprint[] = [
     questionDistribution: {
       mcq: 16,
       assertionReason: 0,
-      vsa: 6,
-      sa: 7,
+      vsa: 7,
+      sa: 2,
       la: 4,
       caseStudy: 2,
     },
     selectedChapters: ["all"],
     unitWeightage: [
-      { unit: "Sec A", topic: "Reading Comprehension Skills", marks: 22 },
-      { unit: "Sec B", topic: "Creative Writing Skills", marks: 18 },
-      { unit: "Sec C", topic: "Literature Prose & Poetry", marks: 40 },
+      { unit: "Section A", topic: "Reading Skills (Unseen Comprehension & Case-based Passages)", marks: 22 },
+      { unit: "Section B", topic: "Creative Writing Skills (Notice, Invitation & Reply, Letters, Article/Report)", marks: 18 },
+      { unit: "Section C", topic: "Literature Textbook & Supplementary Reading Text (Flamingo & Vistas)", marks: 40 },
     ],
-    defaultInstructions: `1. This question paper has 3 Sections: A (Reading Skills), B (Creative Writing Skills), and C (Literature).
-2. Section A contains Reading Passages carrying 22 marks.
-3. Section B contains Creative Writing Skills tasks carrying 18 marks.
-4. Section C contains Literature Extracts, Short Answer Questions, and Long Answer Questions carrying 40 marks.
-5. Adhere strictly to the prescribed word limit for each question.`,
+    defaultInstructions: `1. This question paper has 13 questions across 3 sections:
+   - Section A: Reading Skills (22 Marks)
+   - Section B: Creative Writing Skills (18 Marks)
+   - Section C: Literature Textbook and Supplementary Reading Text (40 Marks)
+2. All questions are compulsory. However, internal choices have been provided in certain questions.
+3. Adhere strictly to the prescribed word limit for each question:
+   - Notice / Invitation & Reply: up to 50 words
+   - Letter / Article / Report: 120-150 words
+   - Short Answer Questions (Literature): 40-50 words
+   - Long Answer Questions (Literature): 120-150 words
+4. Maintain accuracy in spelling and grammatical correctness throughout your answers.`,
+  },
+  {
+    id: "cbse-10-hindi-2026",
+    classId: "10",
+    subject: "hindi",
+    examType: ["annual_exam", "pre_board", "sample_paper", "half_yearly"],
+    title: "CBSE Class 10 Hindi 'A' (Code 002) Official Blueprint 2026",
+    board: "CBSE",
+    year: 2026,
+    totalMarks: 80,
+    duration: "3 Hours",
+    questionDistribution: {
+      mcq: 32,
+      assertionReason: 0,
+      vsa: 10,
+      sa: 0,
+      caseStudy: 2,
+      la: 4,
+    },
+    selectedChapters: ["all"],
+    unitWeightage: [
+      { unit: "खण्ड क", topic: "अपठित बोध (अपठित गद्यांश 7 अंक + अपठित काव्यांश 7 अंक)", marks: 14 },
+      { unit: "खण्ड ख", topic: "व्यावहारिक व्याकरण (वाक्य भेद 4, वाच्य 4, पद परिचय 4, अलंकार 4)", marks: 16 },
+      { unit: "खण्ड ग", topic: "पाठ्यपुस्तक एवं पूरक पाठ्यपुस्तक (क्षितिज गद्य 11, क्षितिज काव्य 11, कृतिका 8)", marks: 30 },
+      { unit: "खण्ड घ", topic: "रचनात्मक लेखन (अनुच्छेद 6, पत्र 5, स्ववृत्त/ईमेल 5, विज्ञापन/संदेश 4)", marks: 20 },
+    ],
+    defaultInstructions: `1. इस प्रश्नपत्र में कुल 4 खण्ड हैं - खण्ड 'क', खण्ड 'ख', खण्ड 'ग' और खण्ड 'घ'।
+2. इस प्रश्नपत्र में कुल 15 प्रश्न हैं। सभी प्रश्न अनिवार्य हैं। यथासंभव प्रत्येक खण्ड के प्रश्नों के उत्तर क्रमानुसार दीजिए।
+3. खण्ड 'क' (अपठित बोध) में कुल 14 अंकों के प्रश्न हैं - अपठित गद्यांश (7 अंक) एवं अपठित काव्यांश (7 अंक)।
+4. खण्ड 'ख' (व्यावहारिक व्याकरण) में कुल 16 अंकों के प्रश्न हैं (प्रत्येक उप-विषय में 5 में से 4 प्रश्नों के उत्तर देने हैं)।
+5. खण्ड 'ग' (पाठ्यपुस्तक एवं पूरक पाठ्यपुस्तक) में कुल 30 अंकों के प्रश्न हैं (क्षितिज गद्य: 11 अंक, क्षितिज काव्य: 11 अंक, कृतिका: 8 अंक)।
+6. खण्ड 'घ' (रचनात्मक लेखन) में कुल 20 अंकों के प्रश्न हैं। प्रश्नों में दिए गए आंतरिक विकल्पों और निर्धारित शब्द-सीमा का विशेष ध्यान रखें।`,
   },
   {
     id: "cbse-12-hindi-2026",
@@ -264,7 +316,7 @@ export const BLUEPRINTS: Blueprint[] = [
     classId: "12",
     subject: "economics",
     examType: ["annual_exam", "pre_board", "sample_paper", "half_yearly"],
-    title: "CBSE Class 12 Economics Official Blueprint 2026",
+    title: "CBSE Class 12 Economics (Code 030) Official Blueprint 2025-26",
     board: "CBSE",
     year: 2026,
     totalMarks: 80,
@@ -272,21 +324,30 @@ export const BLUEPRINTS: Blueprint[] = [
     questionDistribution: {
       mcq: 20,
       assertionReason: 0,
-      vsa: 4,
-      sa: 6,
+      vsa: 0,
+      sa: 4,
+      caseStudy: 6,
       la: 4,
-      caseStudy: 0,
     },
     selectedChapters: ["all"],
     unitWeightage: [
-      { unit: "Part A", topic: "Introductory Macroeconomics", marks: 40 },
-      { unit: "Part B", topic: "Indian Economic Development", marks: 40 },
+      { unit: "Part A - Unit 1", topic: "National Income and Related Aggregates", marks: 10 },
+      { unit: "Part A - Unit 2", topic: "Money and Banking", marks: 6 },
+      { unit: "Part A - Unit 3", topic: "Determination of Income and Employment", marks: 12 },
+      { unit: "Part A - Unit 4", topic: "Government Budget and the Economy", marks: 6 },
+      { unit: "Part A - Unit 5", topic: "Balance of Payments and Foreign Exchange", marks: 6 },
+      { unit: "Part B - Unit 6", topic: "Development Experience (1947-90) & Economic Reforms since 1991", marks: 12 },
+      { unit: "Part B - Unit 7", topic: "Current Challenges facing Indian Economy", marks: 20 },
+      { unit: "Part B - Unit 8", topic: "Development Experience of India – A Comparison with Neighbours", marks: 8 },
     ],
-    defaultInstructions: `1. This question paper contains two parts: Part A (Introductory Macroeconomics) and Part B (Indian Economic Development).
-2. Question Nos. 1 to 10 and 18 to 27 are Multiple Choice Questions of 1 mark each.
-3. Question Nos. 11 to 12 and 28 to 29 are Short Answer Type I questions of 3 marks each.
-4. Question Nos. 13 to 15 and 30 to 32 are Short Answer Type II questions of 4 marks each.
-5. Question Nos. 16 to 17 and 33 to 34 are Long Answer Type questions of 6 marks each.`,
+    defaultInstructions: `1. This question paper contains 34 questions and two sections: Section A (Introductory Macroeconomics) and Section B (Indian Economic Development).
+2. All questions in both sections are compulsory.
+3. Questions 1-10 and 18-27 are Multiple Choice Questions carrying 1 mark each.
+4. Questions 11-12 and 28-29 are Short Answer Type I questions carrying 3 marks each. Answers should normally not exceed 60 to 80 words.
+5. Questions 13-15 and 30-32 are Short Answer Type II questions carrying 4 marks each. Answers should normally not exceed 80 to 100 words.
+6. Questions 16-17 and 33-34 are Long Answer Type questions carrying 6 marks each. Answers should normally not exceed 100 to 150 words.
+7. There is no overall choice. However, an internal choice has been provided in 2 questions of 3 marks, 2 questions of 4 marks, and 2 questions of 6 marks.
+8. Answers should be brief and to the point and the above word limit be adhered to as far as possible.`,
   },
   {
     id: "cbse-12-polscience-2026",
@@ -690,11 +751,11 @@ export const BLUEPRINTS: Blueprint[] = [
 7. Total marks for Theory Examination is 70 Marks (Practical Examination: 30 Marks). Time allowed is 3 Hours.`,
   },
   {
-    id: "cbse-12-physics-2026",
+    id: "cbse-12-physics-2026-alt",
     classId: "12",
     subject: "physics",
     examType: ["annual_exam", "pre_board", "sample_paper", "half_yearly"],
-    title: "CBSE Class 12 Physics (Code 042) Official Blueprint 2026-2027",
+    title: "CBSE Class 12 Physics (Code 042) Official Blueprint 2025-26",
     board: "CBSE",
     year: 2026,
     totalMarks: 70,
@@ -704,24 +765,27 @@ export const BLUEPRINTS: Blueprint[] = [
       assertionReason: 4,
       vsa: 5,
       sa: 7,
-      la: 3,
       caseStudy: 2,
+      la: 3,
     },
     selectedChapters: ["all"],
     unitWeightage: [
-      { unit: "U1-2", topic: "Electrostatics & Current Electricity (Ch 1-3)", marks: 16 },
-      { unit: "U3-4", topic: "Magnetic Effects of Current, Magnetism, EMI & AC (Ch 4-7)", marks: 17 },
-      { unit: "U5-6", topic: "Electromagnetic Waves & Optics (Ch 8-10)", marks: 18 },
-      { unit: "U7-8", topic: "Dual Nature of Radiation/Matter, Atoms & Nuclei (Ch 11-13)", marks: 12 },
-      { unit: "U9", topic: "Semiconductor Electronics: Materials, Devices & Simple Circuits (Ch 14)", marks: 7 },
+      { unit: "Unit I & II", topic: "Electrostatics & Current Electricity (Chapters 1, 2, 3)", marks: 16 },
+      { unit: "Unit III & IV", topic: "Magnetic Effects of Current, Magnetism, EMI & AC (Chapters 4, 5, 6, 7)", marks: 17 },
+      { unit: "Unit V & VI", topic: "Electromagnetic Waves & Optics (Chapters 8, 9, 10)", marks: 18 },
+      { unit: "Unit VII & VIII", topic: "Dual Nature of Radiation, Atoms & Nuclei (Chapters 11, 12, 13)", marks: 12 },
+      { unit: "Unit IX", topic: "Electronic Devices: Semiconductor Electronics (Chapter 14)", marks: 7 },
     ],
-    defaultInstructions: `1. The Question Paper contains 33 questions divided into 5 Sections: A, B, C, D and E. All questions are compulsory.
-2. Section A contains 16 questions (12 MCQs and 4 Assertion-Reasoning) of 1 mark each.
-3. Section B contains 5 Short Answer Type questions of 2 marks each.
-4. Section C contains 7 Short Answer Type questions of 3 marks each.
-5. Section D contains 2 Case-Based questions of 4 marks each.
-6. Section E contains 3 Long Answer Type questions of 5 marks each.
-7. Total marks for Theory Examination is 70 Marks (Practical Examination: 30 Marks). Time allowed is 3 Hours.`,
+    defaultInstructions: `1. There are 33 questions in all. All questions are compulsory.
+2. This question paper has five sections: Section A, Section B, Section C, Section D and Section E.
+3. All the sections are compulsory.
+4. Section A contains sixteen questions: twelve MCQs and four Assertion-Reasoning questions of 1 mark each (Q1 to Q16).
+5. Section B contains five questions of 2 marks each (Q17 to Q21).
+6. Section C contains seven questions of 3 marks each (Q22 to Q28).
+7. Section D contains two case study based questions of 4 marks each with sub-parts (Q29 and Q30).
+8. Section E contains three long answer questions of 5 marks each (Q31 to Q33).
+9. There is no overall choice. However, an internal choice has been provided in one question in Section B, one question in Section C, one question in each CBQ in Section D and all three questions in Section E.
+10. Use of calculators is not permitted. You may use mathematical log tables if necessary.`,
   },
   {
     id: "cbse-11-phyedu-2026",
@@ -927,11 +991,11 @@ export const BLUEPRINTS: Blueprint[] = [
 6. Section E contains Question 29 & 30 Map-based questions carrying 5 marks each.`,
   },
   {
-    id: "cbse-12-geography-2026",
+    id: "cbse-12-geography-2026-alt",
     classId: "12",
     subject: "geography",
     examType: ["annual_exam", "pre_board", "sample_paper", "half_yearly"],
-    title: "CBSE Class 12 Geography (Code 029) Official Blueprint 2026-2027",
+    title: "CBSE Class 12 Geography (Code 029) Official Blueprint 2025-26",
     board: "CBSE",
     year: 2026,
     totalMarks: 70,
@@ -939,22 +1003,34 @@ export const BLUEPRINTS: Blueprint[] = [
     questionDistribution: {
       mcq: 17,
       assertionReason: 0,
-      vsa: 4,
-      sa: 5,
-      la: 4,
+      vsa: 0,
+      sa: 4,
       caseStudy: 2,
+      la: 7,
     },
     selectedChapters: ["all"],
     unitWeightage: [
-      { unit: "Part A", topic: "Fundamentals of Human Geography (Units I-III & Map)", marks: 35 },
-      { unit: "Part B", topic: "India: People and Economy (Units I-V & Map)", marks: 35 },
+      { unit: "Fundamentals of Human Geography", topic: "Unit I: Human Geography (Nature and Scope)", marks: 3 },
+      { unit: "Fundamentals of Human Geography", topic: "Unit II: Population & Human Development (Chapters 2, 3)", marks: 8 },
+      { unit: "Fundamentals of Human Geography", topic: "Unit III: Human Activities, Transport, Trade (Chapters 4-8)", marks: 19 },
+      { unit: "Fundamentals of Human Geography", topic: "Map Work (World Political Map - Identification)", marks: 5 },
+      { unit: "India: People and Economy", topic: "Unit I: Population Distribution, Density, Growth & Composition", marks: 5 },
+      { unit: "India: People and Economy", topic: "Unit II: Human Settlements", marks: 3 },
+      { unit: "India: People and Economy", topic: "Unit III: Resources and Development (Chapters 3-6)", marks: 10 },
+      { unit: "India: People and Economy", topic: "Unit IV: Transport, Communication & International Trade (Chapters 7, 8)", marks: 7 },
+      { unit: "India: People and Economy", topic: "Unit V: Geographical Perspective on Selected Issues and Problems", marks: 5 },
+      { unit: "India: People and Economy", topic: "Map Work (India Political Map - Locating & Labelling)", marks: 5 },
     ],
-    defaultInstructions: `1. Question Paper contains 30 questions divided into 5 Sections: A, B, C, D and E.
-2. Section A contains Question 1 to 17 MCQs carrying 1 mark each.
-3. Section B contains Question 18 to 21 Short Answer Type Questions carrying 3 marks each.
-4. Section C contains Question 22 to 25 Source/Case Based Questions carrying 4 marks each.
-5. Section D contains Question 26 to 28 Long Answer Type Questions carrying 5 marks each.
-6. Section E contains Question 29 & 30 Map-based questions carrying 5 marks each.`,
+    defaultInstructions: `1. This question paper contains 30 questions. All questions are compulsory.
+2. The question paper is divided into 5 Sections: Section A, Section B, Section C, Section D, and Section E.
+3. Section A comprises Questions 1 to 17, which are Multiple Choice Questions of 1 mark each.
+4. Section B comprises Questions 18 and 19, which are Source-based questions of 3 marks each.
+5. Section C comprises Questions 20 to 23, which are Short Answer Type questions of 3 marks each. Answers to these questions should normally not exceed 80 to 100 words.
+6. Section D comprises Questions 24 to 28, which are Long Answer Type questions of 5 marks each. Answers to these questions should normally not exceed 120 to 150 words.
+7. Section E comprises Questions 29 and 30, which are Map-based questions of 5 marks each:
+   - Question 29 is based on the outline physical/political map of the World (identification of features).
+   - Question 30 is based on the outline political map of India (locating and labelling of features).
+8. There is no overall choice. However, an internal choice has been provided in some questions. A student has to attempt only one of the alternatives in such questions.`,
   },
   {
     id: "cbse-11-finearts-2026",
@@ -1216,11 +1292,11 @@ export const BLUEPRINTS: Blueprint[] = [
 5. Section D contains 4 Long Answer Questions of 6 marks each. Total theory marks: 80.`,
   },
   {
-    id: "cbse-12-economics-2026",
+    id: "cbse-12-economics-2026-alt",
     classId: "12",
     subject: "economics",
     examType: ["annual_exam", "pre_board", "sample_paper", "half_yearly"],
-    title: "CBSE Class 12 Economics (Code 030) Official Blueprint 2026-2027",
+    title: "CBSE Class 12 Economics (Code 030) Official Blueprint 2025-26",
     board: "CBSE",
     year: 2026,
     totalMarks: 80,
@@ -1228,23 +1304,30 @@ export const BLUEPRINTS: Blueprint[] = [
     questionDistribution: {
       mcq: 20,
       assertionReason: 0,
-      vsa: 4,
-      sa: 6,
+      vsa: 0,
+      sa: 4,
+      caseStudy: 6,
       la: 4,
-      caseStudy: 3,
     },
     selectedChapters: ["all"],
     unitWeightage: [
-      { unit: "Part A1", topic: "National Income and Related Aggregates", marks: 10 },
-      { unit: "Part A2", topic: "Money and Banking", marks: 6 },
-      { unit: "Part A3", topic: "Determination of Income and Employment", marks: 12 },
-      { unit: "Part A4", topic: "Government Budget and the Economy", marks: 6 },
-      { unit: "Part A5", topic: "Balance of Payments", marks: 6 },
-      { unit: "Part B1", topic: "Development Experience (1947-90) & Economic Reforms since 1991", marks: 12 },
-      { unit: "Part B2", topic: "Current Challenges facing Indian Economy", marks: 20 },
-      { unit: "Part B3", topic: "Development Experience of India – A Comparison with Neighbours", marks: 8 },
+      { unit: "Part A - Unit 1", topic: "National Income and Related Aggregates", marks: 10 },
+      { unit: "Part A - Unit 2", topic: "Money and Banking", marks: 6 },
+      { unit: "Part A - Unit 3", topic: "Determination of Income and Employment", marks: 12 },
+      { unit: "Part A - Unit 4", topic: "Government Budget and the Economy", marks: 6 },
+      { unit: "Part A - Unit 5", topic: "Balance of Payments and Foreign Exchange", marks: 6 },
+      { unit: "Part B - Unit 6", topic: "Development Experience (1947-90) & Economic Reforms since 1991", marks: 12 },
+      { unit: "Part B - Unit 7", topic: "Current Challenges facing Indian Economy", marks: 20 },
+      { unit: "Part B - Unit 8", topic: "Development Experience of India – A Comparison with Neighbours", marks: 8 },
     ],
-    defaultInstructions: "1. This question paper contains 34 questions. All questions are compulsory. Total theory marks: 80.",
+    defaultInstructions: `1. This question paper contains 34 questions and two sections: Section A (Introductory Macroeconomics) and Section B (Indian Economic Development).
+2. All questions in both sections are compulsory.
+3. Questions 1-10 and 18-27 are Multiple Choice Questions carrying 1 mark each.
+4. Questions 11-12 and 28-29 are Short Answer Type I questions carrying 3 marks each. Answers should normally not exceed 60 to 80 words.
+5. Questions 13-15 and 30-32 are Short Answer Type II questions carrying 4 marks each. Answers should normally not exceed 80 to 100 words.
+6. Questions 16-17 and 33-34 are Long Answer Type questions carrying 6 marks each. Answers should normally not exceed 100 to 150 words.
+7. There is no overall choice. However, an internal choice has been provided in 2 questions of 3 marks, 2 questions of 4 marks, and 2 questions of 6 marks.
+8. Answers should be brief and to the point and the above word limit be adhered to as far as possible.`,
   },
   {
     id: "cbse-11-cs-2026",
@@ -1277,26 +1360,35 @@ export const BLUEPRINTS: Blueprint[] = [
     classId: "12",
     subject: "cs",
     examType: ["annual_exam", "pre_board", "sample_paper", "half_yearly"],
-    title: "CBSE Class 12 Computer Science (Code 083) Official Blueprint 2026-2027",
+    title: "CBSE Class 12 Computer Science (Code 083) Official Blueprint 2025-26",
     board: "CBSE",
     year: 2026,
     totalMarks: 70,
     duration: "3 Hours",
     questionDistribution: {
       mcq: 18,
-      assertionReason: 0,
-      vsa: 5,
-      sa: 5,
-      la: 3,
-      caseStudy: 3,
+      assertionReason: 2,
+      vsa: 6,
+      sa: 4,
+      caseStudy: 4,
+      la: 2,
     },
     selectedChapters: ["all"],
     unitWeightage: [
-      { unit: "U1", topic: "Computational Thinking and Programming - II", marks: 40 },
-      { unit: "U2", topic: "Computer Networks", marks: 10 },
-      { unit: "U3", topic: "Database Management", marks: 20 },
+      { unit: "Unit 1", topic: "Computational Thinking and Programming - 2 (Chapters 1 to 7)", marks: 40 },
+      { unit: "Unit 2", topic: "Computer Networks (Chapters 8 to 10)", marks: 10 },
+      { unit: "Unit 3", topic: "Database Management (Chapters 11 to 14)", marks: 20 },
     ],
-    defaultInstructions: "1. This Question Paper contains 35 questions divided into 5 Sections: A, B, C, D and E. Total theory marks: 70.",
+    defaultInstructions: `1. Please check that this question paper contains 36 questions across 5 Sections: Section A, Section B, Section C, Section D and Section E.
+2. All questions are compulsory. However, internal choices have been provided in some questions.
+3. Section A comprises 20 questions of 1 mark each: 18 Multiple Choice Questions and 2 Assertion-Reasoning questions (Q1 to Q20).
+4. Section B comprises 6 Very Short Answer / Short Answer I questions of 2 marks each (Q21 to Q26).
+5. Section C comprises 4 Short Answer II questions of 3 marks each (Q27 to Q30).
+6. Section D comprises 4 Long Answer questions of 4 marks each (Q31 to Q34).
+7. Section E comprises 2 Very Long Answer questions of 5 marks each (Q35 and Q36).
+8. All programming questions must be answered using Python (Python 3.x).
+9. All database queries must be answered using standard Structured Query Language (SQL).
+10. Use of calculators or any other electronic devices is not permitted.`,
   },
   {
     id: "cbse-11-biology-2026",
@@ -1327,11 +1419,11 @@ export const BLUEPRINTS: Blueprint[] = [
     defaultInstructions: "1. The Question Paper contains 33 questions divided into 5 Sections: A, B, C, D and E. Total theory marks: 70.",
   },
   {
-    id: "cbse-12-biology-2026",
+    id: "cbse-12-biology-2026-alt",
     classId: "12",
     subject: "biology",
     examType: ["annual_exam", "pre_board", "sample_paper", "half_yearly"],
-    title: "CBSE Class 12 Biology (Code 044) Official Blueprint 2026-2027",
+    title: "CBSE Class 12 Biology (Code 044) Official Blueprint 2025-26",
     board: "CBSE",
     year: 2026,
     totalMarks: 70,
@@ -1341,18 +1433,26 @@ export const BLUEPRINTS: Blueprint[] = [
       assertionReason: 4,
       vsa: 5,
       sa: 7,
-      la: 3,
       caseStudy: 2,
+      la: 3,
     },
     selectedChapters: ["all"],
     unitWeightage: [
-      { unit: "U6", topic: "Reproduction", marks: 16 },
-      { unit: "U7", topic: "Genetics and Evolution", marks: 20 },
-      { unit: "U8", topic: "Biology and Human Welfare", marks: 12 },
-      { unit: "U9", topic: "Biotechnology and its Applications", marks: 12 },
-      { unit: "U10", topic: "Ecology and Environment", marks: 10 },
+      { unit: "Unit I", topic: "Reproduction (Chapters 1, 2, 3)", marks: 15 },
+      { unit: "Unit II", topic: "Genetics and Evolution (Chapters 4, 5, 6)", marks: 20 },
+      { unit: "Unit III", topic: "Biology and Human Welfare (Chapters 7, 8)", marks: 14 },
+      { unit: "Unit IV", topic: "Biotechnology and its Applications (Chapters 9, 10)", marks: 11 },
+      { unit: "Unit V", topic: "Ecology and Environment (Chapters 11, 12, 13)", marks: 10 },
     ],
-    defaultInstructions: "1. The Question Paper contains 33 questions divided into 5 Sections: A, B, C, D and E. Total theory marks: 70.",
+    defaultInstructions: `1. All questions are compulsory.
+2. The question paper has five sections and 33 questions: Section A, Section B, Section C, Section D and Section E.
+3. Section A has 16 questions of 1 mark each: 12 MCQs and 4 Assertion-Reasoning questions (Q1 to Q16).
+4. Section B has 5 Very Short Answer (VSA) questions of 2 marks each (Q17 to Q21).
+5. Section C has 7 Short Answer (SA) questions of 3 marks each (Q22 to Q28).
+6. Section D has 2 Case-Based questions of 4 marks each with sub-parts (Q29 and Q30).
+7. Section E has 3 Long Answer (LA) questions of 5 marks each (Q31 to Q33).
+8. There is no overall choice. However, internal choices have been provided in some questions. A student has to attempt only one of the alternatives in such questions.
+9. Wherever necessary, neat and properly labeled diagrams should be drawn.`,
   },
   {
     id: "cbse-11-accountancy-2026",
@@ -1781,7 +1881,9 @@ export function getOrGenerateBlueprint(
     normSub.includes("bio") ||
     normSub.includes("geography") ||
     normSub.includes("phyedu") ||
-    normSub.includes("finearts");
+    normSub.includes("finearts") ||
+    normSub === "cs" ||
+    normSub.includes("computer");
 
   let totalMarks = 80;
   let duration = "3 Hours";
