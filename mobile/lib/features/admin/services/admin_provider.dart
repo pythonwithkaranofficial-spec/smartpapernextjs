@@ -6,12 +6,14 @@ class AdminProvider extends ChangeNotifier {
   final ApiClient _apiClient;
 
   List<UserModel> _users = [];
+  Map<String, dynamic>? _stats;
   bool _isLoading = false;
   String? _errorMessage;
 
   AdminProvider(this._apiClient);
 
   List<UserModel> get users => _users;
+  Map<String, dynamic>? get stats => _stats;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
@@ -22,10 +24,14 @@ class AdminProvider extends ChangeNotifier {
 
     try {
       final res = await _apiClient.get('/admin/users');
-      final list = (res['users'] as List? ?? res['data'] as List? ?? [])
-          .map((u) => UserModel.fromJson(u))
+      final data = res['data'] is Map<String, dynamic> ? res['data'] : res;
+      final rawUsers = data['users'] as List? ?? [];
+      _stats = data['stats'] as Map<String, dynamic>?;
+
+      _users = rawUsers
+          .map((u) => UserModel.fromJson(u is Map<String, dynamic> ? u : Map<String, dynamic>.from(u)))
           .toList();
-      _users = list;
+
       _isLoading = false;
       notifyListeners();
     } catch (e) {
@@ -37,11 +43,21 @@ class AdminProvider extends ChangeNotifier {
 
   Future<bool> updateUserRoleOrPlan(String uid, {String? role, String? plan}) async {
     try {
-      final payload = <String, dynamic>{'firebase_uid': uid};
-      if (role != null) payload['role'] = role;
-      if (plan != null) payload['plan'] = plan;
+      if (role != null) {
+        await _apiClient.post('/admin/users', body: {
+          'targetFirebaseUid': uid,
+          'action': 'update_role',
+          'role': role,
+        });
+      }
 
-      await _apiClient.put('/admin/users', body: payload);
+      if (plan != null) {
+        await _apiClient.post('/admin/users', body: {
+          'targetFirebaseUid': uid,
+          'action': 'update_plan',
+          'plan': plan,
+        });
+      }
 
       final idx = _users.indexWhere((u) => u.uid == uid);
       if (idx != -1) {

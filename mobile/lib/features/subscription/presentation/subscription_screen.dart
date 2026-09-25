@@ -1,22 +1,38 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../app/theme/theme_provider.dart';
+import '../../../app/theme/app_colors.dart';
 import '../services/subscription_provider.dart';
 import '../../auth/services/auth_provider.dart';
+import '../../auth/presentation/auth_screen.dart';
 
 class SubscriptionScreen extends StatelessWidget {
   const SubscriptionScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
     final subProvider = Provider.of<SubscriptionProvider>(context);
     final authProvider = Provider.of<AuthProvider>(context);
     final currentPlan = authProvider.user?.plan ?? 'FREE';
 
+    final isDark = themeProvider.isDarkMode;
+    final bg = AppColors.getBackground(isDark);
+    final cardBg = AppColors.getSurface(isDark);
+    final borderColor = AppColors.getBorder(isDark);
+    final textColor = AppColors.getTextPrimary(isDark);
+    final subtextColor = AppColors.getTextSecondary(isDark);
+
     return Scaffold(
-      backgroundColor: const Color(0xFF0F172A),
+      backgroundColor: bg,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1E293B),
-        title: const Text('Subscription & Plans', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        backgroundColor: cardBg,
+        elevation: 0,
+        iconTheme: IconThemeData(color: textColor),
+        title: Text(
+          'Subscription & Passes',
+          style: TextStyle(color: textColor, fontWeight: FontWeight.bold, fontSize: 17),
+        ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -28,9 +44,9 @@ class SubscriptionScreen extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1E293B),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFF6366F1).withValues(alpha: 0.4)),
+                  color: cardBg,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: borderColor),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -38,17 +54,25 @@ class SubscriptionScreen extends StatelessWidget {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Active Subscription:', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 13)),
+                        Text('Active Subscription Plan:', style: TextStyle(color: subtextColor, fontSize: 12)),
                         const SizedBox(height: 4),
                         Text(
                           '$currentPlan PLAN',
-                          style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                          style: TextStyle(color: textColor, fontSize: 18, fontWeight: FontWeight.bold),
                         ),
                       ],
                     ),
-                    const Chip(
-                      backgroundColor: Color(0xFF10B981),
-                      label: Text('ACTIVE', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.2) : Colors.black.withValues(alpha: 0.2)),
+                      ),
+                      child: Text(
+                        'ACTIVE',
+                        style: TextStyle(color: textColor, fontWeight: FontWeight.bold, fontSize: 11),
+                      ),
                     ),
                   ],
                 ),
@@ -61,19 +85,21 @@ class SubscriptionScreen extends StatelessWidget {
                 ),
 
               const SizedBox(height: 24),
-              const Text('Select Upgrade Plan:', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+              Text('Select Upgrade Plan:', style: TextStyle(color: textColor, fontSize: 17, fontWeight: FontWeight.bold)),
               const SizedBox(height: 12),
 
               ...SubscriptionProvider.availablePlans.map((plan) {
                 final isCurrent = currentPlan.toUpperCase() == plan.id.toUpperCase();
                 return Card(
-                  color: const Color(0xFF1E293B),
+                  color: cardBg,
                   margin: const EdgeInsets.only(bottom: 16),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(14),
                     side: BorderSide(
-                      color: plan.isPopular ? const Color(0xFF6366F1) : const Color(0xFF334155),
-                      width: plan.isPopular ? 2 : 1,
+                      color: plan.isPopular
+                          ? (isDark ? Colors.white : Colors.black)
+                          : borderColor,
+                      width: plan.isPopular ? 1.5 : 1,
                     ),
                   ),
                   child: Padding(
@@ -84,31 +110,42 @@ class SubscriptionScreen extends StatelessWidget {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(plan.title, style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.bold)),
+                            Text(plan.title, style: TextStyle(color: textColor, fontSize: 16, fontWeight: FontWeight.bold)),
                             if (plan.isPopular)
-                              const Chip(
-                                backgroundColor: Color(0xFF6366F1),
-                                label: Text('POPULAR', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: isDark ? Colors.white : Colors.black,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  'RECOMMENDED',
+                                  style: TextStyle(
+                                    color: isDark ? Colors.black : Colors.white,
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                               ),
                           ],
                         ),
                         const SizedBox(height: 4),
                         Row(
                           children: [
-                            Text(plan.price, style: const TextStyle(color: Color(0xFF818CF8), fontSize: 22, fontWeight: FontWeight.bold)),
-                            Text(' / ${plan.period}', style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13)),
+                            Text(plan.price, style: TextStyle(color: textColor, fontSize: 22, fontWeight: FontWeight.bold)),
+                            Text(' / ${plan.period}', style: TextStyle(color: subtextColor, fontSize: 13)),
                           ],
                         ),
-                        const SizedBox(height: 8),
-                        Text('Daily Limit: ${plan.limitText}', style: const TextStyle(color: Color(0xFF10B981), fontWeight: FontWeight.w600, fontSize: 13)),
-                        const Divider(color: Color(0xFF334155), height: 20),
+                        const SizedBox(height: 6),
+                        Text('Daily Quota: ${plan.limitText}', style: TextStyle(color: textColor, fontWeight: FontWeight.w600, fontSize: 12.5)),
+                        Divider(color: borderColor, height: 20),
                         ...plan.features.map((f) => Padding(
                               padding: const EdgeInsets.only(bottom: 4),
                               child: Row(
                                 children: [
-                                  const Icon(Icons.check_circle_outline, color: Color(0xFF10B981), size: 16),
+                                  Icon(Icons.check_circle_outline, color: textColor, size: 15),
                                   const SizedBox(width: 8),
-                                  Expanded(child: Text(f, style: const TextStyle(color: Color(0xFFCBD5E1), fontSize: 13))),
+                                  Expanded(child: Text(f, style: TextStyle(color: subtextColor, fontSize: 12.5))),
                                 ],
                               ),
                             )),
@@ -117,28 +154,60 @@ class SubscriptionScreen extends StatelessWidget {
                           width: double.infinity,
                           child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: isCurrent ? const Color(0xFF334155) : const Color(0xFF6366F1),
+                              backgroundColor: isCurrent
+                                  ? (isDark ? const Color(0xFF262626) : const Color(0xFFE5E7EB))
+                                  : (isDark ? Colors.white : Colors.black),
+                              foregroundColor: isCurrent
+                                  ? subtextColor
+                                  : (isDark ? Colors.black : Colors.white),
                               padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                             ),
                             onPressed: (isCurrent || subProvider.isProcessing)
                                 ? null
                                 : () async {
+                                    if (!authProvider.isAuthenticated) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(content: Text('Please sign in to upgrade your subscription plan.')),
+                                      );
+                                      Navigator.push(context, MaterialPageRoute(builder: (ctx) => const AuthScreen()));
+                                      return;
+                                    }
+
                                     final messenger = ScaffoldMessenger.of(context);
                                     final success = await subProvider.initiateCheckout(
                                       plan.id,
-                                      (newPlan) => authProvider.updateUserPlan(newPlan),
+                                      (newPlan) {
+                                        authProvider.updateUserPlan(newPlan);
+                                      },
                                     );
                                     if (success && context.mounted) {
                                       messenger.showSnackBar(
-                                        SnackBar(content: Text('Upgraded to ${plan.title} successfully!')),
+                                        SnackBar(
+                                          backgroundColor: isDark ? Colors.white : Colors.black,
+                                          content: Text(
+                                            'Upgraded to ${plan.title} successfully!',
+                                            style: TextStyle(
+                                              color: isDark ? Colors.black : Colors.white,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
                                       );
                                     }
                                   },
                             child: isCurrent
-                                ? const Text('Current Plan', style: TextStyle(color: Color(0xFF94A3B8)))
+                                ? const Text('Current Plan', style: TextStyle(fontWeight: FontWeight.bold))
                                 : (subProvider.isProcessing
-                                    ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                                    : Text('Upgrade to ${plan.title}', style: const TextStyle(fontWeight: FontWeight.bold))),
+                                    ? SizedBox(
+                                        width: 18,
+                                        height: 18,
+                                        child: CircularProgressIndicator(
+                                          color: isDark ? Colors.black : Colors.white,
+                                          strokeWidth: 2,
+                                        ),
+                                      )
+                                    : Text('Activate ${plan.title}', style: const TextStyle(fontWeight: FontWeight.bold))),
                           ),
                         ),
                       ],

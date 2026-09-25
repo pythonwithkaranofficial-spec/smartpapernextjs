@@ -10,6 +10,8 @@ class AuthProvider extends ChangeNotifier {
 
   AuthProvider(this._authService) {
     _user = _authService.currentUser;
+    // Auto-restore token and backend session on startup
+    restoreSession();
   }
 
   UserModel? get user => _user;
@@ -20,6 +22,14 @@ class AuthProvider extends ChangeNotifier {
   void clearError() {
     _errorMessage = null;
     notifyListeners();
+  }
+
+  Future<void> restoreSession() async {
+    final restoredUser = await _authService.restoreSession();
+    if (restoredUser != null) {
+      _user = restoredUser;
+      notifyListeners();
+    }
   }
 
   Future<bool> login(String email, String password) async {
@@ -70,15 +80,30 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> sendPasswordReset(String email) async {
+  Future<bool> sendPasswordReset(String email) async {
     _setLoading(true);
     try {
       await _authService.sendPasswordReset(email);
       _errorMessage = null;
+      notifyListeners();
+      return true;
     } catch (e) {
-      _errorMessage = e.toString();
+      _errorMessage = e.toString().replaceAll('ApiException', '').trim();
+      notifyListeners();
+      return false;
     } finally {
       _setLoading(false);
+    }
+  }
+
+  Future<bool> sendEmailVerification() async {
+    try {
+      await _authService.sendEmailVerification();
+      return true;
+    } catch (e) {
+      _errorMessage = e.toString().replaceAll('ApiException', '').trim();
+      notifyListeners();
+      return false;
     }
   }
 
@@ -90,21 +115,35 @@ class AuthProvider extends ChangeNotifier {
 
   void updateUserPlan(String newPlan) {
     if (_user != null) {
-      _user = UserModel(
-        uid: _user!.uid,
-        email: _user!.email,
-        displayName: _user!.displayName,
-        photoUrl: _user!.photoUrl,
-        plan: newPlan,
-        role: _user!.role,
-        emailVerified: _user!.emailVerified,
-      );
+      _user = _user!.copyWith(plan: newPlan);
       notifyListeners();
     }
   }
 
-  void _setLoading(bool value) {
-    _isLoading = value;
+  Future<bool> updateProfile({String? displayName, String? preferredClass}) async {
+    _setLoading(true);
+    try {
+      await _authService.updateProfile(displayName: displayName, preferredClass: preferredClass);
+      if (_user != null) {
+        _user = _user!.copyWith(
+          displayName: displayName ?? _user!.displayName,
+          preferredClass: preferredClass ?? _user!.preferredClass,
+        );
+      }
+      _errorMessage = null;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _errorMessage = e.toString().replaceAll('ApiException', '').trim();
+      notifyListeners();
+      return false;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  void _setLoading(bool val) {
+    _isLoading = val;
     notifyListeners();
   }
 }

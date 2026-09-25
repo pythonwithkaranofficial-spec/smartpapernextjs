@@ -23,7 +23,7 @@ class EmptyStateWidget extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 64, color: const Color(0xFF64748B)),
+          Icon(icon, size: 64, color: const Color(0xFF737373)),
           const SizedBox(height: 16),
           Text(
             title,
@@ -33,15 +33,19 @@ class EmptyStateWidget extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             description,
-            style: const TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
+            style: const TextStyle(fontSize: 13, color: Color(0xFFA3A3A3)),
             textAlign: TextAlign.center,
           ),
           if (buttonText != null && onButtonPressed != null) ...[
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: onButtonPressed,
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF6366F1)),
-              child: Text(buttonText!),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: Colors.black,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              child: Text(buttonText!, style: const TextStyle(fontWeight: FontWeight.bold)),
             ),
           ],
         ],

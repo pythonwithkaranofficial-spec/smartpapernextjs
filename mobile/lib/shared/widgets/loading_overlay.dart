@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class GeneratingOverlay extends StatefulWidget {
   final String statusText;
-  const GeneratingOverlay({super.key, this.statusText = 'AI is preparing your paper...'});
+  const GeneratingOverlay({super.key, this.statusText = 'We are creating your paper with our AI, We Appreciate your Patience teacher !'});
 
   @override
   State<GeneratingOverlay> createState() => _GeneratingOverlayState();
@@ -29,7 +29,7 @@ class _GeneratingOverlayState extends State<GeneratingOverlay> with SingleTicker
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: const Color(0xFF0F172A).withValues(alpha: 0.9),
+      color: Colors.black.withValues(alpha: 0.92),
       child: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -42,32 +42,35 @@ class _GeneratingOverlayState extends State<GeneratingOverlay> with SingleTicker
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: const Color(0xFF6366F1).withValues(alpha: 0.15),
-                  border: Border.all(color: const Color(0xFF6366F1).withValues(alpha: 0.4), width: 2),
+                  color: Colors.white.withValues(alpha: 0.1),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 2),
                 ),
                 child: const Icon(
                   Icons.auto_awesome,
                   size: 48,
-                  color: Color(0xFF818CF8),
+                  color: Colors.white,
                 ),
               ),
             ),
             const SizedBox(height: 24),
-            const CircularProgressIndicator(color: Color(0xFF6366F1)),
+            const CircularProgressIndicator(color: Colors.white),
             const SizedBox(height: 16),
-            Text(
-              widget.statusText,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Text(
+                widget.statusText,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
               ),
-              textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
             const Text(
-              'Analyzing CBSE curriculum taxonomy & formatting...',
-              style: TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
+              'Structuring questions, marking scheme & taxonomy...',
+              style: TextStyle(color: Color(0xFFA3A3A3), fontSize: 13),
               textAlign: TextAlign.center,
             ),
           ],

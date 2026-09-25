@@ -45,11 +45,18 @@ class GeneratorProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setLoadedPaper(GeneratedPaperModel paper) {
+    _generatedPaper = paper;
+    _activeSetIndex = 0;
+    notifyListeners();
+  }
+
   Future<void> fetchUserUsage() async {
     try {
       final res = await _apiClient.get('/user/usage');
-      _papersGeneratedToday = res['papersGenerated'] ?? 0;
-      _dailyLimit = res['dailyLimit'] ?? 5;
+      final data = res['data'] is Map<String, dynamic> ? res['data'] : res;
+      _papersGeneratedToday = data['usedToday'] ?? data['papersGenerated'] ?? 0;
+      _dailyLimit = data['dailyLimit'] ?? 5;
       notifyListeners();
     } catch (_) {}
   }
@@ -60,20 +67,30 @@ class GeneratorProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // 1. Call Next.js Gemini AI paper generation endpoint
+      // 1. Call Next.js Gemini AI paper generation endpoint with aligned payload
       final responseJson = await _apiClient.post('/generate', body: _config.toJson());
       _generatedPaper = GeneratedPaperModel.fromJson(responseJson);
       _activeSetIndex = 0;
 
-      // 2. Increment daily usage & save to history
+      // 2. Increment daily usage & save to history in background
+      _papersGeneratedToday += 1;
+      notifyListeners();
       try {
         await _apiClient.post('/user/usage/increment');
+        await fetchUserUsage();
+      } catch (_) {}
+
+      try {
         await _apiClient.post('/user/history', body: {
-          'class': _config.classId,
-          'subject': _config.subject,
+          'class': _config.isCustom && _config.customClass != null && _config.customClass!.isNotEmpty
+              ? _config.customClass
+              : _config.classId,
+          'subject': _config.isCustom && _config.customSubject != null && _config.customSubject!.isNotEmpty
+              ? _config.customSubject
+              : _config.subject,
           'paper_type': _config.examType,
           'marks': _config.totalMarks,
-          'difficulty': '${_config.easyPercentage}/${_config.mediumPercentage}/${_config.hardPercentage}',
+          'difficulty': _config.difficulty,
           'paper_json': responseJson,
         });
       } catch (_) {}
@@ -89,27 +106,112 @@ class GeneratorProvider extends ChangeNotifier {
     }
   }
 
+  void editQuestion({
+    required String sectionId,
+    required String questionId,
+    required String newText,
+    required int newMarks,
+    List<String>? newChoices,
+    String? newOrQuestion,
+  }) {
+    if (currentPaperSet == null) return;
+    for (final sec in currentPaperSet!.sections) {
+      if (sec.id == sectionId) {
+        final idx = sec.questions.indexWhere((q) => q.id == questionId);
+        if (idx != -1) {
+          final q = sec.questions[idx];
+          q.text = newText;
+          q.marks = newMarks;
+          if (newChoices != null) q.choices = newChoices;
+          if (newOrQuestion != null) q.orQuestion = newOrQuestion;
+          notifyListeners();
+          return;
+        }
+      }
+    }
+  }
+
+  void moveQuestion({
+    required String sectionId,
+    required int currentIndex,
+    required String direction,
+  }) {
+    if (currentPaperSet == null) return;
+    for (final sec in currentPaperSet!.sections) {
+      if (sec.id == sectionId) {
+        final targetIndex = direction == 'up' ? currentIndex - 1 : currentIndex + 1;
+        if (targetIndex < 0 || targetIndex >= sec.questions.length) return;
+        final item = sec.questions.removeAt(currentIndex);
+        sec.questions.insert(targetIndex, item);
+        for (int i = 0; i < sec.questions.length; i++) {
+          sec.questions[i].number = i + 1;
+        }
+        notifyListeners();
+        return;
+      }
+    }
+  }
+
+  void deleteQuestion({
+    required String sectionId,
+    required String questionId,
+  }) {
+    if (currentPaperSet == null) return;
+    for (final sec in currentPaperSet!.sections) {
+      if (sec.id == sectionId) {
+        sec.questions.removeWhere((q) => q.id == questionId);
+        for (int i = 0; i < sec.questions.length; i++) {
+          sec.questions[i].number = i + 1;
+        }
+        notifyListeners();
+        return;
+      }
+    }
+  }
+
   Future<bool> swapQuestion({
     required String sectionId,
     required String questionId,
+    required int questionNumber,
     required String currentText,
     required String subject,
-    required String classId,
+    required String classText,
     required String questionType,
     required int marks,
+    String language = 'English',
   }) async {
     try {
+      // Collect existing question texts to exclude duplicates
+      final List<String> excludeQuestionTexts = [];
+      if (currentPaperSet != null) {
+        for (final sec in currentPaperSet!.sections) {
+          for (final q in sec.questions) {
+            if (q.text.isNotEmpty) {
+              excludeQuestionTexts.add(q.text);
+            }
+          }
+        }
+      }
+
+      // Next.js /api/swap-question request schema
       final response = await _apiClient.post('/swap-question', body: {
-        'currentQuestion': currentText,
+        'questionToReplace': {
+          'id': questionId,
+          'number': questionNumber,
+          'text': currentText,
+          'type': questionType,
+          'marks': marks,
+        },
         'subject': subject,
-        'classId': classId,
-        'questionType': questionType,
-        'marks': marks,
+        'classText': classText,
+        'language': language,
+        'excludeQuestionTexts': excludeQuestionTexts,
       });
 
-      final newQuestion = QuestionModel.fromJson(response['newQuestion'] ?? response);
+      final questionData = response['question'] ?? response['data']?['question'] ?? response;
+      final newQuestion = QuestionModel.fromJson(questionData);
 
-      if (_generatedPaper != null) {
+      if (_generatedPaper != null && currentPaperSet != null) {
         for (final section in currentPaperSet!.sections) {
           final idx = section.questions.indexWhere((q) => q.id == questionId);
           if (idx != -1) {

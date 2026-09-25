@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Smart Paper Generator</string>
+    <string name="title_activity_main">Smart Paper Generator</string>
+    <string name="package_name">com.smartpaper.generator</string>
+    <string name="custom_url_scheme">com.smartpaper.generator</string>
+    <!-- AdMob Application ID (Official Google Test App ID for debugging) -->
+    <string name="admob_app_id">ca-app-pub-3940256099942544~3347511713</string>
+</resources>

@@ -8,6 +8,7 @@ import 'package:smart_paper_generator/features/generator/services/generator_prov
 import 'package:smart_paper_generator/features/history/services/history_provider.dart';
 import 'package:smart_paper_generator/features/subscription/services/subscription_provider.dart';
 import 'package:smart_paper_generator/features/admin/services/admin_provider.dart';
+import 'package:smart_paper_generator/app/theme/theme_provider.dart';
 import 'package:smart_paper_generator/app/app.dart';
 
 void main() {
@@ -20,6 +21,7 @@ void main() {
         providers: [
           Provider<ApiClient>.value(value: apiClient),
           Provider<FirebaseAuthService>.value(value: authService),
+          ChangeNotifierProvider(create: (_) => ThemeProvider()),
           ChangeNotifierProvider(create: (_) => AuthProvider(authService)),
           ChangeNotifierProvider(create: (_) => GeneratorProvider(apiClient)),
           ChangeNotifierProvider(create: (_) => HistoryProvider(apiClient)),

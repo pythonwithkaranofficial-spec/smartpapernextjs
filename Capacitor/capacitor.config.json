@@ -1,0 +1,38 @@
+{
+  "appId": "com.smartpaper.generator",
+  "appName": "Smart Paper Generator",
+  "webDir": "www",
+  "server": {
+    "url": "https://paperbykaran.vercel.app",
+    "cleartext": true,
+    "allowNavigation": [
+      "paperbykaran.vercel.app",
+      "*.vercel.app",
+      "accounts.google.com",
+      "*.firebaseapp.com",
+      "*.googleapis.com",
+      "api.razorpay.com",
+      "checkout.razorpay.com",
+      "*"
+    ]
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 2500,
+      "launchAutoHide": true,
+      "backgroundColor": "#090d16",
+      "androidSplashResourceName": "splash",
+      "androidScaleType": "CENTER_CROP",
+      "showSpinner": false
+    },
+    "StatusBar": {
+      "style": "DARK",
+      "backgroundColor": "#090d16"
+    }
+  },
+  "android": {
+    "allowMixedContent": true,
+    "captureInput": true,
+    "webContentsDebuggingEnabled": false
+  }
+}

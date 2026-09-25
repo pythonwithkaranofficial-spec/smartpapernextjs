@@ -14,11 +14,16 @@ import 'features/admin/services/admin_provider.dart';
 
 import 'app/app.dart';
 
+import 'firebase_options.dart';
+import 'app/theme/theme_provider.dart';
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   try {
-    await Firebase.initializeApp();
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
   } catch (_) {
     // Fallback if running unit tests without native bindings
   }
@@ -28,7 +33,7 @@ Future<void> main() async {
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.light,
-      systemNavigationBarColor: Color(0xFF0F172A),
+      systemNavigationBarColor: Color(0xFF0A0A0A),
       systemNavigationBarIconBrightness: Brightness.light,
     ),
   );
@@ -41,6 +46,7 @@ Future<void> main() async {
       providers: [
         Provider<ApiClient>.value(value: apiClient),
         Provider<FirebaseAuthService>.value(value: authService),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(create: (_) => AuthProvider(authService)),
         ChangeNotifierProvider(create: (_) => GeneratorProvider(apiClient)),
         ChangeNotifierProvider(create: (_) => HistoryProvider(apiClient)),

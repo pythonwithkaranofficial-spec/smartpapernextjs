@@ -1,0 +1,16 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Build outputs and temporary caches
+.gradle/
+.kotlin/
+build/
+dist/
+*.log
+
+# Sensitive credentials & local machine properties
+local.properties
+*.keystore
+*.jks
+keystore.properties

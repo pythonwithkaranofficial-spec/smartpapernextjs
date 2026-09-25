@@ -1,0 +1,23 @@
+{
+  "admob": {
+    "appId": {
+      "android": "ca-app-pub-3940256099942544~3347511713",
+      "comment": "Replace with your live production AdMob App ID from Google AdMob Console when publishing"
+    },
+    "testMode": true,
+    "banner": {
+      "adId": "ca-app-pub-3940256099942544/6300978111",
+      "position": "BOTTOM_CENTER",
+      "margin": 0,
+      "isTesting": true
+    },
+    "interstitial": {
+      "adId": "ca-app-pub-3940256099942544/1033173712",
+      "isTesting": true
+    },
+    "rewarded": {
+      "adId": "ca-app-pub-3940256099942544/5224354917",
+      "isTesting": true
+    }
+  }
+}

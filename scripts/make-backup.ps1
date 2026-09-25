@@ -1,8 +1,17 @@
 param (
     [string]$SourceDir = "K:\Android App Files\WebsiteS",
-    [string]$PrimaryZip = "K:\Android App Files\WebsiteS\_backups\WebsiteS_Checkpoint_Backup_2026-09-13.zip",
-    [string]$ParentZip = "K:\Android App Files\WebsiteS_Checkpoint_Backup_2026-09-13.zip"
+    [string]$DateTag = (Get-Date -Format "yyyy-MM-dd"),
+    [string]$PrimaryZip = "",
+    [string]$ParentZip = ""
 )
+
+if ([string]::IsNullOrWhiteSpace($PrimaryZip)) {
+    $PrimaryZip = Join-Path $SourceDir "_backups\WebsiteS_Checkpoint_Backup_$DateTag.zip"
+}
+if ([string]::IsNullOrWhiteSpace($ParentZip)) {
+    $parentDir = Split-Path -Parent $SourceDir
+    $ParentZip = Join-Path $parentDir "WebsiteS_Checkpoint_Backup_$DateTag.zip"
+}
 
 Add-Type -AssemblyName System.IO.Compression
 Add-Type -AssemblyName System.IO.Compression.FileSystem
@@ -15,31 +24,40 @@ if (-not (Test-Path $backupDir)) {
 if (Test-Path $PrimaryZip) { Remove-Item -Force $PrimaryZip }
 if (Test-Path $ParentZip) { Remove-Item -Force $ParentZip }
 
-$dirsToSkip = @("node_modules", ".next", ".git", "_backups")
-$mobileDirsToSkip = @(".dart_tool", "build")
+# Folders to skip at any depth
+$dirsToSkip = @(
+    "node_modules",
+    ".next",
+    ".git",
+    "_backups",
+    ".dart_tool",
+    "build",
+    ".gradle",
+    ".kotlin",
+    "coverage",
+    ".idea"
+)
+
+# File extensions to skip
+$extensionsToSkip = @(".zip", ".tar.gz", ".keystore", ".jks")
 
 $filesToArchive = [System.Collections.Generic.List[System.IO.FileInfo]]::new()
 $dirsQueue = [System.Collections.Generic.Queue[string]]::new()
 $dirsQueue.Enqueue($SourceDir)
 
-Write-Host "Fast scanning files..."
+Write-Host "Fast scanning files in $SourceDir..."
 while ($dirsQueue.Count -gt 0) {
     $currentDir = $dirsQueue.Dequeue()
     $items = Get-ChildItem -LiteralPath $currentDir -Force
     foreach ($item in $items) {
         if ($item.PSIsContainer) {
             $name = $item.Name
-            # Root exclusions
-            if ($currentDir -eq $SourceDir -and $dirsToSkip -contains $name) {
-                continue
-            }
-            # Mobile exclusions
-            if ($currentDir -like "*\mobile" -and $mobileDirsToSkip -contains $name) {
+            if ($dirsToSkip -contains $name) {
                 continue
             }
             $dirsQueue.Enqueue($item.FullName)
         } else {
-            if ($item.Extension -ne ".zip") {
+            if ($extensionsToSkip -notcontains $item.Extension) {
                 $filesToArchive.Add($item)
             }
         }
