@@ -124,7 +124,10 @@ export function GeneratorWizard() {
           const parsed = JSON.parse(saved);
           setConfig({
             ...parsed,
-            selectedChapters: [],
+            selectedChapters:
+              parsed.selectedChapters && parsed.selectedChapters.length > 0
+                ? parsed.selectedChapters
+                : ["all"],
           });
         } catch (e) {
           console.error("Failed to parse saved config", e);
@@ -279,6 +282,14 @@ export function GeneratorWizard() {
         subject={config.subject || "maths"}
         onSelectSyllabus={(classId, subject) => {
           updateConfig((prev) => ({ ...prev, classId, subject, selectedChapters: [] }));
+        }}
+        onSelectBlueprint={(blueprintConfig) => {
+          updateConfig(() => blueprintConfig);
+          setStep(7);
+          setShowSyllabusModal(false);
+          toast.success(
+            `Loaded official CBSE blueprint preset: ${(blueprintConfig.subject || "").toUpperCase()} (${blueprintConfig.totalMarks} Marks)`
+          );
         }}
       />
 

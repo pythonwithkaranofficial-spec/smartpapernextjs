@@ -4,6 +4,7 @@ import React from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { SyllabusExplorer } from "./SyllabusExplorer";
 import { BookOpen } from "lucide-react";
+import { PaperConfig } from "@/types";
 
 interface SyllabusModalProps {
   open: boolean;
@@ -11,6 +12,7 @@ interface SyllabusModalProps {
   classId?: string;
   subject?: string;
   onSelectSyllabus?: (classId: string, subject: string) => void;
+  onSelectBlueprint?: (config: PaperConfig) => void;
 }
 
 export function SyllabusModal({
@@ -19,6 +21,7 @@ export function SyllabusModal({
   classId = "10",
   subject = "maths",
   onSelectSyllabus,
+  onSelectBlueprint,
 }: SyllabusModalProps) {
   return (
     <Sheet open={open} onOpenChange={(val) => !val && onClose()}>
@@ -36,6 +39,12 @@ export function SyllabusModal({
           onSelectSyllabus={(cId, sub) => {
             if (onSelectSyllabus) {
               onSelectSyllabus(cId, sub);
+            }
+            onClose();
+          }}
+          onSelectBlueprint={(bpConfig) => {
+            if (onSelectBlueprint) {
+              onSelectBlueprint(bpConfig);
             }
             onClose();
           }}

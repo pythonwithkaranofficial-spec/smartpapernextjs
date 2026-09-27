@@ -143,6 +143,10 @@ export function StepChaptersSelect({
   // Category badge color helper
   const getCategoryColor = (cat: string | null) => {
     if (!cat) return "bg-blue-500/10 text-blue-400 border-blue-500/20";
+    if (cat.includes("History")) return "bg-amber-500/10 text-amber-500 dark:text-amber-400 border-amber-500/25";
+    if (cat.includes("Geography") && !cat.includes("Human Geography") && !cat.includes("Practical")) return "bg-emerald-500/10 text-emerald-500 dark:text-emerald-400 border-emerald-500/25";
+    if (cat.includes("Political Science")) return "bg-purple-500/10 text-purple-500 dark:text-purple-400 border-purple-500/25";
+    if (cat.includes("Economics") && !cat.includes("Macroeconomics")) return "bg-blue-500/10 text-blue-500 dark:text-blue-400 border-blue-500/25";
     if (cat.includes("Flamingo (Prose)") || cat.includes("क्षितिज (गद्य खंड)")) return "bg-amber-500/10 text-amber-400 border-amber-500/20";
     if (cat.includes("Flamingo (Poetry)") || cat.includes("क्षितिज (काव्य खंड)")) return "bg-rose-500/10 text-rose-400 border-rose-500/20";
     if (cat.includes("Vistas") || cat.includes("कृतिका")) return "bg-purple-500/10 text-purple-400 border-purple-500/20";
@@ -170,6 +174,26 @@ export function StepChaptersSelect({
     if (cat.includes("Human Geography") || cat.includes("Fundamentals of Human Geography")) return "bg-teal-500/10 text-teal-400 border-teal-500/20";
     if (cat.includes("People and Economy") || cat.includes("India - People and Economy")) return "bg-amber-500/10 text-amber-400 border-amber-500/20";
     if (cat.includes("Geography Practical")) return "bg-purple-500/10 text-purple-400 border-purple-500/20";
+    if (cat.includes("Management of Sporting Events")) return "bg-rose-500/10 text-rose-400 border-rose-500/20";
+    if (cat.includes("Children and Women")) return "bg-pink-500/10 text-pink-400 border-pink-500/20";
+    if (cat.includes("Yoga as Preventive")) return "bg-amber-500/10 text-amber-400 border-amber-500/20";
+    if (cat.includes("CWSN") || cat.includes("Special Needs")) return "bg-purple-500/10 text-purple-400 border-purple-500/20";
+    if (cat.includes("Sports and Nutrition") || cat.includes("Nutrition")) return "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
+    if (cat.includes("Test and Measurement")) return "bg-cyan-500/10 text-cyan-400 border-cyan-500/20";
+    if (cat.includes("Physiology and Injuries")) return "bg-red-500/10 text-red-400 border-red-500/20";
+    if (cat.includes("Biomechanics and Sports")) return "bg-blue-500/10 text-blue-400 border-blue-500/20";
+    if (cat.includes("Psychology and Sports")) return "bg-indigo-500/10 text-indigo-400 border-indigo-500/20";
+    if (cat.includes("Training in Sports")) return "bg-orange-500/10 text-orange-400 border-orange-500/20";
+    if (cat.includes("Physical Chemistry")) return "bg-cyan-500/10 text-cyan-400 border-cyan-500/20";
+    if (cat.includes("Inorganic Chemistry")) return "bg-amber-500/10 text-amber-400 border-amber-500/20";
+    if (cat.includes("Organic Chemistry")) return "bg-rose-500/10 text-rose-400 border-rose-500/20";
+    if (cat === "Physics" || cat.startsWith("Physics")) return "bg-sky-500/10 text-sky-400 border-sky-500/20";
+    if (cat === "Chemistry" || cat.startsWith("Chemistry")) return "bg-amber-500/10 text-amber-400 border-amber-500/20";
+    if (cat === "Biology" || cat.startsWith("Biology")) return "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
+    if (cat.includes("Partnership")) return "bg-amber-500/10 text-amber-400 border-amber-500/20";
+    if (cat.includes("Companies")) return "bg-blue-500/10 text-blue-400 border-blue-500/20";
+    if (cat.includes("Financial Statement")) return "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
+    if (cat.includes("Cash Flow")) return "bg-purple-500/10 text-purple-400 border-purple-500/20";
     return "bg-blue-500/10 text-blue-400 border-blue-500/20";
   };
 
@@ -284,66 +308,160 @@ export function StepChaptersSelect({
           </div>
         </div>
 
-        {/* Chapters Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
-          {filteredChapters.map((chap, index) => {
-            const fullTitle = getChapterTitle(chap);
-            const { category, title } = parseChapterInfo(fullTitle);
-            const isSelected = validSelectedChapters.includes(fullTitle);
+        {/* Chapters Grid / Grouped Sections */}
+        {categories.length > 0 && activeCategory === "All" && !searchQuery.trim() ? (
+          <div className="space-y-6">
+            {categories.map((cat) => {
+              const catChapters = rawChapters
+                .map(getChapterTitle)
+                .filter((title) => parseChapterInfo(title).category === cat);
+              const selectedCount = catChapters.filter((t) => validSelectedChapters.includes(t)).length;
+              const allCatSelected = catChapters.length > 0 && catChapters.every((t) => validSelectedChapters.includes(t));
 
-            return (
-              <GlassCard
-                key={index}
-                onClick={() => handleToggleChapter(fullTitle)}
-                className={cn(
-                  "p-3.5 cursor-pointer border flex items-center justify-between gap-3 transition-all duration-300 relative group",
-                  isSelected
-                    ? "border-blue-500/50 bg-blue-500/5 shadow-[0_0_15px_rgba(59,130,246,0.1)]"
-                    : "border-border/40 hover:border-blue-500/25"
-                )}
-              >
-                <div className="flex items-start gap-3 min-w-0">
-                  <div
-                    className={cn(
-                      "w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold font-heading shrink-0 border mt-0.5",
-                      isSelected
-                        ? "bg-blue-500/15 border-blue-500/30 text-blue-500"
-                        : "bg-muted border-border/50 text-muted-foreground"
-                    )}
-                  >
-                    <BookOpen className="w-3 h-3" />
-                  </div>
-                  <div className="min-w-0">
-                    {category && (
-                      <span
-                        className={cn(
-                          "inline-block text-[10px] px-2 py-0.5 rounded-md font-semibold tracking-wide border mb-1 truncate max-w-full",
-                          getCategoryColor(category)
-                        )}
-                      >
-                        {category}
+              const handleToggleCategory = () => {
+                if (allCatSelected) {
+                  updateSelected(validSelectedChapters.filter((ch) => !catChapters.includes(ch)));
+                } else {
+                  const newlySelected = new Set([...validSelectedChapters, ...catChapters]);
+                  updateSelected(Array.from(newlySelected));
+                }
+              };
+
+              return (
+                <div key={cat} className="space-y-3">
+                  <div className="flex items-center justify-between px-1 pb-1.5 border-b border-border/40">
+                    <div className="flex items-center gap-2">
+                      <span className={cn("text-xs font-bold font-heading px-2.5 py-1 rounded-md border", getCategoryColor(cat))}>
+                        {cat}
                       </span>
-                    )}
-                    <h4 className="text-xs font-bold font-heading text-foreground group-hover:text-blue-500 transition-colors leading-snug">
-                      {title}
-                    </h4>
+                      <span className="text-[11px] text-muted-foreground font-medium">
+                        {selectedCount} of {catChapters.length} selected
+                      </span>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleToggleCategory}
+                      className="text-xs text-indigo-400 hover:text-indigo-300 hover:bg-indigo-500/10 rounded-xl h-7 px-2.5"
+                    >
+                      {allCatSelected ? `Deselect All ${cat}` : `Select All ${cat}`}
+                    </Button>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                    {catChapters.map((fullTitle, index) => {
+                      const { category, title } = parseChapterInfo(fullTitle);
+                      const isSelected = validSelectedChapters.includes(fullTitle);
+
+                      return (
+                        <GlassCard
+                          key={index}
+                          onClick={() => handleToggleChapter(fullTitle)}
+                          className={cn(
+                            "p-3.5 cursor-pointer border flex items-center justify-between gap-3 transition-all duration-300 relative group",
+                            isSelected
+                              ? "border-blue-500/50 bg-blue-500/5 shadow-[0_0_15px_rgba(59,130,246,0.1)]"
+                              : "border-border/40 hover:border-blue-500/25"
+                          )}
+                        >
+                          <div className="flex items-start gap-3 min-w-0">
+                            <div
+                              className={cn(
+                                "w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold font-heading shrink-0 border mt-0.5",
+                                isSelected
+                                  ? "bg-blue-500/15 border-blue-500/30 text-blue-500"
+                                  : "bg-muted border-border/50 text-muted-foreground"
+                              )}
+                            >
+                              <BookOpen className="w-3 h-3" />
+                            </div>
+                            <div className="min-w-0">
+                              <h4 className="text-xs font-bold font-heading text-foreground group-hover:text-blue-500 transition-colors leading-snug">
+                                {title}
+                              </h4>
+                            </div>
+                          </div>
+
+                          <div
+                            className={cn(
+                              "w-5 h-5 rounded-full flex items-center justify-center border transition-all duration-300 shrink-0",
+                              isSelected
+                                ? "bg-blue-500 border-transparent text-white"
+                                : "border-border text-transparent scale-90 group-hover:border-blue-500/30"
+                            )}
+                          >
+                            <Check className="w-3.5 h-3.5" />
+                          </div>
+                        </GlassCard>
+                      );
+                    })}
                   </div>
                 </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+            {filteredChapters.map((chap, index) => {
+              const fullTitle = getChapterTitle(chap);
+              const { category, title } = parseChapterInfo(fullTitle);
+              const isSelected = validSelectedChapters.includes(fullTitle);
 
-                <div
+              return (
+                <GlassCard
+                  key={index}
+                  onClick={() => handleToggleChapter(fullTitle)}
                   className={cn(
-                    "w-5 h-5 rounded-full flex items-center justify-center border transition-all duration-300 shrink-0",
+                    "p-3.5 cursor-pointer border flex items-center justify-between gap-3 transition-all duration-300 relative group",
                     isSelected
-                      ? "bg-blue-500 border-transparent text-white"
-                      : "border-border text-transparent scale-90 group-hover:border-blue-500/30"
+                      ? "border-blue-500/50 bg-blue-500/5 shadow-[0_0_15px_rgba(59,130,246,0.1)]"
+                      : "border-border/40 hover:border-blue-500/25"
                   )}
                 >
-                  <Check className="w-3.5 h-3.5" />
-                </div>
-              </GlassCard>
-            );
-          })}
-        </div>
+                  <div className="flex items-start gap-3 min-w-0">
+                    <div
+                      className={cn(
+                        "w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold font-heading shrink-0 border mt-0.5",
+                        isSelected
+                          ? "bg-blue-500/15 border-blue-500/30 text-blue-500"
+                          : "bg-muted border-border/50 text-muted-foreground"
+                      )}
+                    >
+                      <BookOpen className="w-3 h-3" />
+                    </div>
+                    <div className="min-w-0">
+                      {category && (
+                        <span
+                          className={cn(
+                            "inline-block text-[10px] px-2 py-0.5 rounded-md font-semibold tracking-wide border mb-1 truncate max-w-full",
+                            getCategoryColor(category)
+                          )}
+                        >
+                          {category}
+                        </span>
+                      )}
+                      <h4 className="text-xs font-bold font-heading text-foreground group-hover:text-blue-500 transition-colors leading-snug">
+                        {title}
+                      </h4>
+                    </div>
+                  </div>
+
+                  <div
+                    className={cn(
+                      "w-5 h-5 rounded-full flex items-center justify-center border transition-all duration-300 shrink-0",
+                      isSelected
+                        ? "bg-blue-500 border-transparent text-white"
+                        : "border-border text-transparent scale-90 group-hover:border-blue-500/30"
+                    )}
+                  >
+                    <Check className="w-3.5 h-3.5" />
+                  </div>
+                </GlassCard>
+              );
+            })}
+          </div>
+        )}
 
         {filteredChapters.length === 0 && (
           <div className="text-center py-8 text-muted-foreground text-xs">

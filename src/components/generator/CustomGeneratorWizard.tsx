@@ -290,6 +290,16 @@ export function CustomGeneratorWizard() {
           setClassText(`Class ${cId}`);
           setSubjectText(sub);
         }}
+        onSelectBlueprint={(blueprintConfig) => {
+          updateConfig(() => blueprintConfig);
+          setClassText(`Class ${blueprintConfig.classId}`);
+          setSubjectText(blueprintConfig.subject);
+          setStep(7);
+          setShowSyllabusModal(false);
+          toast.success(
+            `Loaded official CBSE blueprint preset: ${(blueprintConfig.subject || "").toUpperCase()} (${blueprintConfig.totalMarks} Marks)`
+          );
+        }}
       />
 
       {/* Header Bar with Syllabus Explorer Trigger & Limits */}

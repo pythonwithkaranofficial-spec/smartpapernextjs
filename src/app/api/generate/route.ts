@@ -240,6 +240,8 @@ export async function POST(request: NextRequest) {
           ? examTypeObj.name.toUpperCase() 
           : (config.examType ? config.examType.replace(/_/g, " ").toUpperCase() : "EXAMINATION");
 
+        let globalQNum = 1;
+
         finalPaper = {
           schoolName: config.options.includeSchoolName && config.options.schoolName ? config.options.schoolName.toUpperCase() : undefined,
           teacherName: config.options.includeTeacherName && config.options.teacherName ? config.options.teacherName : undefined,
@@ -279,11 +281,12 @@ export async function POST(request: NextRequest) {
             return {
               ...section,
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              questions: (section.questions || []).map((q: any, idx: number) => {
+              questions: (section.questions || []).map((q: any) => {
+                const assignedNum = typeof q.number === "number" && q.number > 0 ? q.number : globalQNum++;
                 return {
                   ...q,
                   id: q.id || `q_${Math.random().toString(36).substr(2, 9)}`,
-                  number: idx + 1,
+                  number: assignedNum,
                   text: formatScientificText(q.text || ""),
                   orQuestion: q.orQuestion ? formatScientificText(q.orQuestion) : null,
                   choices: (q.choices && q.choices.length > 0)

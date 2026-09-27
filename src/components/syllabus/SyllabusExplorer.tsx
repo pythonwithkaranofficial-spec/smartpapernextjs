@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
@@ -22,6 +22,8 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { CURRICULUM_DATA } from "@/lib/curriculum-data";
 import { BLUEPRINTS, getOrGenerateBlueprint } from "@/lib/blueprints";
+import { PaperConfig } from "@/types";
+import { toast } from "sonner";
 
 const AVAILABLE_CLASSES = ["9", "10", "11", "12"];
 
@@ -65,6 +67,7 @@ interface SyllabusExplorerProps {
   initialClassId?: string;
   initialSubject?: string;
   onSelectSyllabus?: (classId: string, subject: string) => void;
+  onSelectBlueprint?: (config: PaperConfig) => void;
   compact?: boolean;
 }
 
@@ -72,6 +75,7 @@ export function SyllabusExplorer({
   initialClassId = "10",
   initialSubject = "maths",
   onSelectSyllabus,
+  onSelectBlueprint,
   compact = false,
 }: SyllabusExplorerProps) {
   const [selectedClass, setSelectedClass] = useState<string>(initialClassId);
@@ -112,22 +116,39 @@ export function SyllabusExplorer({
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleGenerateWithBlueprint = (activeBlueprint: any) => {
-    if (!activeBlueprint) return;
+    const active =
+      activeBlueprint ||
+      blueprint ||
+      getOrGenerateBlueprint(selectedClass, currentSubjectKey, "annual_exam");
+    if (!active) return;
 
-    const isHindi = currentSubjectKey.toLowerCase().includes("hindi") || currentSubjectKey.includes("हिन्दी");
+    const isHindi =
+      currentSubjectKey.toLowerCase().includes("hindi") ||
+      currentSubjectKey.includes("हिन्दी");
 
-    const prefilledConfig = {
+    // Gather all chapters for this subject to ensure full coverage
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const allChapters =
+      currentCurriculum?.chapters && currentCurriculum.chapters.length > 0
+        ? currentCurriculum.chapters.map((ch: any) =>
+            typeof ch === "string" ? ch : ch.title
+          )
+        : active?.selectedChapters && active.selectedChapters.length > 0
+        ? active.selectedChapters
+        : ["all"];
+
+    const prefilledConfig: PaperConfig = {
       classId: selectedClass,
       subject: currentSubjectKey,
       examType: "annual_exam",
       difficulty: "Medium",
       language: isHindi ? "Hindi" : "English",
-      totalMarks: activeBlueprint.totalMarks || 80,
-      duration: activeBlueprint.duration || "3 Hours",
-      questionDistribution: activeBlueprint.questionDistribution,
-      blueprintId: activeBlueprint.id,
+      totalMarks: active.totalMarks || 80,
+      duration: active.duration || "3 Hours",
+      questionDistribution: active.questionDistribution,
+      blueprintId: active.id,
       isBlueprintMode: true,
-      unitWeightage: activeBlueprint.unitWeightage,
+      unitWeightage: active.unitWeightage || [],
       options: {
         includeSchoolName: false,
         schoolName: "",
@@ -139,28 +160,120 @@ export function SyllabusExplorer({
         includeTime: true,
         includeMaxMarks: true,
         includeInstructions: true,
-        instructionsText: activeBlueprint.defaultInstructions || "1. All questions are compulsory.",
+        instructionsText: active.defaultInstructions || "1. All questions are compulsory.",
         includeInternalChoice: false,
         includeAnswerKey: false,
         numberOfSets: 1,
       },
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      selectedChapters: activeBlueprint.unitWeightage?.map((u: any) => u.topic) || [],
+      selectedChapters: allChapters,
     };
 
-    localStorage.setItem("smart_paper_form_config", JSON.stringify(prefilledConfig));
-    sessionStorage.setItem("preset_step", "7");
-    router.push("/generate?preset=blueprint&step=7");
+    try {
+      localStorage.setItem("smart_paper_form_config", JSON.stringify(prefilledConfig));
+      sessionStorage.setItem("preset_step", "7");
+    } catch (e) {
+      console.error("Failed to store blueprint config in storage:", e);
+    }
+
+    if (onSelectBlueprint) {
+      toast.success(
+        `Loaded official CBSE blueprint: ${SUBJECT_NAMES[currentSubjectKey] || currentSubjectKey.toUpperCase()} (${prefilledConfig.totalMarks} Marks)`
+      );
+      onSelectBlueprint(prefilledConfig);
+      return;
+    }
+
+    if (onSelectSyllabus) {
+      toast.success(
+        `Applied CBSE syllabus & blueprint: ${SUBJECT_NAMES[currentSubjectKey] || currentSubjectKey.toUpperCase()}`
+      );
+      onSelectSyllabus(selectedClass, currentSubjectKey);
+      return;
+    }
+
+    toast.success(
+      `Opening paper generator with official ${SUBJECT_NAMES[currentSubjectKey] || currentSubjectKey.toUpperCase()} blueprint...`
+    );
+    if (typeof window !== "undefined") {
+      window.location.href = "/generate?preset=blueprint&step=7";
+    } else {
+      router.push("/generate?preset=blueprint&step=7");
+    }
   };
 
-  // Filter chapters by search query
+  const [selectedCategory, setSelectedCategory] = useState<string>("All");
+
+  useEffect(() => {
+    setSelectedCategory("All");
+  }, [selectedClass, currentSubjectKey]);
+
+  // Extract categories (e.g. History, Geography, Political Science, Economics)
+  const categories = useMemo(() => {
+    if (!currentCurriculum?.chapters) return [];
+    const cats = new Set<string>();
+    currentCurriculum.chapters.forEach((ch) => {
+      if (ch.includes(":")) {
+        cats.add(ch.split(":")[0].trim());
+      }
+    });
+    return Array.from(cats);
+  }, [currentCurriculum]);
+
+  // Filter chapters by category and search query
   const filteredChapters = useMemo(() => {
     if (!currentCurriculum?.chapters) return [];
-    if (!searchQuery.trim()) return currentCurriculum.chapters;
-    return currentCurriculum.chapters.filter((ch) =>
-      ch.toLowerCase().includes(searchQuery.toLowerCase().trim())
-    );
-  }, [currentCurriculum, searchQuery]);
+    let list = currentCurriculum.chapters;
+    if (selectedCategory !== "All") {
+      list = list.filter((ch) => ch.startsWith(`${selectedCategory}:`));
+    }
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      list = list.filter((ch) => ch.toLowerCase().includes(q));
+    }
+    return list;
+  }, [currentCurriculum, selectedCategory, searchQuery]);
+
+  const getCategoryColor = (cat: string) => {
+    if (cat.includes("History")) return "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/25";
+    if (cat.includes("Geography")) return "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25";
+    if (cat.includes("Political Science")) return "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/25";
+    if (cat.includes("Economics")) return "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/25";
+    if (cat.includes("Management of Sporting Events")) return "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/25";
+    if (cat.includes("Children and Women")) return "bg-pink-500/10 text-pink-600 dark:text-pink-400 border-pink-500/25";
+    if (cat.includes("Yoga as Preventive")) return "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/25";
+    if (cat.includes("CWSN") || cat.includes("Special Needs")) return "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/25";
+    if (cat.includes("Sports and Nutrition") || cat.includes("Nutrition")) return "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25";
+    if (cat.includes("Test and Measurement")) return "bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-cyan-500/25";
+    if (cat.includes("Physiology and Injuries")) return "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/25";
+    if (cat.includes("Biomechanics and Sports")) return "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/25";
+    if (cat.includes("Psychology and Sports")) return "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/25";
+    if (cat.includes("Training in Sports")) return "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/25";
+    if (cat.includes("Physical Chemistry")) return "bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-cyan-500/25";
+    if (cat.includes("Inorganic Chemistry")) return "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/25";
+    if (cat.includes("Organic Chemistry")) return "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/25";
+    if (cat.includes("Reproduction")) return "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/25";
+    if (cat.includes("Genetics") || cat.includes("Evolution")) return "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/25";
+    if (cat.includes("Biology and Human Welfare") || cat.includes("Human Welfare")) return "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/25";
+    if (cat.includes("Biotechnology")) return "bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-cyan-500/25";
+    if (cat.includes("Ecology") || cat.includes("Environment")) return "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25";
+    if (cat.includes("Unit I") || cat.includes("Electrostatics")) return "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/25";
+    if (cat.includes("Unit II") || cat.includes("Current Electricity")) return "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/25";
+    if (cat.includes("Unit III") || cat.includes("Magnetic")) return "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/25";
+    if (cat.includes("Unit IV") || cat.includes("Induction") || cat.includes("Alternating")) return "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/25";
+    if (cat.includes("Unit V") || cat.includes("Electromagnetic Waves")) return "bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/25";
+    if (cat.includes("Unit VI") || cat.includes("Optics")) return "bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-500/25";
+    if (cat.includes("Unit VII") || cat.includes("Dual Nature")) return "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/25";
+    if (cat.includes("Unit VIII") || cat.includes("Atoms") || cat.includes("Nuclei")) return "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25";
+    if (cat.includes("Unit IX") || cat.includes("Electronic Devices")) return "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/25";
+    if (cat === "Physics" || cat.startsWith("Physics")) return "bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/25";
+    if (cat === "Chemistry" || cat.startsWith("Chemistry")) return "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/25";
+    if (cat === "Biology" || cat.startsWith("Biology")) return "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25";
+    if (cat.includes("Partnership")) return "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/25";
+    if (cat.includes("Companies")) return "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/25";
+    if (cat.includes("Financial Statement")) return "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25";
+    if (cat.includes("Cash Flow")) return "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/25";
+    return "bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border-indigo-500/20";
+  };
 
   return (
     <div className={cn("w-full space-y-6", compact ? "p-2" : "max-w-6xl mx-auto px-4 py-6")}>
@@ -312,6 +425,51 @@ export function SyllabusExplorer({
             exit={{ opacity: 0, y: -10 }}
             className="space-y-4"
           >
+            {/* Category Filter Pills (if subject has books/units like Class 10 Social Science) */}
+            {categories.length > 0 && (
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+                <button
+                  type="button"
+                  onClick={() => setSelectedCategory("All")}
+                  className={cn(
+                    "px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all border shrink-0 cursor-pointer",
+                    selectedCategory === "All"
+                      ? "bg-indigo-600 text-white border-indigo-600 shadow-[0_0_12px_rgba(79,70,229,0.25)]"
+                      : "bg-muted/40 text-muted-foreground border-border/50 hover:bg-muted/70 hover:text-foreground"
+                  )}
+                >
+                  All ({currentCurriculum?.chapters.length || 0})
+                </button>
+                {categories.map((cat) => {
+                  const catCount = currentCurriculum?.chapters.filter((ch) => ch.startsWith(`${cat}:`)).length || 0;
+                  const isActive = selectedCategory === cat;
+                  return (
+                    <button
+                      key={cat}
+                      type="button"
+                      onClick={() => setSelectedCategory(cat)}
+                      className={cn(
+                        "px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all border flex items-center gap-1.5 shrink-0 cursor-pointer",
+                        isActive
+                          ? "bg-indigo-600 text-white border-indigo-600 shadow-[0_0_12px_rgba(79,70,229,0.25)]"
+                          : "bg-muted/40 text-muted-foreground border-border/50 hover:bg-muted/70 hover:text-foreground"
+                      )}
+                    >
+                      <span>{cat}</span>
+                      <span
+                        className={cn(
+                          "text-[10px] px-1.5 py-0.2 rounded-full font-bold",
+                          isActive ? "bg-white/20 text-white" : "bg-indigo-500/20 text-indigo-400"
+                        )}
+                      >
+                        {catCount}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
             {/* Search Input */}
             <div className="relative max-w-md">
               <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -338,7 +496,12 @@ export function SyllabusExplorer({
                     <div className="min-w-0">
                       {ch.includes(":") ? (
                         <>
-                          <span className="inline-block text-[10px] px-2 py-0.5 rounded-md font-semibold bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 mb-1">
+                          <span
+                            className={cn(
+                              "inline-block text-[10px] px-2 py-0.5 rounded-md font-semibold border mb-1",
+                              getCategoryColor(ch.split(":")[0].trim())
+                            )}
+                          >
                             {ch.split(":")[0].trim()}
                           </span>
                           <h4 className="text-xs font-semibold text-slate-900 dark:text-foreground leading-snug">

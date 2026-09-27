@@ -135,6 +135,79 @@ Ensure the questions generated across all sections roughly total these exact mar
       config.examType === "half_yearly" ||
       config.totalMarks >= 65);
 
+  const isSocial =
+    normSubject === "social" ||
+    normSubject.includes("social") ||
+    normSubject.includes("sst") ||
+    normSubject === "socialscience";
+  const isClass10Social = isClass10 && isSocial;
+
+  const isFullClass10SocialExam =
+    isClass10Social &&
+    (config.examType === "annual_exam" ||
+      config.examType === "pre_board" ||
+      config.examType === "sample_paper" ||
+      config.examType === "half_yearly" ||
+      config.totalMarks >= 70);
+
+  const isPhyEdu =
+    normSubject === "phyedu" ||
+    normSubject.includes("physical") ||
+    normSubject.includes("phy edu") ||
+    normSubject.includes("sports");
+  const isClass12PhyEdu = isClass12 && isPhyEdu;
+
+  const isFullClass12PhyEduExam =
+    isClass12PhyEdu &&
+    (config.examType === "annual_exam" ||
+      config.examType === "pre_board" ||
+      config.examType === "sample_paper" ||
+      config.examType === "half_yearly" ||
+      config.totalMarks >= 65);
+
+  const isScience =
+    normSubject === "science" ||
+    normSubject.includes("science") ||
+    normSubject === "sci";
+  const isClass10Science = isClass10 && isScience;
+
+  const isFullClass10ScienceExam =
+    isClass10Science &&
+    (config.examType === "annual_exam" ||
+      config.examType === "pre_board" ||
+      config.examType === "sample_paper" ||
+      config.examType === "half_yearly" ||
+      config.totalMarks >= 70);
+
+  const isChemistry =
+    normSubject === "chemistry" ||
+    normSubject.includes("chemistry") ||
+    normSubject === "chem";
+  const isClass12Chemistry = isClass12 && isChemistry;
+
+  const isFullClass12ChemistryExam =
+    isClass12Chemistry &&
+    (config.examType === "annual_exam" ||
+      config.examType === "pre_board" ||
+      config.examType === "sample_paper" ||
+      config.examType === "half_yearly" ||
+      config.totalMarks >= 65);
+
+  const isAccounts =
+    normSubject === "accounts" ||
+    normSubject === "accountancy" ||
+    normSubject.includes("account") ||
+    normSubject === "acc";
+  const isClass12Accounts = isClass12 && isAccounts;
+
+  const isFullClass12AccountsExam =
+    isClass12Accounts &&
+    (config.examType === "annual_exam" ||
+      config.examType === "pre_board" ||
+      config.examType === "sample_paper" ||
+      config.examType === "half_yearly" ||
+      config.totalMarks >= 70);
+
   const englishClass12Constraint = isClass12English
     ? `--- CBSE CLASS 12 ENGLISH CORE (SUBJECT CODE 301) PRESCRIBED BOOKS DIRECTIVE ---
 Prescribed NCERT Books & Chapters:
@@ -181,7 +254,7 @@ All generated questions MUST strictly adhere to these prescribed books and chapt
 
   const physicsClass12Constraint = isClass12Physics
     ? `--- CBSE CLASS 12 PHYSICS (SUBJECT CODE 042) CURRICULUM & SYLLABUS DIRECTIVE ---
-Prescribed NCERT Units & Chapters (Latest 2025-26 Curriculum):
+Prescribed NCERT Units & Chapters (Latest 2025-26 / 2026-27 Curriculum):
 1. Unit I: Electrostatics
    - Chapter-1: Electric Charges and Fields (Conservation of charge, Coulomb's law, superposition principle, continuous charge distribution, electric field, electric dipole, torque on dipole, electric flux, Gauss's theorem and applications: infinitely long wire, uniformly charged infinite plane sheet, thin spherical shell inside and outside)
    - Chapter-2: Electrostatic Potential and Capacitance (Electric potential, potential difference, potential due to point charge/dipole/system, equipotential surfaces, potential energy of 2 charges and dipole, conductors and dielectrics, capacitors in series and parallel, capacitance with/without dielectric, energy stored in capacitor - formula only)
@@ -221,6 +294,119 @@ STRICTLY DELETED / EXCLUDED TOPICS (NEVER GENERATE QUESTIONS ON THESE):
 PHYSICS SPECIFIC RIGOR & QUALITY REQUIREMENTS:
 - Proper balance between Conceptual questions (~50%) and Numerical problems (~30-35%), and Derivations (~15-20%).
 - Competency-based, application-oriented, and diagram/graph-based questions must be incorporated where appropriate.`
+    : "";
+
+  const chemistryClass12Constraint = isClass12Chemistry
+    ? `--- CBSE CLASS 12 CHEMISTRY (SUBJECT CODE 043) CURRICULUM & SYLLABUS DIRECTIVE ---
+Theory: 70 Marks (3 Hours) | Practical Assessment: 30 Marks | Total: 100 Marks
+(Based strictly on latest prescribed CBSE syllabus, blueprints, and question paper design)
+
+OFFICIAL 10 UNITS & SYLLABUS TOPICS:
+1. Physical Chemistry (Total: 23 Marks):
+   - Unit 1: Solutions (7 Marks)
+     * Types of solutions, expression of concentration of solutions of solids in liquids (molarity, molality, mole fraction, mass percentage).
+     * Solubility of gases in liquids (Henry's law and applications), solubility of solids in liquids.
+     * Vapour pressure of liquid solutions, Raoult's law (for volatile and non-volatile solutes), ideal and non-ideal solutions, positive and negative deviations from Raoult's law, azeotropes (minimum and maximum boiling).
+     * Colligative properties and determination of molar mass: relative lowering of vapour pressure, elevation of boiling point (molal elevation constant Kb), depression of freezing point (cryoscopic constant Kf), osmotic pressure (reverse osmosis, isotonic, hypertonic, hypotonic solutions).
+     * Abnormal molecular masses, van't Hoff factor (i), association and dissociation calculations.
+   - Unit 2: Electrochemistry (9 Marks)
+     * Electrochemical cells, Redox reactions, Galvanic/Voltaic cells, cell potential and standard electrode potential (SHE - Standard Hydrogen Electrode).
+     * Nernst equation and its relation to EMF of chemical cells and equilibrium constant (Kc), Gibbs energy change (Delta G = -nFE_cell).
+     * Conductance in electrolytic solutions: specific and molar conductivity, variation of conductivity and molar conductivity with concentration, Kohlrausch's law of independent migration of ions and its applications (calculation of molar conductivity at infinite dilution for weak electrolytes, degree of dissociation alpha, and dissociation constant Ka).
+     * Electrolytic cells and electrolysis: Faraday's laws of electrolysis (first and second laws with numerical calculations).
+     * Commercial batteries: primary cells (dry cell, mercury cell), secondary cells (lead storage battery, nickel-cadmium cell).
+     * Fuel cells (H2-O2 fuel cell efficiency and reactions), Corrosion of metals (electrochemical theory of rusting of iron and methods of prevention).
+   - Unit 3: Chemical Kinetics (7 Marks)
+     * Rate of a chemical reaction (average and instantaneous rates), factors influencing rate of reaction: concentration, temperature, catalyst, surface area.
+     * Rate law and specific rate constant (k), order of a reaction (0, 1, 2, fractional) and molecularity of a reaction, pseudo first order reactions.
+     * Integrated rate equations and half-life period (t_1/2) for zero and first order reactions with graphical plots ([R] vs t, ln[R] vs t).
+     * Temperature dependence of reaction rate: Arrhenius equation, activation energy (Ea), calculation of rate constants at different temperatures (log(k2/k1) = (Ea / 2.303R) * (1/T1 - 1/T2)).
+     * Collision theory of chemical reactions (elementary idea, activation energy, collision frequency, orientation factor/steric factor P, mathematical treatment not required).
+
+2. Inorganic Chemistry (Total: 14 Marks):
+   - Unit 4: d- and f-Block Elements (7 Marks)
+     * Position in the Periodic Table, electronic configurations of 3d series.
+     * General trends in properties of the first-row transition elements (d-Block): metallic character, atomic and ionic radii, ionization enthalpies, standard electrode potentials (E(M2+/M) and E(M3+/M2+) anomalies), oxidation states (variable oxidation states, stability of Mn2+, Fe3+, etc.), magnetic properties (spin-only magnetic moment mu = sqrt(n(n+2)) BM), catalytic properties, coloured ions (d-d transitions), interstitial compounds formation, alloy formation.
+     * Some important compounds of transition elements: Potassium dichromate (K2Cr2O7) and Potassium permanganate (KMnO4) - preparation, properties, and oxidizing actions in acidic/alkaline media with balanced ionic equations.
+     * The Lanthanoids: electronic configuration, oxidation states (+3 predominant, +2 and +4 states), atomic and ionic radii, Lanthanoid contraction and its consequences (similarity in properties of 4d and 5d elements like Zr/Hf).
+     * The Actinoids: electronic configuration, oxidation states (+3, +4, +5, +6, +7), comparison with lanthanoids (greater range of oxidation states, radioactive nature).
+     * Applications of d- and f-Block elements (catalysts, alloys, magnetic materials).
+   - Unit 5: Coordination Compounds (7 Marks)
+     * Werner's theory of coordination compounds (primary and secondary valencies).
+     * Important terms: coordination entity, central atom/ion, ligands (monodentate, bidentate, polydentate, ambidentate, chelating ligands), coordination number, coordination sphere, coordination polyhedron, oxidation number of central metal atom, homoleptic and heteroleptic complexes.
+     * IUPAC nomenclature of mononuclear coordination compounds.
+     * Isomerism in coordination compounds: Structural isomerism (ionisation, hydrate/solvate, linkage, coordination isomerism) and Stereoisomerism (geometrical cis/trans and optical isomerism/chirality in octahedral and square planar complexes).
+     * Bonding in coordination complexes:
+       - Valence Bond Theory (VBT): hybridisation (sp3, dsp2, sp3d2, d2sp3), geometry, inner and outer orbital complexes, magnetic nature (diamagnetic vs paramagnetic).
+       - Crystal Field Theory (CFT): crystal field splitting in octahedral (Delta_o) and tetrahedral (Delta_t) coordination entities, t2g and eg orbitals, pairing energy (P), high spin vs low spin complexes (spectrochemical series: strong field vs weak field ligands), colour of coordination compounds.
+     * Bonding in metal carbonyls (synergic bonding, sigma-bond donation and pi-backbonding).
+     * Importance and applications of coordination compounds (in qualitative analysis, extraction of metals like Ag and Au, biological systems like chlorophyll, haemoglobin, vitamin B12, and medicine like cis-platin).
+
+3. Organic Chemistry (Total: 33 Marks):
+   - Unit 6: Haloalkanes and Haloarenes (6 Marks)
+     * Classification (mono, di, polyhalogen), IUPAC nomenclature, Nature of C-X bond (sp3 vs sp2, bond length, polarity).
+     * Methods of preparation of haloalkanes (from alcohols using SOCl2, PCl5, PCl3, HX, from hydrocarbons by free radical halogenation, electrophilic addition to alkenes, halogen exchange: Finkelstein and Swarts reactions).
+     * Methods of preparation of haloarenes (from diazonium salts by Sandmeyer and Gattermann reactions, electrophilic substitution of arenes).
+     * Physical properties (melting/boiling points, density, solubility).
+     * Chemical reactions of haloalkanes:
+       - Nucleophilic substitution reactions: SN1 and SN2 mechanisms, kinetics, stereochemical aspects (optical activity, plane polarised light, enantiomers, racemisation vs inversion of configuration).
+       - Elimination reactions: dehydrohalogenation, Saytzeff (Zaitsev) rule.
+       - Reaction with metals: Grignard reagent formation (RMgX), Wurtz reaction.
+     * Chemical reactions of haloarenes: low reactivity of haloarenes towards nucleophilic substitution (resonance effect, hybridization of carbon, instability of phenyl cation), electrophilic substitution reactions (halogenation, nitration, sulphonation, Friedel-Crafts alkylation and acylation), Wurtz-Fittig and Fittig reactions.
+     * Polyhalogen compounds: uses and environmental effects of dichloromethane (CH2Cl2), chloroform (CHCl3), iodoform (CHI3), carbon tetrachloride (CCl4), freons (CFCs), DDT.
+   - Unit 7: Alcohols, Phenols and Ethers (6 Marks)
+     * Classification (monohydric, dihydric, polyhydric; primary, secondary, tertiary alcohols; allylic, benzylic).
+     * Nomenclature and structures of functional groups (-OH, -O-).
+     * Alcohols: methods of preparation (acid-catalysed hydration of alkenes, hydroboration-oxidation, reduction of aldehydes, ketones, and carboxylic acids/esters, from Grignard reagents). Physical properties (hydrogen bonding, boiling point, solubility). Chemical reactions: acidity of alcohols, esterification, reaction with hydrogen halides, PCl3, PCl5, SOCl2, dehydration (formation of alkenes vs ethers, mechanism), oxidation (PCC, Jones reagent, acidic KMnO4), dehydrogenation over hot Cu. Lucas test for distinguishing 1 deg, 2 deg, 3 deg alcohols. Commercial alcohols: methanol and ethanol.
+     * Phenols: methods of preparation (from haloarenes - Dow process, from benzenesulphonic acid, from diazonium salts, from cumene). Physical properties. Chemical reactions: acidic nature of phenol (comparison with alcohols and substituted phenols - effect of EWG and EDG), electrophilic aromatic substitutions (nitration with dilute vs conc. HNO3, halogenation with Br2/H2O vs Br2/CS2), Kolbe's reaction, Reimer-Tiemann reaction, reaction with zinc dust, oxidation with Na2Cr2O7 to benzoquinone.
+     * Ethers: nomenclature, methods of preparation (acid-catalysed dehydration of alcohols, Williamson ether synthesis). Physical properties. Chemical reactions: cleavage of C-O bond by HI/HBr (mechanism with 1 deg, 2 deg, 3 deg alkyl groups), electrophilic substitution in aromatic ethers (halogenation, Friedel-Crafts reactions, nitration).
+   - Unit 8: Aldehydes, Ketones and Carboxylic Acids (8 Marks)
+     * Nomenclature and structure of the carbonyl group (>C=O).
+     * Preparation of aldehydes and ketones: oxidation of alcohols, dehydrogenation of alcohols, ozonolysis of alkenes, hydration of alkynes; Rosenmund reduction, Stephen reduction, Etard reaction, Gattermann-Koch reaction, Friedel-Crafts acylation.
+     * Physical properties (boiling points, dipole-dipole interactions, solubility).
+     * Chemical reactions of aldehydes and ketones:
+       - Nucleophilic addition reactions: addition of HCN, NaHSO3, Grignard reagents, alcohols (acetals and ketals), addition of ammonia derivatives (NH2-Z: hydroxylamine, hydrazine, phenylhydrazine, 2,4-DNP, semicarbazide). Mechanism of nucleophilic addition.
+       - Reduction: Clemmensen reduction (Zn-Hg / conc. HCl), Wolff-Kishner reduction (NH2NH2 / KOH, glycol), reduction to alcohols (NaBH4, LiAlH4).
+       - Oxidation: Tollens' test (silver mirror), Fehling's test, Haloform reaction (Iodoform test for CH3-C=O group).
+       - Reactions due to alpha-hydrogen: Aldol condensation, Cross-aldol condensation.
+       - Cannizzaro reaction (for aldehydes without alpha-hydrogen), Electrophilic aromatic substitution of benzaldehyde (meta-directing).
+     * Carboxylic Acids: nomenclature and structure of carboxyl group (-COOH). Methods of preparation (from primary alcohols and aldehydes, from alkylbenzenes, from nitriles and amides, from Grignard reagents and CO2, from acyl halides and anhydrides, from esters). Physical properties. Chemical reactions: acidity (resonance stabilisation of carboxylate ion, comparison with phenols, effect of substituents on acid strength: pKa), formation of anhydride, esterification, reaction with PCl5, PCl3, SOCl2, reaction with ammonia, reduction (LiAlH4), decarboxylation (soda-lime), Hell-Volhard-Zelinsky (HVZ) reaction, electrophilic aromatic substitution (meta-directing).
+   - Unit 9: Amines (6 Marks)
+     * Structure of amines, classification (1 deg, 2 deg, 3 deg amines, quaternary ammonium salts), IUPAC nomenclature.
+     * Methods of preparation of amines: reduction of nitro compounds, ammonolysis of alkyl halides (Hoffmann's ammonolysis), reduction of nitriles, reduction of amides, Gabriel phthalimide synthesis, Hoffmann bromamide degradation reaction.
+     * Physical properties: hydrogen bonding, boiling points, solubility in water.
+     * Chemical reactions:
+       - Basic character of amines: comparison of basicity in gaseous phase (3 deg > 2 deg > 1 deg > NH3) vs aqueous solution (ethyl group: 2 deg > 3 deg > 1 deg > NH3; methyl group: 2 deg > 1 deg > 3 deg > NH3; aliphatic vs aromatic amines - effect of resonance in aniline).
+       - Alkylation and Acylation.
+       - Carbylamine reaction (test for primary amines using CHCl3 + KOH).
+       - Reaction with nitrous acid (HNO2): aliphatic amines produce alcohol + N2 gas; aromatic primary amines form diazonium salts.
+       - Reaction with benzenesulphonyl chloride (Hinsberg's reagent) to distinguish 1 deg, 2 deg, 3 deg amines.
+       - Electrophilic substitution in aniline: bromination (Br2/H2O yields 2,4,6-tribromoaniline, monobromination via protection with acetic anhydride), nitration (formation of ortho, meta, para isomers), sulphonation (formation of sulphanilic acid and zwitterion).
+     * Diazonium salts: preparation of benzenediazonium chloride, physical properties, chemical reactions: reactions involving displacement of nitrogen (replacement by halogen - Sandmeyer and Gattermann reactions, replacement by -I, -F [Balz-Schiemann], -OH, -H, -NO2), azo-coupling reactions (with phenol [orange dye] and with aniline [yellow dye]), importance in synthetic organic chemistry.
+   - Unit 10: Biomolecules (7 Marks)
+     * Carbohydrates: classification (aldoses, ketoses, monosaccharides, disaccharides, polysaccharides). Monosaccharides: glucose (preparation, open-chain structure, chemical reactions supporting structure: HI, Br2 water, HNO3, acetic anhydride, HCN, hydroxylamine, cyclic structure, alpha and beta anomers, Haworth projections) and fructose (cyclic structure). Disaccharides: glycosidic linkage, sucrose (invert sugar, non-reducing), lactose (reducing), maltose (reducing). Polysaccharides: starch (amylose and amylopectin), cellulose, glycogen; biological importance of carbohydrates.
+     * Proteins: elementary idea of alpha-amino acids, zwitterion structure, isoelectric point, peptide bond/linkage, polypeptides, classification of proteins: fibrous and globular proteins. Structural levels: primary, secondary (alpha-helix and beta-pleated sheet), tertiary, and quaternary structures. Denaturation of proteins.
+     * Enzymes: biocatalysts, specificity, mechanism of action.
+     * Vitamins: classification (water-soluble: B and C; fat-soluble: A, D, E, K), deficiency diseases (scurvy, rickets, beriberi, night blindness, xerophthalmia).
+     * Nucleic Acids: chemical composition of nucleic acids (pentose sugar, phosphoric acid, nitrogenous bases: purines A, G and pyrimidines C, T, U), nucleosides and nucleotides. Structure of DNA (Watson-Crick double helix, complementary base pairing A=T, G===C) and RNA (single strand, types: mRNA, tRNA, rRNA), biological functions: replication and protein synthesis (genetic code).
+     * Hormones: elementary idea (excluding structure): steroid hormones, adrenaline, thyroxine, insulin, glucagon.
+
+STRICTLY FORMATIVE-ONLY TOPICS (NEVER GENERATE BOARD EXAM QUESTIONS FROM THESE):
+- Surface Chemistry (adsorption, physisorption/chemisorption, colloids, emulsions)
+- General Principles and Processes of Isolation of Elements (metallurgy, Ellingham diagrams)
+- Polymers (polymerization, Bakelite, Nylon, Buna-S, Dacron)
+- Chemistry in Everyday Life (drugs, analgesics, food preservatives, detergents)
+The four topics above are strictly for formative school assessment and MUST NEVER appear in summative board examinations.
+
+QUESTION PAPER DESIGN & COMPETENCIES (70 MARKS):
+1. Remembering and Understanding (40% - 28 Marks): Definitions, statements of laws, IUPAC names, terminology, conceptual explanations.
+2. Applying (30% - 21 Marks): Numericals, solving conversions, naming products, predicting precipitation/electrochemical outcomes.
+3. Analysing, Evaluating and Creating (30% - 21 Marks): Deducing mechanisms, case-based data interpretation, reasoning anomalies (d-block oxidation states, acidity/basicity trends, CFT crystal field splitting).
+
+CRITICAL CHEMISTRY ACCURACY DIRECTIVES:
+- Physical Chemistry: Calculations MUST use correct formulas (E_cell = E_cathode - E_anode, Lambda_m = (kappa * 1000) / M, Delta T_b = i * K_b * m, pi = i * C * R * T, k = (2.303/t) * log([R]0/[R]), mu = sqrt(n(n+2)) BM). Provide clean numerical data with SI units (S cm^2 mol^-1, mol L^-1 s^-1, etc.).
+- Inorganic Chemistry: Balanced redox equations for KMnO4 and K2Cr2O7 in acidic medium. State electronic configurations accurately (Cr: [Ar] 3d^5 4s^1, Cu: [Ar] 3d^10 4s^1).
+- Organic Chemistry: Every chemical transformation must be reaction-wise accurate. Mechanisms for SN1, SN2, acid-catalysed hydration/dehydration must follow standard arrow-pushing logic in solutions.`
     : "";
 
   const csClass12Constraint = isClass12CS
@@ -294,32 +480,38 @@ CRITICAL COMPUTER SCIENCE QUALITY & CODE ACCURACY DIRECTIVE:
 
   const biologyClass12Constraint = isClass12Biology
     ? `--- CBSE CLASS 12 BIOLOGY (SUBJECT CODE 044) CURRICULUM & SYLLABUS DIRECTIVE ---
-Prescribed Units & Chapters (Latest 2025-26 Curriculum):
-1. Unit I: Reproduction (15 Marks)
+Prescribed Units & Chapters (Latest 2026-27 Curriculum, Theory: 70 Marks, 3 Hours):
+1. Unit VI: Reproduction (16 Marks)
    - Chapter-1: Sexual Reproduction in Flowering Plants (Flower structure; development of male and female gametophytes; pollination - types, agencies and examples; outbreeding devices; pollen-pistil interaction; double fertilization; post fertilization events - development of endosperm and embryo, development of seed and formation of fruit; special modes - apomixis, parthenocarpy, polyembryony; Significance of seed dispersal and fruit formation).
-   - Chapter-2: Human Reproduction (Male and female reproductive systems; microscopic anatomy of testis and ovary; gametogenesis - spermatogenesis and oogenesis; menstrual cycle; fertilisation, embryo development upto blastocyst formation, implantation; pregnancy and placenta formation; parturition; lactation).
-   - Chapter-3: Reproductive Health (Need for reproductive health and prevention of STDs; birth control - need and methods, contraception and medical termination of pregnancy - MTP; amniocentesis; infertility and assisted reproductive technologies - IVF, ZIFT, GIFT).
-2. Unit II: Genetics and Evolution (20 Marks)
-   - Chapter-4: Principles of Inheritance and Variation (Heredity and variation, Mendelian inheritance; deviations from Mendelism - incomplete dominance, co-dominance, multiple alleles and inheritance of blood groups, pleiotropy; elementary idea of polygenic inheritance; chromosome theory of inheritance; chromosomes and genes; Sex determination in humans, birds and honey bee, linkage and crossing over; sex-linked inheritance - haemophilia, colour blindness; Mendelian disorders in humans - thalassemias; chromosomal disorders in humans - Down's syndrome, Turner's and Klinefelter's syndromes).
-   - Chapter-5: Molecular Basis of Inheritance (Search for genetic material and DNA as genetic material; Structure of DNA and RNA; DNA packaging; DNA replication; Central Dogma; transcription, genetic code, translation; gene expression and regulation - lac operon; Genome, Human and rice genome project; DNA fingerprinting).
+   - Chapter-2: Human Reproduction (Male and female reproductive systems; microscopic anatomy of testis and ovary; gametogenesis - spermatogenesis and oogenesis; menstrual cycle; fertilisation, embryo development upto blastocyst formation, implantation; pregnancy and placenta formation - elementary idea; parturition - elementary idea; lactation - elementary idea).
+   - Chapter-3: Reproductive Health (Need for reproductive health and prevention of Sexually Transmitted Diseases - STDs; birth control - need and methods, contraception and medical termination of pregnancy - MTP; amniocentesis; infertility and assisted reproductive technologies - IVF, ZIFT, GIFT - elementary idea for general awareness).
+2. Unit VII: Genetics and Evolution (20 Marks)
+   - Chapter-4: Principles of Inheritance and Variation (Heredity and variation: Mendelian inheritance; deviations from Mendelism - incomplete dominance, co-dominance, multiple alleles and inheritance of blood groups, pleiotropy; elementary idea of polygenic inheritance; chromosome theory of inheritance; chromosomes and genes; Sex determination - in humans, birds and honey bee; linkage and crossing over; sex-linked inheritance - haemophilia, colour blindness; Mendelian disorders in humans - thalassemia; chromosomal disorders in humans - Down's syndrome, Turner's and Klinefelter's syndromes).
+   - Chapter-5: Molecular Basis of Inheritance (Search for genetic material and DNA as genetic material; Structure of DNA and RNA; DNA packaging; DNA replication; Central Dogma; transcription, genetic code, translation; gene expression and regulation - lac operon; Genome, Human and rice genome projects; DNA fingerprinting).
    - Chapter-6: Evolution (Origin of life; biological evolution and evidences for biological evolution: paleontology, comparative anatomy, embryology and molecular evidences; Darwin's contribution, modern synthetic theory of evolution; mechanism of evolution - variation by mutation and recombination and natural selection with examples, types of natural selection; Gene flow and genetic drift; Hardy-Weinberg's principle; adaptive radiation; human evolution).
-3. Unit III: Biology and Human Welfare (14 Marks)
+3. Unit VIII: Biology and Human Welfare (12 Marks)
    - Chapter-7: Human Health and Diseases (Pathogens; parasites causing human diseases: malaria, dengue, chikungunya, filariasis, ascariasis, typhoid, pneumonia, common cold, amoebiasis, ring worm and their control; Basic concepts of immunology - vaccines; cancer, HIV and AIDS; Adolescence - drug and alcohol abuse).
-   - Chapter-8: Microbes in Human Welfare (Microbes in food processing, industrial production, sewage treatment, energy generation - biogas, and microbes as bio-control agents and bio-fertilizers; Antibiotics - production and judicious use).
-4. Unit IV: Biotechnology and its Applications (11 Marks)
+   - Chapter-8: Microbes in Human Welfare (Microbes in food processing, industrial production, sewage treatment, energy generation and microbes as bio-control agents and bio-fertilizers; Antibiotics - production and judicious use).
+4. Unit IX: Biotechnology and its Applications (12 Marks)
    - Chapter-9: Biotechnology - Principles and Processes (Genetic Engineering - Recombinant DNA Technology, tools: restriction enzymes, DNA ligase, cloning vectors pBR322, competent hosts; processes of recombinant DNA technology: isolation of DNA, PCR, insertion, bioreactors, downstream processing).
-   - Chapter-10: Biotechnology and its Applications (Applications of biotechnology in health and agriculture: Human insulin production, vaccine production, stem cell technology, gene therapy - ADA deficiency; genetically modified organisms - Bt crops: Bt cotton, pest-resistant tobacco; transgenic animals; biosafety issues, biopiracy and patents).
-5. Unit V: Ecology and Environment (10 Marks)
-   - Chapter-11: Organisms and Populations (Population interactions - mutualism, competition, predation, parasitism; population attributes - growth models: exponential and logistic growth, birth rate, death rate, age distribution pyramids).
-   - Chapter-12: Ecosystem (Ecosystem patterns, components, productivity: primary and secondary, decomposition; energy flow, 10% law; ecological pyramids: pyramids of number, biomass, energy).
-   - Chapter-13: Biodiversity and Conservation (Biodiversity: concept, patterns - latitudinal gradients and species-area relationship, importance and rivet popper hypothesis; loss of biodiversity - evil quartet; biodiversity conservation: in-situ and ex-situ; hotspots, endangered organisms, extinction, Red Data Book, Sacred Groves, biosphere reserves, national parks, wildlife sanctuaries, Ramsar sites).
+   - Chapter-10: Biotechnology and its Application (Application of biotechnology in health and agriculture: Human insulin and vaccine production, stem cell technology, gene therapy; genetically modified organisms - Bt crops; transgenic animals; biosafety issues, biopiracy and patents).
+5. Unit X: Ecology and Environment (10 Marks)
+   - Chapter-11: Organisms and Populations (Population interactions - mutualism, competition, predation, parasitism; population attributes - growth, birth rate and death rate, age distribution).
+   - Chapter-12: Ecosystem (Ecosystems: Patterns, components; productivity and decomposition; energy flow; pyramids of number, biomass, energy).
+   - Chapter-13: Biodiversity and its Conservation (Biodiversity: Concept, patterns, importance; loss of biodiversity; biodiversity conservation; hotspots, endangered organisms, extinction, Red Data Book, Sacred Groves, biosphere reserves, national parks, wildlife sanctuaries and Ramsar sites).
 
-STRICTLY DELETED / EXCLUDED TOPICS (NEVER GENERATE QUESTIONS FROM THESE):
-- Chapter Reproduction in Organisms (old Chapter 1) is completely DELETED.
-- Chapter Strategies for Enhancement in Food Production (old Chapter 9) is completely DELETED.
-- Chapter Environmental Issues (old Chapter 16) is completely DELETED.
-- In Chapter 11 (Organisms and Populations): "Organism and its Environment", "Major Abiotic Factors (temperature, water, light, soil)", "Responses to Abiotic Factors (regulate, conform, migrate, suspend)", and "Adaptations" are EXCLUDED.
+STRICTLY DELETED / FORMATIVE-ONLY TOPICS (NEVER GENERATE SUMMATIVE QUESTIONS FROM THESE):
+- Old Chapter 1: Reproduction in Organisms is completely DELETED.
+- Old Chapter 9: Strategies for Enhancement in Food Production is completely DELETED.
+- Environmental Issues (Air/Water pollution, Solid/Radioactive Wastes, Greenhouse effect, Ozone depletion, Deforestation): Assessed only FORMATIVELY in schools; strictly EXCLUDED from summative board examinations.
+- In Chapter 11 (Organisms and Populations): "Organism and its Environment", "Major Abiotic Factors (temperature, water, light, soil)", "Responses to Abiotic Factors", and "Adaptations" are EXCLUDED.
 - In Chapter 12 (Ecosystem): "Ecological Succession" (hydrarch and xerarch) and "Nutrient Cycles" (carbon cycle and phosphorus cycle) are EXCLUDED.
+
+QUESTION PAPER DESIGN & COMPETENCY DISTRIBUTION (CBSE 2026-27):
+- Demonstrate Knowledge and Understanding: 50% (35 Marks) - State, name, list, identify, define, suggest, describe, outline, summarize.
+- Application of Knowledge / Concepts: 30% (21 Marks) - Calculate, illustrate, show, adapt, explain, distinguish.
+- Analyse, Evaluate and Create: 20% (14 Marks) - Interpret, analyse, compare, contrast, examine, evaluate, discuss, construct.
+- Internal Choice: Approximately 33% internal choice across sections.
 
 CRITICAL BIOLOGY QUALITY & ACCURACY DIRECTIVE:
 1. Biological Terminology: Use standard, precise biological terminology and correct binomial nomenclature conventions (e.g. Escherichia coli, Pisum sativum, Plasmodium vivax, Haemophilus influenzae).
@@ -457,6 +649,407 @@ CRITICAL GEOGRAPHY ACCURACY DIRECTIVE:
 3. Precision: Use standard geographical terms (e.g. demographic transition, carrying capacity, hinterland, watershed, non-metallic minerals, technopolies).`
     : "";
 
+  const socialClass10Constraint = isClass10Social
+    ? `--- CBSE CLASS 10 SOCIAL SCIENCE (SUBJECT CODE 087) FOUR-COMPONENT DIRECTIVE ---
+CRITICAL 4-COMPONENT SEPARATION MANDATE:
+Class 10 Social Science is NOT a generic single-subject pool. It consists of FOUR distinct, independent components:
+1. History (India and the Contemporary World - II)
+2. Geography (Contemporary India - II)
+3. Political Science (Democratic Politics - II)
+4. Economics (Understanding Economic Development)
+
+History ≠ Geography ≠ Political Science ≠ Economics!
+Never mix topics, content, or questions between these four distinct components.
+
+TARGETED CHAPTER & SHORT-PAPER BOUNDARY ENFORCEMENT:
+- If the user selected chapters from only ONE component (e.g. only History: "Nationalism in India"), generate questions EXCLUSIVELY from that specific chapter and subject. Never introduce questions from Geography, Political Science, or Economics!
+- If the user selected chapters from multiple components (e.g. 1 Geography + 1 Economics), distribute questions strictly and proportionately among only those selected chapters.
+- Never generate questions from unselected components or out-of-syllabus/deleted topics!
+
+OFFICIAL COMPONENT SPECIFICATIONS & SYLLABUS (NCERT):
+1. History (India and the Contemporary World - II):
+   - Prescribed Chapters:
+     * Chapter 1: The Rise of Nationalism in Europe
+     * Chapter 2: Nationalism in India
+     * Chapter 3: The Making of a Global World (Subtopics 1 to 1.3: Pre-modern World to Conquest, Disease and Trade for Board Exams; Subtopics 2 to 4.4 are for Interdisciplinary Project only)
+     * Chapter 5: Print Culture and the Modern World
+     * Note: Chapter 4 "The Age of Industrialisation" is for Periodic Assessment only.
+   - History Map Pointing Items (from Nationalism in India):
+     * Congress Sessions: Calcutta (Sep 1920), Nagpur (Dec 1920), Madras (1927).
+     * Satyagraha & Movement Centres: Champaran (Indigo), Kheda (Peasant), Ahmedabad (Cotton Mill), Amritsar (Jallianwala Bagh), Chauri Chaura (Calling off Non-Cooperation Movement), Dandi (Civil Disobedience Movement).
+
+2. Geography (Contemporary India - II):
+   - Prescribed Chapters:
+     * Chapter 1: Resources and Development
+     * Chapter 2: Forest and Wildlife Resources
+     * Chapter 3: Water Resources
+     * Chapter 4: Agriculture
+     * Chapter 5: Minerals and Energy Resources
+     * Chapter 6: Manufacturing Industries
+     * Chapter 7: Lifelines of National Economy (ONLY Map Pointing to be evaluated in Board Examination)
+   - Geography Map Pointing Items:
+     * Major Soil Types (Alluvial, Black, Red & Yellow, Laterite, Arid, Forest).
+     * Dams: Salal, Bhakra Nangal, Tehri, Rana Pratap Sagar, Sardar Sarovar, Hirakud, Nagarjuna Sagar, Tungabhadra.
+     * Agriculture: Major areas of Rice and Wheat; Largest/Major producer states of Sugarcane, Tea, Coffee, Rubber, Cotton, and Jute.
+     * Minerals & Energy: Thermal Power Plants (Namrup, Singrauli, Ramagundam); Nuclear Power Plants (Narora, Kakrapar, Tarapur, Kalpakkam); Coal, Oil fields, and Iron ore mines.
+     * Manufacturing: Cotton Textiles (Mumbai, Indore, Surat, Kanpur, Coimbatore); Iron & Steel (Durgapur, Bokaro, Jamshedpur, Bhilai, Vijayanagar, Salem); Software Technology Parks (Noida, Gandhinagar, Mumbai, Pune, Hyderabad, Bengaluru, Chennai, Thiruvananthapuram).
+     * Lifelines of National Economy: Major Ports (Kandla, Mumbai, Marmagao, New Mangalore, Kochi, Tuticorin, Chennai, Visakhapatnam, Paradip, Haldia); International Airports (Amritsar, Delhi, Mumbai, Chennai, Kolkata, Hyderabad).
+
+3. Political Science (Democratic Politics - II):
+   - Prescribed Chapters:
+     * Chapter 1: Power-sharing
+     * Chapter 2: Federalism
+     * Chapter 3: Gender, Religion and Caste
+     * Chapter 4: Political Parties
+     * Chapter 5: Outcomes of Democracy
+
+4. Economics (Understanding Economic Development):
+   - Prescribed Chapters:
+     * Chapter 1: Development
+     * Chapter 2: Sectors of the Indian Economy
+     * Chapter 3: Money and Credit
+     * Chapter 4: Globalisation and the Indian Economy (Evaluated topics: "What is Globalization?" and "Factors that have enabled Globalisation")
+     * Note: Chapter 5 "Consumer Rights" is for Project Work only (no board exam questions).
+
+SUBJECT-SPECIFIC QUESTION QUALITY DIRECTIVE:
+- History: Chronological accuracy, conceptual depth, cause-consequence relationships, source/passage analysis, nationalist movements.
+- Geography: Conceptual understanding, spatial/environmental analysis, resource distribution, map reading/labelling.
+- Political Science: Constitutional provisions, federal structures, democratic debate, assertion-reason, power-sharing mechanisms.
+- Economics: Conceptual clarity (GDP, PCI, HDI, formal/informal credit, terms of credit, multinational corporations), real-world scenario analysis, data-based interpretation.`
+    : "";
+
+  const phyEduClass12Constraint = isClass12PhyEdu
+    ? `--- CBSE CLASS 12 PHYSICAL EDUCATION (SUBJECT CODE 048) OFFICIAL CURRICULUM & SYLLABUS DIRECTIVE ---
+Theory: 70 Marks (3 Hours) | Practical Assessment: 30 Marks | Total: 100 Marks
+(Based strictly on latest prescribed CBSE syllabus and official blueprints)
+
+OFFICIAL 10 UNITS & SYLLABUS TOPICS:
+1. Unit 1: Management of Sporting Events (Weightage: 05 + 04 b* Marks = 9 Marks)
+   - Functions of Sports Events Management: Planning, Organising, Staffing, Directing, and Controlling.
+   - Various Committees and their Responsibilities: Pre-tournament, During-tournament, and Post-tournament committees (Organising, Technical, Finance, Transport, Boarding & Lodging, Refreshment, Ground & Equipment, First Aid, Publicity, Reception, Prize distribution).
+   - Fixtures and their Procedures:
+     * Knock-Out Tournament: Formula for total matches = N - 1. Calculation of Byes = Next higher power of 2 - N. Distribution of Byes in Upper Half and Lower Half. Seeding procedure and Special Seeding.
+     * League / Round Robin Tournament: Cyclic method, Staircase method, and Tabular method. Formula for total matches = N(N - 1) / 2. Deciding winner (British method & American method percentage).
+     * Combination Tournaments: Knock-out cum Knock-out, League cum League, Knock-out cum League, League cum Knock-out.
+   - Intramural and Extramural Tournaments: Meaning, Objectives, and Significance in school/community.
+   - Community Sports Program: Sports Day, Health Run, Run for Fun, Run for Specific Cause, and Run for Unity.
+
+2. Unit 2: Children and Women in Sports (Weightage: 07 Marks)
+   - Exercise Guidelines of WHO for different age groups: Under 5 years, 5–17 years (children & adolescents: at least 60 min moderate-to-vigorous aerobic daily), 18–64 years (adults: 150-300 min moderate aerobic weekly), 65 years & above.
+   - Common Postural Deformities and Corrective Measures:
+     * Knock Knees (Genu Valgum) & Bow Legs (Genu Varum)
+     * Flat Foot (Pes Planus)
+     * Round Shoulders
+     * Spinal Curvatures: Kyphosis (Hunchback / round upper back), Lordosis (Swayback / inward curve of lumbar), Scoliosis (lateral S/C curve of spine).
+     * Specific corrective yogic asanas and physical exercises for each deformity.
+   - Women's Participation in Sports: Physical, Psychological, and Social benefits.
+   - Special Consideration: Menarche and Menstrual Dysfunction (amenorrhea, dysmenorrhea, oligomenorrhea).
+   - Female Athlete Triad: Interrelationship among Osteoporosis (low bone mineral density), Amenorrhea (absence of menstrual cycles), and Eating Disorders (Anorexia Nervosa & Bulimia Nervosa).
+
+3. Unit 3: Yoga as Preventive measure for Lifestyle Disease (Weightage: 06 + 01 b* Marks = 7 Marks)
+   - Obesity: Procedure, Benefits, and Contraindications for Tadasana, Katichakrasana, Pavanmuktasana, Matsyasana, Halasana, Paschimottanasana, Ardha-Matsyendrasana, Dhanurasana, Ushtrasana, Suryabhedan Pranayama.
+   - Diabetes: Procedure, Benefits, and Contraindications for Katichakrasana, Pavanmuktasana, Bhujangasana, Shalabhasana, Dhanurasana, Suptavajrasana, Paschimottanasana, Ardha-Matsyendrasana, Mandukasana, Gomukhasana, Yogmudra, Ushtrasana, Kapalbhati.
+   - Asthma: Procedure, Benefits, and Contraindications for Tadasana, Urdhwahastottanasana, UttanMandukasana, Bhujangasana, Dhanurasana, Ushtrasana, Vakrasana, Kapalbhati, Gomukhasana, Matsyasana, Anuloma-Viloma.
+   - Hypertension: Procedure, Benefits, and Contraindications for Tadasana, Katichakrasana, Uttanpadasana, Ardha Halasana, Sarala Matsyasana, Gomukhasana, UttanMandukasana, Vakrasana, Bhujangasana, Makarasana, Shavasana, Nadishodhanapranayama, Sheetali Pranayama.
+   - Back Pain and Arthritis: Procedure, Benefits, and Contraindications for Tadasana, Urdhwahastottanasana, Ardha-Chakrasana, Ushtrasana, Vakrasana, Sarala Matsyendrasana, Bhujangasana, Gomukhasana, Bhadrasana, Makarasana, Nadi-Shodhana Pranayama.
+   * NOTE: Strict correctness of Asana names, Sanskrit terminologies, body alignments, breathing, and specific medical contraindications (e.g. avoiding forward bends in back pain/hernia, avoiding backward bends in hernia/ulcer, avoiding inversions in high blood pressure).
+
+4. Unit 4: Physical Education and Sports for CWSN (Children with Special Needs - Divyang) (Weightage: 04 + 04 b* Marks = 8 Marks)
+   - Organizations Promoting Disability Sports:
+     * Special Olympics: Founded by Eunice Kennedy Shriver (1968), Special Olympics Bharat for intellectual disabilities.
+     * Paralympics: Founded by Sir Ludwig Guttmann (Stoke Mandeville 1948 / Rome 1960), International Paralympic Committee (IPC) for physical/visual disabilities.
+     * Deaflympics: Founded 1924 Paris, International Committee of Sports for the Deaf (ICSD), visual cues instead of auditory starters.
+   - Concept of Classification and Divisioning in Sports: Medical and functional classification systems, divisioning criteria (age, gender, ability) to ensure fair and equitable competition.
+   - Concept of Inclusion in Sports: Meaning, Need, and Implementation strategies in regular physical education curriculum.
+   - Advantages of Physical Activities for CWSN: Physical, cognitive, emotional, social, and psychological benefits.
+   - Strategies to Make Physical Activities Accessible for CWSN: Assistive equipment, modified rules/court dimensions, individualized instruction, trained personnel, safe environment.
+
+5. Unit 5: Sports and Nutrition (Weightage: 07 Marks)
+   - Concept of Balanced Diet and Nutrition: Definition, energy requirements, caloric balance.
+   - Macro and Micro Nutrients:
+     * Macro Nutrients: Carbohydrates (simple & complex, 4 kcal/g), Proteins (essential & non-essential amino acids, 4 kcal/g), Fats (saturated, unsaturated, trans fats, 9 kcal/g), Water.
+     * Micro Nutrients: Minerals (Macro: Calcium, Phosphorus, Sodium, Potassium, Magnesium; Micro: Iron, Iodine, Zinc, Copper) and Vitamins (Fat-soluble: A, D, E, K; Water-soluble: B-complex, C) - sources and deficiency symptoms.
+   - Nutritive and Non-Nutritive Components of Diet:
+     * Nutritive: Carbs, proteins, fats, minerals, vitamins.
+     * Non-Nutritive: Roughage/Fibre, Water, Color compounds, Flavour compounds, Plant compounds (phytochemicals).
+   - Eating for Weight Control: Meaning of Healthy Weight, BMI categories (<18.5 Underweight, 18.5-24.9 Normal, 25-29.9 Overweight, >=30 Obese), Pitfalls of Dieting (skipping meals, extreme restriction, lack of nutrients), Food Intolerance vs Food Allergy, Common Food Myths.
+   - Importance of Diet in Sports: Pre-competition meal (high carb, moderate protein, low fat/fibre, 3-4 hours prior), During-competition hydration & electrolyte replenishment, Post-competition recovery nutrition (carbohydrate-protein ratio 3:1 or 4:1 within 30-45 minutes).
+
+6. Unit 6: Test and Measurement in Sports (Weightage: 08 Marks)
+   - Fitness Test - SAI Khelo India Fitness Test in Schools:
+     * Age Group 5–8 Years (Classes 1–3): BMI, Flamingo Balance Test (static balance), Plate Tapping Test (speed and coordination of limb movement).
+     * Age Group 9–18 Years (Classes 4–12): BMI, 50m Speed Dash, 600m Run/Walk (cardiovascular endurance), Sit and Reach Test (hamstring & lower back flexibility), Strength Tests: Partial Abdominal Curl Up (abdominal core strength), Push-Ups for boys (upper body muscular endurance), Modified Push-Ups for girls.
+   - Measurement of Cardio-Vascular Fitness - Harvard Step Test:
+     * Equipment & protocol (bench height: 20 inches / 50.8 cm for boys, 16 inches for girls; 30 steps/min for 5 minutes).
+     * Fitness Index (Short Form) = (100 * Test duration in seconds) / (5.5 * Pulse count between 1 to 1.5 min after exercise).
+     * Fitness Index (Long Form) = (100 * Test duration in seconds) / (2 * Sum of 3 recovery pulse counts: 1-1.5 min, 2-2.5 min, 3-3.5 min).
+   - Computing Basal Metabolic Rate (BMR): Concept of BMR, factors affecting BMR (age, gender, lean body mass, body temperature), calculation formulas (Harris-Benedict equation / Mifflin-St Jeor equation).
+   - Rikli and Jones - Senior Citizen Fitness Test (Full Battery of 6 Items):
+     1. Chair Stand Test: Lower body strength (repetitions in 30 seconds).
+     2. Arm Curl Test: Upper body strength (repetitions in 30 sec with 5 lb dumbbell for women, 8 lb for men).
+     3. Chair Sit and Reach Test: Lower body flexibility (ruler measurement to toe in inches).
+     4. Back Scratch Test: Upper body / shoulder flexibility (distance between fingertips in inches).
+     5. Eight Foot Up and Go Test: Motor agility and dynamic balance (time in seconds to walk 8 feet, turn, and sit).
+     6. Six-Minute Walk Test: Aerobic endurance and functional stamina (total distance walked in 6 minutes).
+   - Johnsen - Methney Test of Motor Educability: Test battery items (Front Roll, Roll, Jumping Half-Turn, Jumping Full-Turn), scoring and significance.
+
+7. Unit 7: Physiology and Injuries in Sport (Weightage: 04 + 04 b* Marks = 8 Marks)
+   - Physiological Factors Determining Components of Physical Fitness:
+     * Strength: Muscle size (cross-sectional area), body weight, muscle fiber composition (fast twitch vs slow twitch), nerve impulse coordination.
+     * Speed: Fast-twitch (white) muscle fibers, nervous system responsiveness, flexibility, biochemical energy reserves (ATP-CP).
+     * Endurance: Aerobic capacity (VO2 max, oxygen uptake/transport/economy), lactate threshold, slow-twitch (red) fibers, muscle glycogen.
+     * Flexibility: Joint structure, muscle elasticity, age/gender, temperature, connective tissue.
+   - Effect of Exercise on the Muscular System: Hypertrophy, increased capillary density, increased myoglobin & mitochondrial density, change in connective tissue, glycogen storage capacity.
+   - Effect of Exercise on Cardio-Respiratory System: Cardiac hypertrophy (Athletic heart), increased stroke volume, decreased resting heart rate (bradycardia), increased cardiac output during exercise, increased vital capacity, tidal volume, and VO2 max, reduced rate of respiration at rest.
+   - Physiological Changes Due to Aging: Reduction in bone mineral density, sarcopenia (loss of muscle mass), decrease in cardiovascular elasticity, decrease in lung compliance, sensory decline.
+   - Sports Injuries Classification and Management:
+     * Soft Tissue Injuries:
+       - Skin injuries: Abrasion, Contusion (hematoma/bruise), Laceration, Incision.
+       - Muscle/Tendon injuries: Strain (mild, moderate, severe muscle tear).
+       - Ligament injuries: Sprain (torn or stretched ligament, common in ankle/knee).
+     * Bone and Joint Injuries:
+       - Dislocations: Shoulder, hip, finger, wrist dislocations.
+       - Fractures: Simple/Closed, Compound/Open, Greenstick (common in children), Comminuted (bone broken into multiple pieces), Transverse (right angle to axis), Oblique (slanted), Impacted (bone ends driven into each other).
+     * First Aid Management: PRICER procedure (Protect, Rest, Ice, Compression, Elevation, Referral) for acute soft tissue injuries; immobilisation and splinting for fractures.
+
+8. Unit 8: Biomechanics and Sports (Weightage: 10 Marks)
+   - Newton's Laws of Motion and their Application in Sports:
+     * First Law (Law of Inertia): An object remains at rest or in uniform motion unless acted upon by external force (e.g. sprinter starting from blocks, ball rolling until friction stops it).
+     * Second Law (Law of Acceleration / Momentum, F = ma): Force is proportional to rate of change of momentum (e.g. baseball pitcher throwing fast, follow-through in kicking).
+     * Third Law (Law of Action and Reaction): For every action, there is an equal and opposite reaction (e.g. swimmer pushing water backwards, high jumper pushing ground downwards).
+   - Types of Levers and their Application in Sports:
+     * Anatomy of Levers: Fulcrum (F), Effort (E), Load/Resistance (L).
+     * Class I Lever (F in middle - L-F-E): Nodding head, triceps extension at elbow, scissors, rowing oars.
+     * Class II Lever (L in middle - F-L-E): Standing on tiptoes (plantar flexion / gastrocnemius), push-up pivot at toes. Provides mechanical advantage for force.
+     * Class III Lever (E in middle - F-E-L): Biceps curl (flexion at elbow), kicking a football, batting in cricket. Provides mechanical advantage for speed and range of motion.
+   - Equilibrium (Dynamic and Static) and Centre of Gravity (CG):
+     * Static Equilibrium (body at rest) vs Dynamic Equilibrium (body in motion).
+     * Principles of stability: Lower CG increases stability, broader base of support increases stability, CG must fall within base of support. Application in wrestling, gymnastics, sprinting.
+   - Friction and Sports:
+     * Types: Static friction, Dynamic/Kinetic friction (Sliding friction, Rolling friction), Fluid friction (air/water resistance).
+     * Friction as friend and foe: Necessary for grip (spikes in track shoes, chalk on gymnast hands, studs in football boots); detrimental when resistance impedes motion (waxing skis, smooth cycling suits, streamlined swimming).
+   - Projectile in Sports:
+     * Concept of projectile, trajectory (parabola).
+     * Factors affecting projectile trajectory: Angle of release (optimum 45° if release & landing heights are equal; <45° in shotput/discus due to higher release point), initial velocity, height of release, air resistance, spin (Magnus effect), gravity.
+
+9. Unit 9: Psychology and Sports (Weightage: 07 Marks)
+   - Personality - Definition and Types:
+     * Definition: Dynamic organization within individual of psychophysical systems.
+     * Carl Jung's Classification: Introverts, Extroverts, Ambiverts.
+     * Big Five Theory (OCEAN Model): Openness to experience, Conscientiousness, Extraversion, Agreeableness, Neuroticism.
+   - Motivation - Types and Techniques in Sports:
+     * Intrinsic Motivation (internal enjoyment, mastery, self-determination) vs Extrinsic Motivation (medals, money, fame, punishment avoidance).
+     * Techniques: Goal setting, positive reinforcement, feedback, spectators/audience, praise and blame.
+   - Exercise Adherence: Meaning, reasons for non-adherence, psychological and health benefits of adherence, strategies for enhancing adherence (social support, setting achievable goals, enjoyable activities, progress monitoring).
+   - Aggression in Sports:
+     * Meaning and concept of aggression.
+     * Types: Hostile Aggression (intent to cause bodily harm/pain), Instrumental Aggression (harm caused as a byproduct of achieving a goal), Assertive Behavior (high intensity/force without intent to injure, within rules).
+   - Psychological Attributes in Sports:
+     * Self-Esteem: Self-worth and confidence in athletic competence.
+     * Mental Imagery: Visualization, cognitive rehearsal of motor movements before execution.
+     * Self-Talk: Positive vs negative self-talk, instructional and motivational cues.
+     * Goal Setting: SMART principles (Specific, Measurable, Achievable, Relevant, Time-bound), Outcome vs Performance vs Process goals.
+
+10. Unit 10: Training in Sports (Weightage: 09 Marks)
+    - Concept of Talent Identification and Talent Development:
+      * Talent Identification: Discovering individuals with high athletic potential using scientific, physiological, anthropometric, and motor tests.
+      * Talent Development: Providing systematic training environment, coaching, nutrition, and psychological support to convert potential into peak performance.
+    - Sports Training Cycle:
+      * Micro Cycle: Shortest training block, usually lasting 3 to 10 days (typically 1 week).
+      * Meso Cycle: Medium-duration training block, usually lasting 3 to 6 weeks.
+      * Macro Cycle: Longest training plan, usually spanning several months to 1 year (or 4 years in Olympic quadrennium), consisting of Preparatory, Competition, and Transition periods.
+    - Methods to Develop Strength, Endurance, and Speed:
+      * Strength Development:
+        - Isometric exercises (constant muscle length, zero joint movement, e.g. wall push, plank).
+        - Isotonic exercises (concentric shortening & eccentric lengthening, e.g. barbell curls, squats).
+        - Isokinetic exercises (constant speed throughout range of motion against variable resistance, using dynamometers like Cybex).
+      * Endurance Development:
+        - Continuous training method (slow continuous & fast continuous without rest intervals).
+        - Interval training method (work-rest-work protocol based on heart rate recovery, Fox & Mathews).
+        - Fartlek training method (Swedish 'speed play' over varied natural terrain, invented by Gösta Holmér, heart rate fluctuates between 140-180 bpm).
+      * Speed Development:
+        - Acceleration runs (reaching maximum speed from stationary start within 20-30 meters).
+        - Pace runs / Pace races (running uniform submaximal speed over entire distance, e.g. 800m, 1500m).
+    - Methods to Develop Flexibility and Coordinative Ability:
+      * Flexibility Development: Ballistic method (rhythmic bobbing/swinging), Static stretching method (hold for 10-30 sec), Dynamic stretching, PNF (Proprioceptive Neuromuscular Facilitation - contract-relax).
+      * Coordinative Abilities: Orientation, Differentiation, Coupling, Reaction, Balance, Rhythm, Adaptation abilities.
+    - Circuit Training:
+      * Meaning, history (developed by R.E. Morgan and G.T. Adamson at University of Leeds in 1953).
+      * Characteristics: 6 to 10 exercise stations arranged in a circle targeting alternative muscle groups, timed work-rest intervals.
+      * Importance: Develops overall general strength, muscular endurance, and cardiovascular fitness simultaneously in a group setting.
+
+INTERNAL ASSESSMENT / PRACTICAL (MAX. 30 MARKS) STRUCTURE (FOR CONTEXT & REFERENCE):
+- Physical Fitness Test: SAI Khelo India Test / Brockport Physical Fitness Test (BPFT) for CWSN (6 Marks)
+- Proficiency in Games and Sports (Skill of any one IOA recognized sport/game of choice) (7 Marks)
+- Yogic Practices (7 Marks)
+- Record File: Fitness test administration, 2 Asanas for each lifestyle disease, Field & Equipment diagrams, rules and skills (5 Marks)
+- Viva Voce (Health / Games and Sports / Yoga) (5 Marks)
+- b* Notation: Designates questions with visual/tactile diagrams or data interpretation designed with alternative concept-based questions for Visually Impaired candidates.
+
+CRITICAL PHYSICAL EDUCATION QUALITY & TERMINOLOGY REQUIREMENTS:
+1. Exact Sports Science Terminology: Formulas (Harvard Step Index, BMR), lever classifications (Classes 1, 2, 3), Newton's laws applications, types of injuries (Strain vs Sprain), WHO guidelines, and Asanas MUST be scientifically and factually accurate.
+2. Knock-Out & League Fixtures: Fixture calculations, upper half / lower half division of teams, number of byes, and league pairings must adhere to exact mathematical formulas.
+3. Case Studies: Must present realistic, practical athletic, school tournament, or training scenarios with authentic data and direct sub-questions.`
+    : "";
+
+  const scienceClass10Constraint = isClass10Science
+    ? `--- CBSE CLASS 10 SCIENCE (SUBJECT CODE 086) THREE-COMPONENT DIRECTIVE ---
+CRITICAL 3-COMPONENT SEPARATION MANDATE:
+Class 10 Science is NOT a generic single-subject pool. It consists of THREE distinct, independent components:
+1. Physics (25 Marks Theory: Natural Phenomena - 12 Marks, Effects of Current - 13 Marks)
+2. Chemistry (25 Marks Theory: Chemical Substances - Nature and Behaviour - 25 Marks)
+3. Biology (30 Marks Theory: World of Living - 25 Marks, Natural Resources - 5 Marks)
+TOTAL THEORY: Exactly 80 Marks.
+
+Physics ≠ Chemistry ≠ Biology!
+Never mix topics, content, or questions between these three distinct components.
+
+TARGETED CHAPTER & SHORT-PAPER BOUNDARY ENFORCEMENT:
+- If the user selected chapters from only ONE component (e.g. only Physics: "Physics: Electricity" or only Chemistry: "Chemistry: Acids, Bases and Salts" or only Biology: "Biology: Life Processes"), generate questions EXCLUSIVELY from that specific chapter and component. Never introduce questions from the other two components!
+- If the user selected chapters from multiple components (e.g. 1 Chemistry + 1 Biology), distribute questions strictly and proportionately among only those selected chapters.
+- Never generate questions from unselected components or out-of-syllabus/deleted topics!
+
+OFFICIAL COMPONENT SPECIFICATIONS & SYLLABUS:
+1. PHYSICS (Themes: Natural Phenomena & How Things Work - 25 Marks):
+   - Unit III: Natural Phenomena (12 Marks):
+     * Light – Reflection and Refraction: Reflection of light by curved surfaces; Images formed by spherical mirrors, centre of curvature, principal axis, principal focus, focal length, mirror formula (derivation not required), magnification. Refraction; Laws of refraction, refractive index. Refraction of light by spherical lens; Image formed by spherical lenses; Lens formula (derivation not required); Magnification. Power of a lens.
+     * The Human Eye and the Colourful World: Functioning of a lens in human eye, defects of vision (myopia, hypermetropia, presbyopia) and their corrections, applications of spherical mirrors and lenses. Refraction of light through a prism, dispersion of light, scattering of light, applications in daily life (Tyndall effect, blue colour of sky).
+     * EXCLUSION: Colour of the sun at sunrise and sunset is strictly EXCLUDED.
+   - Unit IV: Effects of Current (13 Marks):
+     * Electricity: Electric current, potential difference and electric current. Ohm's law; Resistance, Resistivity, Factors on which the resistance of a conductor depends. Series combination of resistors, parallel combination of resistors and its applications in daily life. Heating effect of electric current and its applications in daily life (Joule's law). Electric power, Interrelation between P, V, I and R.
+     * Magnetic Effects of Electric Current: Magnetic field, field lines, field due to a current carrying conductor, field due to current carrying coil or solenoid; Force on current carrying conductor, Fleming's Left Hand Rule, Direct current. Alternating current: frequency of AC. Advantage of AC over DC. Domestic electric circuits (earth wire, fuse, short circuit, overloading).
+
+2. CHEMISTRY (Theme: Materials - 25 Marks):
+   - Unit I: Chemical Substances - Nature and Behaviour (25 Marks):
+     * Chemical Reactions and Equations: Chemical equation, Balanced chemical equation, implications of a balanced chemical equation, types of chemical reactions: combination, decomposition (thermal, electrolytic, photolytic), displacement, double displacement, precipitation, endothermic and exothermic reactions, oxidation and reduction, redox reactions.
+     * Acids, Bases and Salts: Definitions in terms of furnishing of H+ and OH- ions, General properties, examples and uses, neutralization, concept of pH scale (definition relating to logarithm not required), importance of pH in everyday life; preparation and uses of Sodium Hydroxide (chlor-alkali process), Bleaching powder, Baking soda, Washing soda, and Plaster of Paris (water of crystallization).
+     * Metals and Non-Metals: Properties of metals and non-metals; Reactivity series; Formation and properties of ionic compounds; Basic metallurgical processes (crushing, concentration, roasting, calcination, reduction, refining); Corrosion and its prevention (galvanization, alloying).
+     * Carbon and its Compounds: Covalent bonding in carbon compounds (tetravalency and catenation). Versatile nature of carbon. Homologous series. Nomenclature of carbon compounds containing functional groups (halogens, alcohol, ketones, aldehydes, alkanes, alkenes and alkynes), difference between saturated hydrocarbons and unsaturated hydrocarbons. Chemical properties of carbon compounds (combustion, oxidation, addition and substitution reaction). Ethanol and Ethanoic acid (only properties and uses - esterification, saponification), soaps and detergents (micelle formation and cleansing action).
+
+3. BIOLOGY (Themes: The World of the Living & Natural Resources - 30 Marks):
+   - Unit II: World of Living (25 Marks):
+     * Life Processes: 'Living Being'. Basic concept of nutrition (autotrophic & heterotrophic, stomata, human digestive system), respiration (aerobic & anaerobic, ATP, human respiratory system), transport (circulatory system in humans, blood, lymph, heart, transport of water and food in plants - xylem & phloem) and excretion (human excretory system, nephron structure, excretion in plants).
+     * Control and Coordination: Tropic movements in plants (phototropism, geotropism, hydrotropism, thigmotropism, chemotropism); Introduction of plant hormones (auxin, gibberellin, cytokinin, abscisic acid); Control and co-ordination in animals: Nervous system; Voluntary, involuntary and reflex action (reflex arc); Chemical co-ordination: animal hormones (endocrine glands, adrenaline, thyroxine, growth hormone, insulin, testosterone, estrogen).
+     * How do Organisms Reproduce?: Reproduction in animals and plants (asexual: fission, fragmentation, regeneration, budding, vegetative propagation, spore formation; and sexual reproduction in flowering plants - pollination & fertilization; human male and female reproductive systems); reproductive health - need and methods of family planning (barrier, chemical, surgical). Safe sex vs HIV/AIDS. Child bearing and women's health.
+     * Heredity: Heredity; Mendel's contribution - Laws for inheritance of traits (monohybrid & dihybrid cross, phenotype & genotype ratios); Sex determination: brief introduction (XX and XY chromosomes).
+     * EXCLUSIONS: Evolution; evolution and classification; and evolution should not be equated with progress are strictly EXCLUDED from evaluation.
+   - Unit V: Natural Resources (5 Marks):
+     * Our Environment: Eco-system (biotic and abiotic components, food chains and food webs, trophic levels, 10% law of energy flow), Environmental problems, Ozone depletion (CFCs, Montreal protocol), waste production and their solutions. Biodegradable and non-biodegradable substances.
+     * EXCLUSION: NCERT Chapter 16 "Management of Natural Resources" will NOT be assessed in the year-end examination (assigned for portfolio/internal assessment only).
+
+SUBJECT-SPECIFIC QUESTION QUALITY DIRECTIVE:
+- Physics:
+  * Calculations, formulas, sign conventions (Cartesian), circuit diagrams, ray diagrams, and standard SI units (A, V, Ω, Ω·m, W, kWh, J, D) MUST be 100% scientifically accurate.
+  * Numerical questions must provide sufficient, clear data with realistic physical values.
+  * Ray diagrams must follow strict mirror and lens rules (principal focus, centre of curvature, optical centre).
+- Chemistry:
+  * Chemical equations MUST be balanced with proper states of matter (s, l, g, aq) where relevant.
+  * IUPAC nomenclature, structural formulas, functional group representations, and reaction conditions (catalysts, heat) must be exact.
+  * Acids, bases, and pH questions must reflect standard observable indicators and lab reactions.
+- Biology:
+  * Diagrams (human heart, nephron, reflex arc, human digestive/respiratory/reproductive systems, flower parts) and physiological mechanisms must use accurate biological terminology.
+  * Mendel's crosses must show clear parent phenotypes/genotypes, gametes, and F1/F2 ratios (3:1, 9:3:3:1).
+  * Ecological concepts must accurately adhere to the 10% energy transfer rule and biomagnification.`
+    : "";
+
+  const accountancyClass12Constraint = isClass12Accounts
+    ? `--- CBSE CLASS 12 ACCOUNTANCY (SUBJECT CODE 055) CURRICULUM & EXAMINATION DIRECTIVE ---
+CRITICAL COURSE STRUCTURE & UNIT WEIGHTAGES (THEORY: 80 MARKS, 3 HOURS; PROJECT: 20 MARKS):
+PART A: ACCOUNTING FOR PARTNERSHIP FIRMS AND COMPANIES (60 MARKS - 150 PERIODS)
+1. Unit 1: Accounting for Partnership Firms (36 Marks)
+   - Partnership Fundamentals:
+     * Partnership: Features, Partnership Deed.
+     * Provisions of the Indian Partnership Act, 1932 in the absence of partnership deed (no interest on capital, no salary/commission, interest on drawings not charged, profits shared equally, interest on partner's loan @ 6% p.a.).
+     * Note: Interest on partner's loan is to be treated as a CHARGE AGAINST PROFITS (debited to Profit and Loss Account, not P&L Appropriation Account).
+     * Fixed vs Fluctuating capital accounts. Preparation of Profit and Loss Appropriation Account: division of profit among partners, guarantee of profits.
+     * Past adjustments (relating to interest on capital, interest on drawing, salary and profit sharing ratio) using Statement Showing Adjustments.
+     * Goodwill: Meaning, nature, factors affecting, and methods of valuation: Average profit method, Super profit method, and Capitalisation method (capitalisation of average profit & super profit).
+     * Note: Goodwill must be adjusted through partners' capital/current accounts strictly as per AS 26 (Intangible Assets - self-generated goodwill cannot be recognized in the books of accounts).
+   - Reconstitution of a Partnership Firm:
+     * Change in Profit Sharing Ratio among existing partners: Sacrificing ratio (Old Ratio - New Ratio) and Gaining ratio (New Ratio - Old Ratio). Accounting for revaluation of assets and reassessment of liabilities. Treatment of reserves, accumulated profits and losses (Workmen Compensation Reserve, Investment Fluctuation Reserve, etc.). Preparation of Revaluation Account and Balance Sheet.
+     * Admission of a Partner: Effect of admission on PSR, calculation of sacrificing ratio. Treatment of goodwill strictly as per AS 26 (Premium for Goodwill). Revaluation of assets and reassessment of liabilities. Treatment of reserves, accumulated profits and losses. Adjustment of capital accounts (based on new partner's capital or total capital of new firm) and preparation of partners' capital/current accounts and Balance Sheet of reconstituted firm.
+     * Retirement and Death of a Partner: Effect of retirement/death on PSR, calculation of gaining ratio. Treatment of goodwill strictly as per AS 26. Revaluation of assets and reassessment of liabilities, adjustment of accumulated profits, losses and reserves. Adjustment of capital accounts, preparation of capital/current accounts, and Balance Sheet. Preparation of Loan Account of the retiring partner.
+     * Death of a Partner: Calculation of deceased partner's share of profit till the date of death (on time basis or turnover/sales basis, credited via P&L Suspense A/c or Gaining Partners' Capital A/cs). Preparation of deceased partner's capital account and his Executor's Account.
+   - Dissolution of a Partnership Firm:
+     * Meaning of dissolution of partnership vs dissolution of partnership firm; types/modes of dissolution.
+     * Settlement of accounts: Preparation of Realisation Account, Partners' Capital Accounts, and Cash/Bank Account (excluding piecemeal distribution, sale to a company and insolvency of partner(s)).
+     * MANDATORY REALISATION RULES (CBSE OFFICIAL SYLLABUS NOTES):
+       (i) If the realised value of tangible assets is not given, it should be considered as realised at book value itself.
+       (ii) If the realised value of intangible assets is not given, it should be considered as nil (zero value).
+       (iii) In case realisation expenses are borne by a partner, clear indication must be given regarding the payment thereof (e.g. paid by firm on behalf of partner, or paid by partner himself).
+
+2. Unit 2: Accounting for Companies (24 Marks)
+   - Accounting for Share Capital:
+     * Features and types of companies. Share and share capital: nature and types.
+     * Issue and allotment of equity and preference shares. Public subscription of shares: over-subscription and under-subscription. Issue at par and at premium. Calls in advance and calls in arrears (excluding interest). Issue of shares for consideration other than cash.
+     * Concepts of Private Placement, Employee Stock Option Plan (ESOP), and Sweat Equity.
+     * Accounting treatment of forfeiture and re-issue of shares:
+       - Forfeiture of shares issued at par and at premium (premium received vs not received).
+       - Re-issue of forfeited shares at par, premium, or discount (maximum permissible discount on reissue cannot exceed the amount forfeited on those specific reissued shares).
+       - Transfer to Capital Reserve = (Amount forfeited on reissued shares - Discount allowed on reissue).
+     * Presentation and disclosure of share capital in the Balance Sheet of a company as per Schedule III Part I of the Companies Act, 2013 (Authorized Capital, Issued Capital, Subscribed Capital: Subscribed and fully paid up, Subscribed but not fully paid up, less Calls-in-Arrears, add Share Forfeited Account).
+   - Accounting for Debentures:
+     * Debentures: Meaning, types. Issue of debentures at par, at a premium, and at a discount. Issue of debentures for consideration other than cash.
+     * Issue of debentures with terms of redemption:
+       Case 1: Issued at par, redeemable at par.
+       Case 2: Issued at discount, redeemable at par.
+       Case 3: Issued at premium, redeemable at par.
+       Case 4: Issued at par, redeemable at premium.
+       Case 5: Issued at discount, redeemable at premium.
+       Case 6: Issued at premium, redeemable at premium.
+     * Debentures as collateral security (concept, disclosure in Balance Sheet, and Journal entries).
+     * Interest on debentures (concept of TDS is excluded).
+     * MANDATORY DEBENTURES RULE (AS 16 DIRECTIVE):
+       Discount or loss on issue of debentures to be written off in the year debentures are allotted: FIRST from Securities Premium Reserve (if it exists) and then balance from Statement of Profit and Loss as Finance Cost (AS 16).
+
+PART B: FINANCIAL STATEMENT ANALYSIS (20 MARKS)
+3. Unit 3: Analysis of Financial Statements (12 Marks)
+   - Financial Statements of a Company:
+     * Meaning, nature, uses and importance of financial statements.
+     * Statement of Profit and Loss and Balance Sheet in prescribed format with major headings and sub-headings as per Schedule III to the Companies Act, 2013. (Note: Exceptional items, extraordinary items and discontinued operations are excluded).
+   - Financial Statement Analysis: Meaning, significance, objectives, importance and limitations.
+   - Tools for Financial Statement Analysis: Comparative statements, Common size statements, Ratio analysis, Cash flow analysis.
+   - Accounting Ratios: Meaning, objectives, classification and computation:
+     * Liquidity Ratios: Current Ratio (Current Assets / Current Liabilities, ideal 2:1) and Quick Ratio / Acid-test Ratio (Quick Assets / Current Liabilities, ideal 1:1).
+     * Solvency Ratios:
+       - Debt to Equity Ratio = Long-term Debts / Shareholders' Funds (ideal 2:1)
+       - Total Assets to Debt Ratio = Total Assets / Long-term Debts
+       - Proprietary Ratio = Shareholders' Funds / Total Assets
+       - Interest Coverage Ratio = Net Profit before Interest and Tax / Fixed Interest Charges (expressed in times)
+     * Activity / Turnover Ratios (expressed in 'Times'):
+       - Inventory Turnover Ratio = Cost of Revenue from Operations / Average Inventory
+       - Trade Receivables Turnover Ratio = Net Credit Revenue from Operations / Average Trade Receivables
+       - Trade Payables Turnover Ratio = Net Credit Purchases / Average Trade Payables
+       - Working Capital Turnover Ratio = Revenue from Operations / Working Capital
+     * Profitability Ratios (expressed in '%'):
+       - Gross Profit Ratio = (Gross Profit / Revenue from Operations) * 100
+       - Operating Ratio = [(Cost of Revenue from Operations + Operating Expenses) / Revenue from Operations] * 100
+       - Operating Profit Ratio = (Operating Profit / Revenue from Operations) * 100
+       - Net Profit Ratio = (Net Profit after Tax / Revenue from Operations) * 100
+       - Return on Investment (ROI) / Return on Capital Employed = (Net Profit before Interest and Tax / Capital Employed) * 100
+
+4. Unit 4: Cash Flow Statement (8 Marks)
+   - Meaning, objectives, benefits, and preparation (Indirect Method only as per AS 3 Revised). (Note: Extra-ordinary items excluded).
+   - Calculation of Cash flows from Operating Activities, Investing Activities, and Financing Activities.
+   - Adjustments relating to: Depreciation and amortization, profit or loss on sale of non-current assets/investments, dividend (both final proposed/paid and interim dividend), provision for tax and tax paid.
+   - MANDATORY CASH FLOW RULES (CBSE OFFICIAL SYLLABUS NOTES):
+     (i) Bank overdraft and cash credit are to be treated as short-term borrowings under FINANCING ACTIVITIES.
+     (ii) Current investments are to be considered as Marketable Securities / Cash Equivalents unless specified otherwise.
+     (iii) Proposed dividend of current year is ignored (contingent liability); only proposed dividend of previous year declared/paid in current year is added in Operating Activities and deducted in Financing Activities.
+     (iv) Interim dividend paid during the year is added back to Net Profit in Operating Activities and deducted under Financing Activities.
+
+QUESTION PAPER TYPOLOGY & COMPETENCIES (80 MARKS TOTAL - IMAGE 1):
+1. Remembering and Understanding (40% - 32 Marks): Recalling accounting terms, rules of partnership act, Schedule III headings, journal entry rules, ratio definitions, theory of debentures and shares.
+2. Applying (30% - 24 Marks): Journal entries for issue/forfeiture/reissue of shares, issue of debentures with redemption terms, partnership revaluation/admission calculations, ratio computations, cash flow adjustments.
+3. Analysing, Evaluating and Creating (30% - 24 Marks): Case-based partnership profit appropriation, past adjustments statements, pro-rata allotment tables, dissolution realisation accounts, comprehensive Cash Flow Statement preparation.
+
+CRITICAL ACCOUNTANCY ACCURACY & NUMERICAL INTEGRITY DIRECTIVE:
+1. Double-Entry Accuracy: Every journal entry MUST balance (Debit total = Credit total). Always include brief, clear narrations ("Being...").
+2. Standard Ledger Accounts: Revaluation A/c, Realisation A/c, Partners' Capital A/cs, Cash/Bank A/c must have proper Dr. / Cr. and column headers.
+3. Schedule III Compliance: Balance sheet disclosure of share capital must provide Notes to Accounts with Authorised, Issued, Subscribed & fully paid-up, Subscribed but not fully paid-up, Less Calls-in-arrears, Add Share forfeited a/c.
+4. Mathematical & Data Consistency: Provide complete, logically consistent numbers. When calculating ratios or cash flow, all required balance sheet figures and adjustments must correlate perfectly.`
+    : "";
+
   const hindiConstraint = isHindiSubject
     ? `9. HINDI SUBJECT SPECIAL DIRECTIVE: The entire output MUST be generated in formal, standard CBSE Hindi (Devanagari script).
        - Section names MUST be in Devanagari (e.g. "खण्ड क", "खण्ड ख", "खण्ड ग", "खण्ड घ", "खण्ड ङ").
@@ -509,6 +1102,31 @@ CRITICAL GEOGRAPHY ACCURACY DIRECTIVE:
   // Specialized prompt for Full Class 12 Geography Board / Pre-Board / Sample / Half-Yearly Papers (70 Marks, 5 Sections, 30 Questions)
   if (isFullClass12GeographyExam) {
     return buildClass12GeographyFullExamPrompt(config, solutionDirective);
+  }
+
+  // Specialized prompt for Full Class 10 Social Science Board / Pre-Board / Sample / Half-Yearly Papers (80 Marks, 6 Sections, 37 Questions)
+  if (isFullClass10SocialExam) {
+    return buildClass10SocialFullExamPrompt(config, solutionDirective);
+  }
+
+  // Specialized prompt for Full Class 12 Physical Education Board / Pre-Board / Sample / Half-Yearly Papers (70 Marks, 5 Sections, 37 Questions)
+  if (isFullClass12PhyEduExam) {
+    return buildClass12PhyEduFullExamPrompt(config, solutionDirective);
+  }
+
+  // Specialized prompt for Full Class 10 Science Board / Pre-Board / Sample / Half-Yearly Papers (80 Marks, 5 Sections, 39 Questions)
+  if (isFullClass10ScienceExam) {
+    return buildClass10ScienceFullExamPrompt(config, solutionDirective);
+  }
+
+  // Specialized prompt for Full Class 12 Chemistry Board / Pre-Board / Sample / Half-Yearly Papers (70 Marks, 5 Sections, 33 Questions)
+  if (isFullClass12ChemistryExam) {
+    return buildClass12ChemistryFullExamPrompt(config, solutionDirective);
+  }
+
+  // Specialized prompt for Full Class 12 Accountancy Board / Pre-Board / Sample / Half-Yearly Papers (80 Marks, 2 Parts, 34 Questions)
+  if (isFullClass12AccountsExam) {
+    return buildClass12AccountancyFullExamPrompt(config, solutionDirective);
   }
 
   if (config.isCustom) {
@@ -586,10 +1204,15 @@ ${internalChoicePrompt}
 ${hindiConstraint}
 ${hindiClass10Constraint}
 ${physicsClass12Constraint}
+${chemistryClass12Constraint}
 ${csClass12Constraint}
 ${biologyClass12Constraint}
 ${economicsClass12Constraint}
 ${geographyClass12Constraint}
+${socialClass10Constraint}
+${phyEduClass12Constraint}
+${scienceClass10Constraint}
+${accountancyClass12Constraint}
 
 --- JSON SCHEMA FORMAT ---
 {
@@ -659,10 +1282,15 @@ ${unitWeightagePrompt}
 ${englishClass12Constraint}
 ${hindiClass10Constraint}
 ${physicsClass12Constraint}
+${chemistryClass12Constraint}
 ${csClass12Constraint}
 ${biologyClass12Constraint}
 ${economicsClass12Constraint}
 ${geographyClass12Constraint}
+${socialClass10Constraint}
+${phyEduClass12Constraint}
+${scienceClass10Constraint}
+${accountancyClass12Constraint}
 
 --- CRITICAL CONSTRAINTS ---
 1. STRICT CHAPTER ALIGNMENT: Only generate questions from the chapters listed in the target chapters section above. Never generate questions from any other chapters or topics.
@@ -1355,7 +1983,7 @@ LANGUAGE & PRESENTATION MANDATE
 
 /**
  * Builds the official 70-Mark, 5-Section, 33-Question examination paper prompt for CBSE Class 12 Physics (Subject Code 042).
- * Strictly adheres to the 2025-26 Course Structure, 9 Units, 14 Chapters, and official CBSE Examination Blueprint.
+ * Strictly adheres to the 2025-26 / 2026-27 Course Structure, 9 Units, 14 Chapters, and official CBSE Examination Blueprint.
  */
 function buildClass12PhysicsFullExamPrompt(config: PaperConfig, solutionDirective: string): string {
   const targetChaptersDirective =
@@ -1367,7 +1995,7 @@ When generating questions across all 5 sections, strictly prioritize and select 
 ${config.selectedChapters.map((c) => `- ${c}`).join("\n")}
 Ensure all generated questions originate strictly from these chosen chapters. Distribute the 33 questions and 70 marks proportionally among the selected chapters.`
       : `--- FULL SYLLABUS UNIT-WISE MARKS DISTRIBUTION ---
-Follow the official CBSE 2025-26 Course Structure and Unit Weightage strictly:
+Follow the official CBSE 2025-26 / 2026-27 Course Structure and Unit Weightage strictly:
 - Unit I (Electrostatics: Ch 1 & 2) + Unit II (Current Electricity: Ch 3) => 16 Marks
 - Unit III (Magnetic Effects: Ch 4 & 5) + Unit IV (EMI & AC: Ch 6 & 7) => 17 Marks
 - Unit V (EM Waves: Ch 8) + Unit VI (Optics: Ch 9 & 10) => 18 Marks
@@ -1377,7 +2005,7 @@ Total = 16 + 17 + 18 + 12 + 7 = 70 Marks.`;
 
   return `
 You are a Senior CBSE Examination Paper Setter and Chief Examiner for Class 12 Physics (Subject Code 042) with 25+ years of experience.
-Your task is to generate the COMPLETE, OFFICIAL, 100% CBSE-COMPLIANT Class 12 Physics Theory Question Paper for 2025-26.
+Your task is to generate the COMPLETE, OFFICIAL, 100% CBSE-COMPLIANT Class 12 Physics Theory Question Paper for 2025-26 / 2026-27.
 
 Total Marks: 70
 Time Allowed: 3 Hours
@@ -1387,7 +2015,7 @@ Subject: Physics (Subject Code 042)
 Class: Class 12 (CBSE Senior Secondary)
 
 ======================================================================
-CRITICAL CBSE SYLLABUS & PRESCRIBED UNITS DIRECTIVE (2025-26)
+CRITICAL CBSE SYLLABUS & PRESCRIBED UNITS DIRECTIVE (2025-26 / 2026-27)
 ======================================================================
 Prescribed Units & Chapters:
 1. Unit I: Electrostatics
@@ -2108,36 +2736,42 @@ EXAM TYPE: ${config.examType.toUpperCase().replace("_", " ")}
 TARGET CHAPTERS / SYLLABUS:
 ${selectedChapters}
 
---- OFFICIAL COURSE STRUCTURE & PRESCRIBED UNITS (70 MARKS TOTAL) ---
-1. Unit I: Reproduction (15 Marks)
+--- OFFICIAL COURSE STRUCTURE & PRESCRIBED UNITS (70 MARKS TOTAL, CBSE 2026-27) ---
+1. Unit VI: Reproduction (16 Marks)
    - Chapter-1: Sexual Reproduction in Flowering Plants (Flower structure; development of male and female gametophytes; pollination - types, agencies and examples; outbreeding devices; pollen-pistil interaction; double fertilization; post fertilization events - development of endosperm and embryo, development of seed and formation of fruit; special modes - apomixis, parthenocarpy, polyembryony; Significance of seed dispersal and fruit formation).
-   - Chapter-2: Human Reproduction (Male and female reproductive systems; microscopic anatomy of testis and ovary; gametogenesis - spermatogenesis and oogenesis; menstrual cycle; fertilisation, embryo development upto blastocyst formation, implantation; pregnancy and placenta formation; parturition; lactation).
-   - Chapter-3: Reproductive Health (Need for reproductive health and prevention of STDs; birth control - need and methods, contraception and medical termination of pregnancy - MTP; amniocentesis; infertility and assisted reproductive technologies - IVF, ZIFT, GIFT).
+   - Chapter-2: Human Reproduction (Male and female reproductive systems; microscopic anatomy of testis and ovary; gametogenesis - spermatogenesis and oogenesis; menstrual cycle; fertilisation, embryo development upto blastocyst formation, implantation; pregnancy and placenta formation - elementary idea; parturition - elementary idea; lactation - elementary idea).
+   - Chapter-3: Reproductive Health (Need for reproductive health and prevention of Sexually Transmitted Diseases - STDs; birth control - need and methods, contraception and medical termination of pregnancy - MTP; amniocentesis; infertility and assisted reproductive technologies - IVF, ZIFT, GIFT - elementary idea for general awareness).
 
-2. Unit II: Genetics and Evolution (20 Marks)
-   - Chapter-4: Principles of Inheritance and Variation (Heredity and variation, Mendelian inheritance; deviations from Mendelism - incomplete dominance, co-dominance, multiple alleles and inheritance of blood groups, pleiotropy; elementary idea of polygenic inheritance; chromosome theory of inheritance; chromosomes and genes; Sex determination in humans, birds and honey bee, linkage and crossing over; sex-linked inheritance - haemophilia, colour blindness; Mendelian disorders in humans - thalassemias; chromosomal disorders in humans - Down's syndrome, Turner's and Klinefelter's syndromes).
-   - Chapter-5: Molecular Basis of Inheritance (Search for genetic material and DNA as genetic material; Structure of DNA and RNA; DNA packaging; Central Dogma; transcription, genetic code, translation; gene expression and regulation - lac operon; Genome, Human and rice genome project; DNA fingerprinting).
+2. Unit VII: Genetics and Evolution (20 Marks)
+   - Chapter-4: Principles of Inheritance and Variation (Heredity and variation: Mendelian inheritance; deviations from Mendelism - incomplete dominance, co-dominance, multiple alleles and inheritance of blood groups, pleiotropy; elementary idea of polygenic inheritance; chromosome theory of inheritance; chromosomes and genes; Sex determination - in humans, birds and honey bee; linkage and crossing over; sex-linked inheritance - haemophilia, colour blindness; Mendelian disorders in humans - thalassemia; chromosomal disorders in humans - Down's syndrome, Turner's and Klinefelter's syndromes).
+   - Chapter-5: Molecular Basis of Inheritance (Search for genetic material and DNA as genetic material; Structure of DNA and RNA; DNA packaging; DNA replication; Central Dogma; transcription, genetic code, translation; gene expression and regulation - lac operon; Genome, Human and rice genome projects; DNA fingerprinting).
    - Chapter-6: Evolution (Origin of life; biological evolution and evidences for biological evolution: paleontology, comparative anatomy, embryology and molecular evidences; Darwin's contribution, modern synthetic theory of evolution; mechanism of evolution - variation by mutation and recombination and natural selection with examples, types of natural selection; Gene flow and genetic drift; Hardy-Weinberg's principle; adaptive radiation; human evolution).
 
-3. Unit III: Biology and Human Welfare (14 Marks)
+3. Unit VIII: Biology and Human Welfare (12 Marks)
    - Chapter-7: Human Health and Diseases (Pathogens; parasites causing human diseases: malaria, dengue, chikungunya, filariasis, ascariasis, typhoid, pneumonia, common cold, amoebiasis, ring worm and their control; Basic concepts of immunology - vaccines; cancer, HIV and AIDS; Adolescence - drug and alcohol abuse).
-   - Chapter-8: Microbes in Human Welfare (Microbes in food processing, industrial production, sewage treatment, energy generation - biogas, and microbes as bio-control agents and bio-fertilizers; Antibiotics - production and judicious use).
+   - Chapter-8: Microbes in Human Welfare (Microbes in food processing, industrial production, sewage treatment, energy generation and microbes as bio-control agents and bio-fertilizers; Antibiotics - production and judicious use).
 
-4. Unit IV: Biotechnology and its Applications (11 Marks)
+4. Unit IX: Biotechnology and its Applications (12 Marks)
    - Chapter-9: Biotechnology - Principles and Processes (Genetic Engineering - Recombinant DNA Technology, tools: restriction enzymes, DNA ligase, cloning vectors pBR322, competent hosts; processes of recombinant DNA technology: isolation of DNA, PCR, insertion, bioreactors, downstream processing).
-   - Chapter-10: Biotechnology and its Applications (Applications of biotechnology in health and agriculture: Human insulin production, vaccine production, stem cell technology, gene therapy - ADA deficiency; genetically modified organisms - Bt crops: Bt cotton, pest-resistant tobacco; transgenic animals; biosafety issues, biopiracy and patents).
+   - Chapter-10: Biotechnology and its Application (Application of biotechnology in health and agriculture: Human insulin and vaccine production, stem cell technology, gene therapy; genetically modified organisms - Bt crops; transgenic animals; biosafety issues, biopiracy and patents).
 
-5. Unit V: Ecology and Environment (10 Marks)
-   - Chapter-11: Organisms and Populations (Population interactions - mutualism, competition, predation, parasitism; population attributes - growth models: exponential and logistic growth, birth rate, death rate, age distribution pyramids).
-   - Chapter-12: Ecosystem (Ecosystem patterns, components, productivity: primary and secondary, decomposition; energy flow, 10% law; ecological pyramids: pyramids of number, biomass, energy).
-   - Chapter-13: Biodiversity and Conservation (Biodiversity: concept, patterns - latitudinal gradients and species-area relationship, importance and rivet popper hypothesis; loss of biodiversity - evil quartet; biodiversity conservation: in-situ and ex-situ; hotspots, endangered organisms, extinction, Red Data Book, Sacred Groves, biosphere reserves, national parks, wildlife sanctuaries, Ramsar sites).
+5. Unit X: Ecology and Environment (10 Marks)
+   - Chapter-11: Organisms and Populations (Population interactions - mutualism, competition, predation, parasitism; population attributes - growth, birth rate and death rate, age distribution).
+   - Chapter-12: Ecosystem (Ecosystems: Patterns, components; productivity and decomposition; energy flow; pyramids of number, biomass, energy).
+   - Chapter-13: Biodiversity and its Conservation (Biodiversity: Concept, patterns, importance; loss of biodiversity; biodiversity conservation; hotspots, endangered organisms, extinction, Red Data Book, Sacred Groves, biosphere reserves, national parks, wildlife sanctuaries and Ramsar sites).
 
-STRICTLY DELETED / EXCLUDED TOPICS (NEVER GENERATE QUESTIONS FROM THESE):
+STRICTLY DELETED / FORMATIVE-ONLY TOPICS (NEVER GENERATE SUMMATIVE QUESTIONS FROM THESE):
 - Old Chapter 1: Reproduction in Organisms (DELETED)
 - Old Chapter 9: Strategies for Enhancement in Food Production (DELETED)
-- Old Chapter 16: Environmental Issues (DELETED)
+- Environmental Issues (Air/Water pollution, Solid/Radioactive Wastes, Greenhouse effect, Ozone depletion, Deforestation): Strictly FORMATIVE reading material only, NOT assessed in summative board examinations.
 - In Chapter 11 (Organisms and Populations): "Organism and its Environment", "Major Abiotic Factors (temperature, water, light, soil)", "Responses to Abiotic Factors", and "Adaptations" are EXCLUDED.
 - In Chapter 12 (Ecosystem): "Ecological Succession" and "Nutrient Cycles" are EXCLUDED.
+
+--- QUESTION PAPER DESIGN & COMPETENCY DISTRIBUTION (CBSE 2026-27) ---
+- Demonstrate Knowledge and Understanding: 50% (35 Marks) - Suggestive verbs: State, name, list, identify, define, suggest, describe, outline, summarize.
+- Application of Knowledge / Concepts: 30% (21 Marks) - Suggestive verbs: Calculate, illustrate, show, adapt, explain, distinguish.
+- Analyse, Evaluate and Create: 20% (14 Marks) - Suggestive verbs: Interpret, analyse, compare, contrast, examine, evaluate, discuss, construct.
+- An internal choice of approximately 33% is provided across the question paper.
 
 --- OFFICIAL QUESTION PAPER BLUEPRINT (STRICT 70 MARKS, 33 QUESTIONS, 5 SECTIONS) ---
 The paper must have EXACTLY 33 questions distributed across 5 Sections as follows:
@@ -3037,6 +3671,1721 @@ ${languagePrompt}
           "orQuestion": null,
           "solution": "Official Map Work Location & Labelling Key (India Map):\\n(i) Bihar [1 Mark]\\n(ii) Gujarat / Maharashtra [1 Mark]\\n(iii) Bailadila (Chhattisgarh) [1 Mark]\\n(iv) Katni (Madhya Pradesh) [1 Mark]\\n(v) Mathura (Uttar Pradesh) [1 Mark]\\n(vi) Marmagao (Goa) [1 Mark]\\n(vii) Kolkata (West Bengal) [1 Mark]\\n(Any 5 correctly located and labelled = 5 x 1 = 5 Marks)",
           "orSolution": null
+        }
+      ]
+    }
+  ]
+}
+`;
+}
+
+/**
+ * Builds the official 80-Mark, 6-Section, 37-Question examination paper prompt for CBSE Class 10 Social Science (Subject Code 087).
+ * Strictly adheres to the 4-component balance: History (18+2 Map = 20M), Geography (17+3 Map = 20M), Political Science (20M), Economics (20M).
+ */
+function buildClass10SocialFullExamPrompt(config: PaperConfig, solutionDirective: string): string {
+  const targetChaptersDirective =
+    config.selectedChapters &&
+    config.selectedChapters.length > 0 &&
+    !config.selectedChapters.includes("all")
+      ? `--- USER SELECTED CHAPTER FOCUS ---
+When generating questions across the four components, strictly prioritize these selected chapters/topics chosen by the user:
+${config.selectedChapters.map((c) => `- ${c}`).join("\n")}
+Ensure all generated questions originate strictly from these chosen chapters while maintaining the component structure.`
+      : `--- FULL SYLLABUS COVERAGE (EQUAL 4-COMPONENT BALANCE) ---
+Cover all prescribed chapters across History, Geography, Political Science, and Economics evenly according to the official CBSE blueprint.`;
+
+  return `
+You are a Senior CBSE Examination Paper Setter and Head Examiner for Class 10 Social Science (Subject Code 087) with 25+ years of experience.
+Your task is to generate the COMPLETE, OFFICIAL, 100% CBSE-COMPLIANT Class 10 Social Science Question Paper for 2026.
+
+Total Marks: 80
+Time Allowed: 3 Hours
+Target Exam Type: ${config.examType}
+Difficulty Level: ${config.difficulty}
+Subject: Social Science (Subject Code 087)
+Class: Class 10 (Class X)
+
+======================================================================
+MANDATORY FOUR-COMPONENT STRUCTURE & SUBJECT-WISE WEIGHTAGE (80 MARKS)
+======================================================================
+Social Science consists of FOUR distinct components, each carrying exactly 20 Marks (25% weightage):
+1. History (India and the Contemporary World - II): 18 Marks Theory + 2 Marks Map Pointing = 20 Marks (25%)
+2. Geography (Contemporary India - II): 17 Marks Theory + 3 Marks Map Pointing = 20 Marks (25%)
+3. Political Science (Democratic Politics - II): 20 Marks Theory = 20 Marks (25%)
+4. Economics (Understanding Economic Development): 20 Marks Theory = 20 Marks (25%)
+TOTAL: Exactly 80 Marks (100%).
+
+CRITICAL INDEPENDENCE RULE:
+History ≠ Geography ≠ Political Science ≠ Economics!
+Each component must maintain its own syllabus and question pool. You must NEVER mix topics across components or generate disproportionate questions from one component while neglecting another.
+
+======================================================================
+OFFICIAL SYLLABUS BOUNDARIES & PRESCRIBED NCERT TEXTBOOKS
+======================================================================
+1. HISTORY (India and the Contemporary World - II):
+   - The Rise of Nationalism in Europe (French Revolution, Nation-states, Liberal Nationalism, Unifications of Italy and Germany, Visualizing the Nation, Nationalism and Imperialism)
+   - Nationalism in India (First World War, Khilafat and Non-Cooperation, Differing Strands within the Movement, Towards Civil Disobedience, The Sense of Collective Belonging)
+   - The Making of a Global World (ONLY Subtopics 1 to 1.3: Pre-modern World to Conquest, Disease and Trade for Board Examination)
+   - Print Culture and the Modern World (The First Printed Books, Print comes to Europe, The Print Revolution, The Reading Mania, The Nineteenth Century, India and the World of Print, Religious Reform and Public Debates, New Forms of Publication, Print and Censorship)
+   - STRICTLY EXCLUDED FROM BOARD EXAM:
+     * "The Age of Industrialisation" is for Periodic Assessment only.
+     * "The Making of a Global World" subtopics 2 to 4.4 are for Interdisciplinary Project only.
+   - History Map Items (from Nationalism in India):
+     * INC Sessions: Calcutta (Sep 1920), Nagpur (Dec 1920), Madras (1927).
+     * Satyagraha & Nationalist Centres: Champaran (Indigo), Kheda (Peasant), Ahmedabad (Cotton Mill), Amritsar (Jallianwala Bagh), Chauri Chaura (Calling off Non-Cooperation), Dandi (Civil Disobedience).
+
+2. GEOGRAPHY (Contemporary India - II):
+   - Resources and Development (Classification, Development, Planning in India, Land resources, Land degradation and conservation, Soil as a resource, Classification of soils, Soil erosion and conservation)
+   - Forest and Wildlife Resources (Flora and Fauna, Depletion of Flora and Fauna, Conservation of forest and wildlife in India, Types and distribution of forests, Community and Conservation)
+   - Water Resources (Water Scarcity, Multi-purpose river projects and integrated water resources management, Rainwater harvesting)
+   - Agriculture (Types of farming, Cropping pattern, Major crops, Technological and Institutional reforms, Contribution of agriculture to national economy)
+   - Minerals and Energy Resources (What is a mineral, Mode of occurrence, Ferrous & Non-ferrous minerals, Non-metallic minerals, Rock minerals, Conservation of minerals, Conventional and Non-conventional energy resources, Conservation of energy resources)
+   - Manufacturing Industries (Importance, Contribution of industry to national economy, Industrial location, Classification of industries, Spatial distribution: Agro-based and Mineral-based, Industrial pollution and environmental degradation, Control of environmental degradation)
+   - Lifelines of National Economy: ONLY Map Pointing to be evaluated in Board Examination (Major Ports & International Airports). Theory is for Interdisciplinary Project only.
+   - Geography Map Items:
+     * Soils: Alluvial, Black, Red and Yellow, Laterite, Arid, Forest and Mountainous.
+     * Dams: Salal, Bhakra Nangal, Tehri, Rana Pratap Sagar, Sardar Sarovar, Hirakud, Nagarjuna Sagar, Tungabhadra.
+     * Agriculture: Major areas of Rice and Wheat; Largest/Major producer states of Sugarcane, Tea, Coffee, Rubber, Cotton, and Jute.
+     * Energy: Thermal (Namrup, Singrauli, Ramagundam); Nuclear (Narora, Kakrapar, Tarapur, Kalpakkam).
+     * Manufacturing: Cotton Textiles (Mumbai, Indore, Surat, Kanpur, Coimbatore); Iron & Steel (Durgapur, Bokaro, Jamshedpur, Bhilai, Vijayanagar, Salem); Software Technology Parks (Noida, Gandhinagar, Mumbai, Pune, Hyderabad, Bengaluru, Chennai, Thiruvananthapuram).
+     * Lifelines of National Economy: Major Ports (Kandla, Mumbai, Marmagao, New Mangalore, Kochi, Tuticorin, Chennai, Visakhapatnam, Paradip, Haldia); International Airports (Amritsar - Raja Sansi, Delhi - IGI, Mumbai - CSM, Chennai - Meenambakkam, Kolkata - NSCB, Hyderabad - Rajiv Gandhi).
+
+3. POLITICAL SCIENCE (Democratic Politics - II):
+   - Power-sharing (Case studies of Belgium and Sri Lanka, Majoritarianism in Sri Lanka, Accommodation in Belgium, Why power sharing is desirable, Forms of power sharing)
+   - Federalism (What is Federalism, What makes India a federal country, How is federalism practiced, Decentralization in India)
+   - Gender, Religion and Caste (Gender and Politics, Women's political representation, Religion, Communalism and Politics, Caste and Politics, Caste inequalities, Caste in politics, Politics in caste)
+   - Political Parties (Why do we need political parties, Functions, How many parties should we have, National parties, State parties, Challenges to political parties, How can parties be reformed)
+   - Outcomes of Democracy (How do we assess democracy's outcomes, Accountable, responsive and legitimate government, Economic growth and development, Reduction of inequality and poverty, Accommodation of social diversity, Dignity and freedom of citizens)
+
+4. ECONOMICS (Understanding Economic Development):
+   - Development (What development promises, National development, How to compare different countries or states, Income and other criteria, Public facilities, Sustainability of development)
+   - Sectors of the Indian Economy (Sectors of economic activities, Comparing the three sectors, Primary, Secondary and Tertiary sectors in India, Where are most of the people employed, How to create more employment, Division of sectors as Organized and Unorganized, Sectors in terms of ownership: Public and Private)
+   - Money and Credit (Money as a medium of exchange, Modern forms of money, Loan activities of banks, Two different credit situations, Terms of credit, Formal sector credit in India, Self-help groups for the poor)
+   - Globalisation and the Indian Economy (ONLY Subtopics evaluated in Board Examination: "What is Globalization?" and "Factors that have enabled Globalisation" including IT & Trade Liberalization). Subtopics on WTO and Struggle for Fair Globalisation are for project work.
+   - STRICTLY EXCLUDED FROM BOARD EXAM:
+     * "Consumer Rights" is for Project Work / Internal Assessment only (0 marks in board exam).
+
+${targetChaptersDirective}
+
+======================================================================
+MANDATORY 6-SECTION, 37-QUESTION BLUEPRINT STRUCTURE (EXACTLY 80 MARKS)
+======================================================================
+The paper MUST consist of exactly 6 sections (Section A to Section F) and exactly 37 sequentially numbered questions (Q1 to Q37):
+
+----------------------------------------------------------------------
+SECTION A: Multiple Choice Questions (Q1 to Q20) — 20 Questions x 1 Mark = 20 Marks
+----------------------------------------------------------------------
+- Exactly 20 MCQs carrying 1 mark each.
+- Distribution: Balanced strictly across all 4 subjects:
+  * Q1 to Q5: History (~5 Questions) — includes chronology/ordering of events, identifying personalities/quotes, source snippet interpretation, and Assertion-Reason.
+  * Q6 to Q10: Geography (~5 Questions) — includes resource classification, matching soil/crop with state, statement evaluation, and conservation measures.
+  * Q11 to Q15: Political Science (~5 Questions) — includes forms of power-sharing, subjects in Union/State/Concurrent lists, party ideologies, and Assertion-Reason.
+  * Q16 to Q20: Economics (~5 Questions) — includes per capita income/HDI calculation concept, identifying employment disguised unemployment scenarios, formal vs informal credit comparison, and globalization drivers.
+- Question Typology: Standard MCQs, Assertion-Reason, Picture/Statement-based, Match the Following, Correct Sequence/Chronology.
+- Every question in Section A must have "choices": exactly 4 distinct, plausible options. Set "marks": 1, "type": "mcq" (or "assertionReason" where applicable).
+
+----------------------------------------------------------------------
+SECTION B: Very Short Answer (VSA) Questions (Q21 to Q24) — 4 Questions x 2 Marks = 8 Marks
+----------------------------------------------------------------------
+- Narrative questions requiring concise, point-wise answers (not exceeding 40 words, 2 distinct evaluated points).
+- Subject Distribution: Exactly ONE from each subject:
+  * Q21: History (2 Marks)
+  * Q22: Geography (2 Marks)
+  * Q23: Political Science (2 Marks)
+  * Q24: Economics (2 Marks)
+- At least 1 question must provide an internal choice ("orQuestion" and "orSolution") from the same subject.
+- Set "marks": 2, "type": "vsa", "choices": null.
+
+----------------------------------------------------------------------
+SECTION C: Short Answer (SA) Questions (Q25 to Q29) — 5 Questions x 3 Marks = 15 Marks
+----------------------------------------------------------------------
+- Narrative questions requiring clear, conceptual explanations (not exceeding 60 words, 3 distinct evaluated points).
+- Subject Distribution:
+  * Q25: History (3 Marks)
+  * Q26: Geography (3 Marks)
+  * Q27: Political Science (3 Marks)
+  * Q28: Economics (3 Marks)
+  * Q29: Political Science OR Economics (3 Marks - balancing marks so that History=18, Geography=17, PolScience=20, Economics=20).
+- At least 1 question must provide an internal choice ("orQuestion" and "orSolution") from the same subject.
+- Set "marks": 3, "type": "sa", "choices": null.
+
+----------------------------------------------------------------------
+SECTION D: Long Answer (LA) Questions (Q30 to Q33) — 4 Questions x 5 Marks = 20 Marks
+----------------------------------------------------------------------
+- Comprehensive narrative questions requiring detailed, multi-dimensional answers (not exceeding 120 words, 5 points).
+- EXACTLY ONE QUESTION PER SUBJECT COMPONENT:
+  * Q30: History (5 Marks) — MUST provide an internal choice ("orQuestion") also from prescribed History.
+  * Q31: Geography (5 Marks) — MUST provide an internal choice ("orQuestion") also from prescribed Geography.
+  * Q32: Political Science (5 Marks) — MUST provide an internal choice ("orQuestion") also from prescribed Political Science.
+  * Q33: Economics (5 Marks) — MUST provide an internal choice ("orQuestion") also from prescribed Economics.
+- Set "marks": 5, "type": "la", "choices": null.
+
+----------------------------------------------------------------------
+SECTION E: Case Study / Source-Based Questions (Q34 to Q36) — 3 Questions x 4 Marks = 12 Marks
+----------------------------------------------------------------------
+- Exactly 3 Case-Based questions carrying 4 marks each.
+- Distribution:
+  * Q34: History Case Study (4 Marks) — Extract from Nationalism in Europe, Nationalism in India, or Print Culture (120-160 words).
+  * Q35: Geography Case Study (4 Marks) — Extract on water scarcity/conservation, agriculture, or mineral management (120-160 words).
+  * Q36: Economics / Political Science Case Study (4 Marks) — Real-world scenario on credit/banking, self-help groups, globalization, or power sharing (120-160 words).
+- Each Case Study must present the passage followed by 3 sub-questions:
+  - (i) 1 Mark (recall / identification)
+  - (ii) 1 Mark (interpretation / comprehension)
+  - (iii) 2 Marks (analytical / application, with an internal choice "OR" in sub-question iii).
+- Format text as: "Read the source given below and answer the questions that follow:\\n\\n[Text of passage]\\n\\n(34.1) [Question 1] (1 Mark)\\n(34.2) [Question 2] (1 Mark)\\n(34.3) [Question 3] (2 Marks)\\nOR\\n[Alternative Question 3] (2 Marks)"
+- Set "marks": 4, "type": "caseStudy", "choices": null.
+
+----------------------------------------------------------------------
+SECTION F: Map Skill Based Question (Q37) — 5 Marks Total
+----------------------------------------------------------------------
+- Exactly 1 comprehensive Map Skill Question numbered 37, divided into two distinct parts:
+  * Q37 (a): History Map Skill (2 Marks)
+    "Two places A and B have been marked on the given outline political map of India. Identify them and write their correct names on the lines drawn near them:
+    (A) [A Congress Session or Nationalist Satyagraha Centre, e.g., 'The place where Indian National Congress session was held in September 1920' OR 'The place where Mahatma Gandhi broke the salt law'] (1 Mark)
+    (B) [Another Satyagraha or Incident centre, e.g., 'The place where the Jallianwala Bagh incident took place' OR 'The place where the movement of Indigo planters took place'] (1 Mark)"
+  * Q37 (b): Geography Map Skill (3 Marks)
+    "On the same outline political map of India, locate and label ANY THREE of the following with suitable symbols:
+    (i) [A Dam from syllabus, e.g., Salal / Bhakra Nangal / Tehri / Sardar Sarovar / Hirakud] (1 Mark)
+    (ii) [A Major Crop Region, e.g., Major Rice producing area / Major Sugarcane producer state] (1 Mark)
+    (iii) [A Power Plant, e.g., Singrauli Thermal Power Plant / Tarapur Nuclear Power Plant / Kalpakkam] (1 Mark)
+    (iv) [An Industrial Centre or Major Sea Port / Airport, e.g., Mumbai Cotton Textile / Bengaluru Software Technology Park / Marmagao Port / Netaji Subhash Chandra Bose International Airport] (1 Mark)"
+- Set "marks": 5, "type": "la", "choices": null.
+
+======================================================================
+COGNITIVE COMPETENCY LEVELS (CBSE GUIDELINES)
+======================================================================
+1. Remembering and Understanding: 30% (24 Marks)
+2. Applying: 13.25% (11 Marks)
+3. Formulating, Analysing, Evaluating and Creating: 50% (40 Marks)
+4. Map Skill: 6.25% (5 Marks)
+
+======================================================================
+${solutionDirective}
+======================================================================
+
+--- JSON SCHEMA FORMAT ---
+Output strictly a valid JSON object matching the following structure. Do not wrap in markdown fences:
+{
+  "sections": [
+    {
+      "name": "Section A",
+      "description": "Multiple Choice Questions (1 Mark each)",
+      "marksPerQuestion": 1,
+      "questions": [
+        {
+          "id": "q1",
+          "text": "1. [History MCQ text...]",
+          "marks": 1,
+          "type": "mcq",
+          "choices": ["(A) Choice 1", "(B) Choice 2", "(C) Choice 3", "(D) Choice 4"],
+          "orQuestion": null,
+          "solution": "(B) Choice 2 - [Detailed explanation]",
+          "orSolution": null
+        }
+      ]
+    },
+    {
+      "name": "Section B",
+      "description": "Very Short Answer Type Questions (2 Marks each, max 40 words)",
+      "marksPerQuestion": 2,
+      "questions": [
+        {
+          "id": "q21",
+          "text": "21. [History 2-Mark Question]",
+          "marks": 2,
+          "type": "vsa",
+          "choices": null,
+          "orQuestion": null,
+          "solution": "Point-wise marking scheme: [1 Mark for point 1, 1 Mark for point 2]",
+          "orSolution": null
+        }
+      ]
+    },
+    {
+      "name": "Section C",
+      "description": "Short Answer Type Questions (3 Marks each, max 60 words)",
+      "marksPerQuestion": 3,
+      "questions": [
+        {
+          "id": "q25",
+          "text": "25. [3-Mark Question]",
+          "marks": 3,
+          "type": "sa",
+          "choices": null,
+          "orQuestion": null,
+          "solution": "Point-wise marking scheme: [3 distinct points with explanation = 3 Marks]",
+          "orSolution": null
+        }
+      ]
+    },
+    {
+      "name": "Section D",
+      "description": "Long Answer Type Questions (5 Marks each, max 120 words)",
+      "marksPerQuestion": 5,
+      "questions": [
+        {
+          "id": "q30",
+          "text": "30. [History 5-Mark Question]",
+          "marks": 5,
+          "type": "la",
+          "choices": null,
+          "orQuestion": "[Alternative History 5-Mark Question]",
+          "solution": "Point-wise 5-Mark evaluation breakdown",
+          "orSolution": "Point-wise 5-Mark evaluation breakdown for alternative question"
+        }
+      ]
+    },
+    {
+      "name": "Section E",
+      "description": "Case-Based / Source-Based Questions (4 Marks each)",
+      "marksPerQuestion": 4,
+      "questions": [
+        {
+          "id": "q34",
+          "text": "34. Read the source given below and answer the questions that follow:\\n\\n[Passage text...]\\n\\n(34.1) [Sub-question 1] (1 Mark)\\n(34.2) [Sub-question 2] (1 Mark)\\n(34.3) [Sub-question 3] (2 Marks)\\nOR\\n[Alternative Sub-question 3] (2 Marks)",
+          "marks": 4,
+          "type": "caseStudy",
+          "choices": null,
+          "orQuestion": null,
+          "solution": "(34.1) [1 Mark answer]\\n(34.2) [1 Mark answer]\\n(34.3) [2 Marks answer with breakdown]",
+          "orSolution": null
+        }
+      ]
+    },
+    {
+      "name": "Section F",
+      "description": "Map Skill Based Question (5 Marks)",
+      "marksPerQuestion": 5,
+      "questions": [
+        {
+          "id": "q37",
+          "text": "37. (a) Two places A and B have been marked on the given outline political map of India. Identify them and write their correct names on the lines drawn near them:\\n(A) [History Feature 1] (1 Mark)\\n(B) [History Feature 2] (1 Mark)\\n\\n(b) On the same outline political map of India, locate and label any THREE of the following with suitable symbols:\\n(i) [Geography Feature 1] (1 Mark)\\n(ii) [Geography Feature 2] (1 Mark)\\n(iii) [Geography Feature 3] (1 Mark)\\n(iv) [Geography Feature 4] (1 Mark)",
+          "marks": 5,
+          "type": "la",
+          "choices": null,
+          "orQuestion": null,
+          "solution": "Official Map Identification & Labelling Key:\\n37(a) History Identification (2 Marks):\\n(A) [Correct place name, e.g. Calcutta] [1 Mark]\\n(B) [Correct place name, e.g. Dandi] [1 Mark]\\n\\n37(b) Geography Location & Labelling (Any 3 x 1 = 3 Marks):\\n(i) [Correct location and state] [1 Mark]\\n(ii) [Correct location and state] [1 Mark]\\n(iii) [Correct location and state] [1 Mark]\\n(iv) [Correct location and state] [1 Mark]",
+          "orSolution": null
+        }
+      ]
+    }
+  ]
+}
+`;
+}
+
+/**
+ * Builds the official 70-Mark, 5-Section, 37-Question examination paper prompt for CBSE Class 12 Physical Education (Subject Code 048).
+ * Follows the official CBSE 2024-25 / 2025-26 / 2026-27 design:
+ * Total Marks: 70 | Time Allowed: 3 Hours
+ * - Section A: Questions 1 to 18 (18 Multiple Choice Questions carrying 1 mark each = 18 Marks). All compulsory.
+ * - Section B: Questions 19 to 24 (6 Very Short Answer carrying 2 marks each, candidates attempt any 5 = 10 Marks, 60–90 words).
+ * - Section C: Questions 25 to 30 (6 Short Answer carrying 3 marks each, candidates attempt any 5 = 15 Marks, 100–150 words).
+ * - Section D: Questions 31 to 33 (3 Case-Based Questions carrying 4 marks each = 12 Marks, with internal choices in sub-parts).
+ *     * Q31: Unit 1 (Management of Sporting Events / Fixtures)
+ *     * Q32: Unit 4 (Physical Education and Sports for CWSN - Divyang)
+ *     * Q33: Unit 7 (Physiology and Injuries in Sport)
+ * - Section E: Questions 34 to 37 (4 Long Answer carrying 5 marks each, candidates attempt any 3 = 15 Marks, 200–300 words).
+ * Total: 18 + 10 + 15 + 12 + 15 = 70 Marks (37 Questions total).
+ */
+function buildClass12PhyEduFullExamPrompt(config: PaperConfig, solutionDirective: string): string {
+  const targetChaptersDirective =
+    config.selectedChapters &&
+    config.selectedChapters.length > 0 &&
+    !config.selectedChapters.includes("all")
+      ? `--- USER SELECTED UNITS & TOPICS FOCUS ---
+When generating questions across all sections, strictly prioritize and select questions from these chosen units/topics:
+${config.selectedChapters.map((c) => `- ${c}`).join("\n")}
+Ensure all generated questions originate strictly from these chosen units/topics while maintaining the 5-section paper blueprint.`
+      : `--- FULL SYLLABUS COVERAGE (OFFICIAL 10 UNITS WEIGHTAGE) ---
+Ensure balanced, comprehensive distribution across all 10 prescribed units in accordance with the official CBSE blueprint:
+- Unit 1: Management of Sporting Events (05 + 04 b* = 9 Marks)
+- Unit 2: Children and Women in Sports (7 Marks)
+- Unit 3: Yoga as Preventive measure for Lifestyle Disease (06 + 01 b* = 7 Marks)
+- Unit 4: Physical Education and Sports for CWSN (04 + 04 b* = 8 Marks)
+- Unit 5: Sports and Nutrition (7 Marks)
+- Unit 6: Test and Measurement in Sports (8 Marks)
+- Unit 7: Physiology and Injuries in Sport (04 + 04 b* = 8 Marks)
+- Unit 8: Biomechanics and Sports (10 Marks)
+- Unit 9: Psychology and Sports (7 Marks)
+- Unit 10: Training in Sports (9 Marks)
+Total Marks: 70 Marks Theory (plus 30 Marks Practical Assessment = 100 Marks).`;
+
+  return `
+You are a Senior CBSE Examination Paper Setter and Chief Examiner for Class 12 Physical Education (Subject Code 048) with 25+ years of experience.
+Your task is to generate the COMPLETE, OFFICIAL, 100% CBSE-COMPLIANT Class 12 Physical Education Question Paper for 2026.
+
+Total Marks: 70
+Time Allowed: 3 Hours
+Target Exam Type: ${config.examType}
+Difficulty Level: ${config.difficulty}
+Subject: Physical Education (Subject Code 048)
+Class: Class 12 (Class XII)
+
+======================================================================
+OFFICIAL SYLLABUS & UNIT WEIGHTAGE (70 MARKS)
+======================================================================
+1. Unit 1: Management of Sporting Events (05 + 04 b* = 9 Marks)
+   - Functions of sports event management (POSDC), Committees & responsibilities (pre/during/post), Fixtures (Knockout: N-1 matches, byes formula, upper/lower half; League: Cyclic, Staircase, Tabular, N(N-1)/2 matches; Combination), Intramurals & Extramurals, Community sports.
+2. Unit 2: Children and Women in Sports (7 Marks)
+   - WHO exercise guidelines for age groups, Common postural deformities (Knock knees, flat foot, round shoulders, lordosis, kyphosis, scoliosis, bow legs) & corrective measures, Women in sports, Menarche & menstrual dysfunction, Female athlete triad (osteoporosis, amenorrhea, eating disorders).
+3. Unit 3: Yoga as Preventive measure for Lifestyle Disease (06 + 01 b* = 7 Marks)
+   - Obesity, Diabetes, Asthma, Hypertension, Back pain and Arthritis: exact procedures, benefits, and medical contraindications for prescribed Asanas and Pranayama.
+4. Unit 4: Physical Education and Sports for CWSN (Divyang) (04 + 04 b* = 8 Marks)
+   - Disability sports organizations (Special Olympics, Paralympics, Deaflympics), Classification & Divisioning in sports, Concept of Inclusion, Advantages of physical activities for CWSN, Strategies to make sports accessible for CWSN.
+5. Unit 5: Sports and Nutrition (7 Marks)
+   - Balanced diet, Macro & Micro nutrients, Nutritive vs Non-nutritive components, Weight control (healthy weight, dieting pitfalls, food intolerance, food myths), Sports diet (pre, during, post competition requirements).
+6. Unit 6: Test and Measurement in Sports (8 Marks)
+   - SAI Khelo India battery (5-8 yrs & 9-18 yrs), Harvard Step Test calculation formula, Computing BMR, Rikli & Jones Senior Citizen Fitness Test (6 items), Johnsen-Methney Test of Motor Educability.
+7. Unit 7: Physiology and Injuries in Sport (04 + 04 b* = 8 Marks)
+   - Physiological factors determining fitness components, Effect of exercise on Muscular & Cardio-Respiratory systems, Aging changes, Sports injuries classification (soft tissue & bone/joint fractures) and PRICER management.
+8. Unit 8: Biomechanics and Sports (10 Marks)
+   - Newton's Laws of Motion & applications in sports, Types of Levers (Class I, II, III) & applications in human movement/sports, Equilibrium (Dynamic/Static) & Centre of Gravity, Friction in sports, Projectile motion & trajectory factors.
+9. Unit 9: Psychology and Sports (7 Marks)
+   - Personality (Jung & Big Five OCEAN), Motivation (intrinsic vs extrinsic & techniques), Exercise adherence, Aggression types (Hostile, Instrumental, Assertive), Psychological attributes (self-esteem, mental imagery, self-talk, goal setting).
+10. Unit 10: Training in Sports (9 Marks)
+    - Talent Identification & Development, Training cycles (Micro, Meso, Macro), Methods to develop Strength (isometric, isotonic, isokinetic), Endurance (continuous, interval, fartlek), Speed (acceleration & pace runs), Flexibility (ballistic, static, dynamic, PNF), Coordinative abilities, Circuit training.
+
+${targetChaptersDirective}
+
+======================================================================
+QUESTION PAPER BLUEPRINT & SECTION-WISE SPECIFICATION (37 QUESTIONS, 70 MARKS)
+======================================================================
+
+----------------------------------------------------------------------
+SECTION A: Multiple Choice Questions (Q1 to Q18) — 18 Questions x 1 Mark = 18 Marks
+----------------------------------------------------------------------
+- Exactly 18 MCQs carrying 1 mark each. All questions are compulsory.
+- Distributed across all 10 units.
+- Must include:
+  * Conceptual definition questions (e.g. lever classes, BMR, sports training cycles, personality types).
+  * 2 Assertion-Reason Questions: Standard 4 options:
+    (A) Both A and R are true and R is the correct explanation of A.
+    (B) Both A and R are true but R is not the correct explanation of A.
+    (C) A is true but R is false.
+    (D) A is false but R is true.
+  * 1 Match the Following Question (e.g. Asana matched with Lifestyle disease, or Test item matched with physical fitness component).
+  * 1 Statement-based / Data interpretation Question (e.g. BMI category or WHO exercise guidelines).
+  * Diagram / Concept-based Question (e.g. identifying lever class from human movement, identifying posture deformity, or projectile angle). For Visually Impaired candidates (b*), the text must provide clear descriptive context so the question is fully answerable from text.
+- Every question in Section A must have "choices": exactly 4 distinct, plausible options. Set "marks": 1, "type": "mcq" (or "assertionReason").
+
+----------------------------------------------------------------------
+SECTION B: Very Short Answer (VSA) Questions (Q19 to Q24) — 6 Questions (Attempt any 5) x 2 Marks = 10 Marks
+----------------------------------------------------------------------
+- Exactly 6 questions carrying 2 marks each.
+- Candidates have to attempt ANY 5 questions (word limit: 60 to 90 words, 2 distinct evaluated points).
+- Testing focused concepts: e.g.
+  * Difference between Intramural and Extramural tournaments.
+  * Any two objectives of Special Olympics or Deaflympics.
+  * Meaning of Food Intolerance and one symptom.
+  * Formula for computing Harvard Step Test Fitness Index (short form).
+  * Two physiological changes occurring due to aging.
+  * Meaning of Interval Training method or Fartlek method.
+- Set "marks": 2, "type": "vsa", "choices": null.
+
+----------------------------------------------------------------------
+SECTION C: Short Answer (SA) Questions (Q25 to Q30) — 6 Questions (Attempt any 5) x 3 Marks = 15 Marks
+----------------------------------------------------------------------
+- Exactly 6 questions carrying 3 marks each.
+- Candidates have to attempt ANY 5 questions (word limit: 100 to 150 words, 3 distinct evaluated points).
+- Testing intermediate analytical sports concepts: e.g.
+  * Procedure and rules for drawing a Knock-Out fixture for 11 or 13 teams (calculating matches, byes, upper/lower half).
+  * Three corrective exercises for Flat Foot / Knock Knees / Kyphosis.
+  * Procedure, benefits, and contraindications of any one Asana for Diabetes or Hypertension.
+  * Macro nutrients vs Micro nutrients: functions and sources.
+  * Newton's Second Law of Motion and its application in throwing / kicking sports.
+  * Techniques for enhancing exercise adherence among individuals.
+- Set "marks": 3, "type": "sa", "choices": null.
+
+----------------------------------------------------------------------
+SECTION D: Case-Based / Competency-Based Questions (Q31 to Q33) — 3 Questions x 4 Marks = 12 Marks
+----------------------------------------------------------------------
+- Exactly 3 Case-Based questions carrying 4 marks each. All questions are compulsory.
+- In strict adherence to the syllabus blueprint and the 'b*' notation, the 3 case studies are allocated as:
+  * Q31: Unit 1 (Management of Sporting Events / Tournament Fixtures):
+    A realistic case study describing an inter-school or zonal sports tournament (e.g. 19 teams participating in a knock-out tournament, or organization committees).
+    Followed by 4 sub-questions (1 mark each) or (1+1+2 marks):
+    (31.1) Sub-question 1 (1 Mark)
+    (31.2) Sub-question 2 (1 Mark)
+    (31.3) Sub-question 3 (1 Mark)
+    (31.4) Sub-question 4 (1 Mark) OR [Alternative sub-question with internal choice] (1 Mark)
+  * Q32: Unit 4 (Physical Education & Sports for CWSN - Divyang):
+    A case study highlighting an inclusive sports meet in a school or Paralympics athlete story, focusing on divisioning, adaptive physical education, assistive equipment, or benefits of sports for children with special needs.
+    Followed by 4 sub-questions (1 mark each):
+    (32.1) Sub-question 1 (1 Mark)
+    (32.2) Sub-question 2 (1 Mark)
+    (32.3) Sub-question 3 (1 Mark)
+    (32.4) Sub-question 4 (1 Mark) OR [Alternative sub-question] (1 Mark)
+  * Q33: Unit 7 (Physiology and Injuries in Sport):
+    A sports case study involving an athlete experiencing an acute sports injury during a football/basketball match or marathon training, analyzing injury classification (sprain/strain/fracture), immediate PRICER management, or cardio-respiratory adaptation.
+    Followed by 4 sub-questions (1 mark each):
+    (33.1) Sub-question 1 (1 Mark)
+    (33.2) Sub-question 2 (1 Mark)
+    (33.3) Sub-question 3 (1 Mark)
+    (33.4) Sub-question 4 (1 Mark) OR [Alternative sub-question] (1 Mark)
+- Set "marks": 4, "type": "caseStudy", "choices": null.
+
+----------------------------------------------------------------------
+SECTION E: Long Answer (LA) Questions (Q34 to Q37) — 4 Questions (Attempt any 3) x 5 Marks = 15 Marks
+----------------------------------------------------------------------
+- Exactly 4 questions carrying 5 marks each.
+- Candidates have to attempt ANY 3 questions (word limit: 200 to 300 words, comprehensive point-wise structure).
+- Testing in-depth core syllabus domains:
+  * Q34 (Unit 8: Biomechanics and Sports): Detailed explanation of Types of Levers (Class I, Class II, Class III) with anatomical fulcrum-effort-load diagram representations, mechanical advantages, and specific sporting examples (e.g. kicking, push-ups, rowing).
+  * Q35 (Unit 10: Training in Sports): Explain different methods to develop Strength (Isometric, Isotonic, Isokinetic) OR Endurance (Continuous, Interval, Fartlek) along with their physiological merits and training guidelines.
+  * Q36 (Unit 3: Yoga as Preventive measure for Lifestyle Disease): In-depth discussion of Obesity or Back Pain and Arthritis: explain two distinct Asanas with step-by-step procedures, physiological benefits, and contraindications.
+  * Q37 (Unit 6: Test and Measurement in Sports): Explain the administration and scoring of Rikli and Jones Senior Citizen Fitness Test (detailing at least 5 test items) OR SAI Khelo India Fitness Test battery for 9–18 years.
+- Set "marks": 5, "type": "la", "choices": null.
+
+======================================================================
+${solutionDirective}
+======================================================================
+
+--- JSON SCHEMA FORMAT ---
+Output strictly a valid JSON object matching the following structure. Do not wrap in markdown fences:
+{
+  "sections": [
+    {
+      "name": "Section A",
+      "description": "Multiple Choice Questions (1 Mark each, Q1 to Q18 - All questions are compulsory)",
+      "marksPerQuestion": 1,
+      "questions": [
+        {
+          "id": "q1",
+          "text": "1. [Physical Education MCQ text...]",
+          "marks": 1,
+          "type": "mcq",
+          "choices": ["(A) Choice 1", "(B) Choice 2", "(C) Choice 3", "(D) Choice 4"],
+          "orQuestion": null,
+          "solution": "(A) Choice 1 - [Detailed scientific/factual explanation]",
+          "orSolution": null
+        }
+      ]
+    },
+    {
+      "name": "Section B",
+      "description": "Very Short Answer Type Questions (2 Marks each, Q19 to Q24 - Attempt any 5 questions, 60–90 words)",
+      "marksPerQuestion": 2,
+      "questions": [
+        {
+          "id": "q19",
+          "text": "19. [2-Mark Very Short Answer Question]",
+          "marks": 2,
+          "type": "vsa",
+          "choices": null,
+          "orQuestion": null,
+          "solution": "Marking scheme: [1 Mark for point 1, 1 Mark for point 2]",
+          "orSolution": null
+        }
+      ]
+    },
+    {
+      "name": "Section C",
+      "description": "Short Answer Type Questions (3 Marks each, Q25 to Q30 - Attempt any 5 questions, 100–150 words)",
+      "marksPerQuestion": 3,
+      "questions": [
+        {
+          "id": "q25",
+          "text": "25. [3-Mark Short Answer Question]",
+          "marks": 3,
+          "type": "sa",
+          "choices": null,
+          "orQuestion": null,
+          "solution": "Marking scheme: [1 Mark each for 3 distinct points with explanation]",
+          "orSolution": null
+        }
+      ]
+    },
+    {
+      "name": "Section D",
+      "description": "Case-Based / Competency-Based Questions (4 Marks each, Q31 to Q33 - All questions are compulsory)",
+      "marksPerQuestion": 4,
+      "questions": [
+        {
+          "id": "q31",
+          "text": "31. Read the passage given below and answer the questions that follow:\\n\\n[Case study scenario about tournament management / fixtures...]\\n\\n(31.1) [Sub-question 1] (1 Mark)\\n(31.2) [Sub-question 2] (1 Mark)\\n(31.3) [Sub-question 3] (1 Mark)\\n(31.4) [Sub-question 4] (1 Mark)\\nOR\\n[Alternative Sub-question 4] (1 Mark)",
+          "marks": 4,
+          "type": "caseStudy",
+          "choices": null,
+          "orQuestion": null,
+          "solution": "(31.1) [1 Mark answer]\\n(31.2) [1 Mark answer]\\n(31.3) [1 Mark answer]\\n(31.4) [1 Mark answer with explanation]",
+          "orSolution": null
+        }
+      ]
+    },
+    {
+      "name": "Section E",
+      "description": "Long Answer Type Questions (5 Marks each, Q34 to Q37 - Attempt any 3 questions, 200–300 words)",
+      "marksPerQuestion": 5,
+      "questions": [
+        {
+          "id": "q34",
+          "text": "34. [5-Mark Comprehensive Long Answer Question]",
+          "marks": 5,
+          "type": "la",
+          "choices": null,
+          "orQuestion": null,
+          "solution": "Point-wise marking breakdown: [1 Mark for definition/classification, 2 Marks for anatomical analysis, 2 Marks for sporting applications]",
+          "orSolution": null
+        }
+      ]
+    }
+  ]
+}
+`;
+}
+
+/**
+ * Builds the official 80-Mark, 5-Section, 39-Question examination paper prompt for CBSE Class 10 Science (Subject Code 086).
+ * Follows the official CBSE 2024-25 / 2025-26 / 2026-27 design and question paper blueprint:
+ * Total Marks: 80 | Time Allowed: 3 Hours
+ * - Section A: Questions 1 to 20 (20 Objective Type Questions x 1 Mark = 20 Marks):
+ *     * Q1 to Q16: Multiple Choice Questions (16 MCQs distributed across Chemistry, Biology, Physics)
+ *     * Q17 to Q20: Assertion-Reasoning Questions (4 A-R Questions with standard options A, B, C, D)
+ * - Section B: Questions 21 to 26 (6 Very Short Answer Questions x 2 Marks = 12 Marks, 30–50 words):
+ *     * Exactly 2 Physics, 2 Chemistry, 2 Biology questions with internal choices in 2 questions.
+ * - Section C: Questions 27 to 33 (7 Short Answer Questions x 3 Marks = 21 Marks, 50–80 words):
+ *     * Distributed across components (e.g. 2 Physics, 2-3 Chemistry, 2-3 Biology) with internal choices in 2 questions.
+ * - Section D: Questions 34 to 36 (3 Long Answer Questions x 5 Marks = 15 Marks, 80–120 words):
+ *     * Q34: Chemistry (5 Marks) with internal choice
+ *     * Q35: Biology (5 Marks) with internal choice
+ *     * Q36: Physics (5 Marks) with internal choice
+ * - Section E: Questions 37 to 39 (3 Case-Based / Source-Based Assessment Units x 4 Marks = 12 Marks):
+ *     * Q37: Physics Case Study (4 Marks) with sub-questions and internal choice
+ *     * Q38: Chemistry Case Study (4 Marks) with sub-questions and internal choice
+ *     * Q39: Biology Case Study (4 Marks) with sub-questions and internal choice
+ * Total: 20 + 12 + 21 + 15 + 12 = 80 Marks (39 Questions total).
+ * Subject-wise distribution: Physics: 25 Marks | Chemistry: 25 Marks | Biology: 30 Marks = 80 Marks.
+ */
+function buildClass10ScienceFullExamPrompt(config: PaperConfig, solutionDirective: string): string {
+  const targetChaptersDirective =
+    config.selectedChapters &&
+    config.selectedChapters.length > 0 &&
+    !config.selectedChapters.includes("all")
+      ? `--- USER SELECTED CHAPTER FOCUS ---
+When generating questions across the three components, strictly prioritize these selected chapters/topics chosen by the user:
+${config.selectedChapters.map((c) => `- ${c}`).join("\n")}
+Ensure all generated questions originate strictly from these chosen chapters while maintaining the component structure.`
+      : `--- FULL SYLLABUS COVERAGE (3-COMPONENT BALANCE: PHYSICS 25M, CHEMISTRY 25M, BIOLOGY 30M) ---
+Cover all prescribed chapters across Physics, Chemistry, and Biology in strict accordance with the official CBSE blueprint.`;
+
+  return `
+You are a Senior CBSE Examination Paper Setter and Chief Examiner for Class 10 Science (Subject Code 086) with 25+ years of experience.
+Your task is to generate the COMPLETE, OFFICIAL, 100% CBSE-COMPLIANT Class 10 Science Question Paper for 2026.
+
+Total Marks: 80
+Time Allowed: 3 Hours
+Target Exam Type: ${config.examType}
+Difficulty Level: ${config.difficulty}
+Subject: Science (Subject Code 086)
+Class: Class 10 (Class X)
+
+======================================================================
+MANDATORY THREE-COMPONENT STRUCTURE & SUBJECT-WISE WEIGHTAGE (80 MARKS)
+======================================================================
+Science is a COMBINED subject consisting of THREE distinct, independent components:
+1. Physics: 25 Marks Theory
+   - Unit III: Natural Phenomena (12 Marks)
+   - Unit IV: Effects of Current (13 Marks)
+2. Chemistry: 25 Marks Theory
+   - Unit I: Chemical Substances - Nature and Behaviour (25 Marks)
+3. Biology: 30 Marks Theory
+   - Unit II: World of Living (25 Marks)
+   - Unit V: Natural Resources (05 Marks)
+TOTAL: Exactly 80 Marks Theory (plus 20 Marks Internal Assessment = 100 Marks).
+
+CRITICAL INDEPENDENCE RULE:
+Physics ≠ Chemistry ≠ Biology!
+Each component must maintain its own syllabus and question pool. You must NEVER mix concepts between components (e.g., do not put an electricity question under chemistry, or a chemical reaction under biology). Maintain the exact blueprint balance.
+
+======================================================================
+OFFICIAL SYLLABUS BOUNDARIES & PRESCRIBED NCERT TOPICS
+======================================================================
+1. PHYSICS (Themes: Natural Phenomena & How Things Work - 25 Marks):
+   - Unit III: Natural Phenomena (12 Marks):
+     * Light – Reflection and Refraction: Reflection of light by curved surfaces; Images formed by spherical mirrors, centre of curvature, principal axis, principal focus, focal length, mirror formula (derivation not required), magnification. Refraction; Laws of refraction, refractive index. Refraction of light by spherical lens; Image formed by spherical lenses; Lens formula (derivation not required); Magnification. Power of a lens.
+     * The Human Eye and the Colourful World: Functioning of a lens in human eye, defects of vision (myopia, hypermetropia, presbyopia) and their corrections, applications of spherical mirrors and lenses. Refraction of light through a prism, dispersion of light, scattering of light, applications in daily life (Tyndall effect, blue colour of clear sky).
+     * STRICT EXCLUSION: Colour of the sun at sunrise and sunset is EXCLUDED.
+   - Unit IV: Effects of Current (13 Marks):
+     * Electricity: Electric current, potential difference and electric current. Ohm's law; Resistance, Resistivity, Factors on which the resistance of a conductor depends. Series combination of resistors, parallel combination of resistors and its applications in daily life. Heating effect of electric current and its applications in daily life (Joule's law of heating). Electric power, Interrelation between P, V, I and R.
+     * Magnetic Effects of Electric Current: Magnetic field, field lines, field due to a current carrying conductor, field due to current carrying coil or solenoid; Force on current carrying conductor, Fleming's Left Hand Rule, Direct current. Alternating current: frequency of AC. Advantage of AC over DC. Domestic electric circuits (earth wire, fuse, short circuit, overloading).
+
+2. CHEMISTRY (Theme: Materials - 25 Marks):
+   - Unit I: Chemical Substances - Nature and Behaviour (25 Marks):
+     * Chemical Reactions and Equations: Chemical equation, Balanced chemical equation, implications of a balanced chemical equation, types of chemical reactions: combination, decomposition (thermal, electrolytic, photolytic), displacement, double displacement, precipitation, endothermic and exothermic reactions, oxidation and reduction, redox reactions.
+     * Acids, Bases and Salts: Definitions in terms of furnishing of H+ and OH- ions, General properties, examples and uses, neutralization, concept of pH scale (definition relating to logarithm not required), importance of pH in everyday life; preparation and uses of Sodium Hydroxide (chlor-alkali process), Bleaching powder, Baking soda, Washing soda, and Plaster of Paris (water of crystallization).
+     * Metals and Non-Metals: Properties of metals and non-metals; Reactivity series; Formation and properties of ionic compounds; Basic metallurgical processes (crushing, concentration, roasting, calcination, reduction, refining); Corrosion and its prevention (galvanization, alloying).
+     * Carbon and its Compounds: Covalent bonding in carbon compounds (tetravalency and catenation). Versatile nature of carbon. Homologous series. Nomenclature of carbon compounds containing functional groups (halogens, alcohol, ketones, aldehydes, alkanes, alkenes and alkynes), difference between saturated hydrocarbons and unsaturated hydrocarbons. Chemical properties of carbon compounds (combustion, oxidation, addition and substitution reaction). Ethanol and Ethanoic acid (only properties and uses - esterification, saponification), soaps and detergents (micelle formation and cleansing action).
+
+3. BIOLOGY (Themes: The World of the Living & Natural Resources - 30 Marks):
+   - Unit II: World of Living (25 Marks):
+     * Life Processes: 'Living Being'. Basic concept of nutrition (autotrophic & heterotrophic, stomata, human digestive system), respiration (aerobic & anaerobic, ATP, human respiratory system), transport (circulatory system in humans, blood, lymph, heart, transport of water and food in plants - xylem & phloem) and excretion (human excretory system, nephron structure, excretion in plants).
+     * Control and Coordination: Tropic movements in plants (phototropism, geotropism, hydrotropism, thigmotropism, chemotropism); Introduction of plant hormones (auxin, gibberellin, cytokinin, abscisic acid); Control and co-ordination in animals: Nervous system; Voluntary, involuntary and reflex action (reflex arc); Chemical co-ordination: animal hormones (endocrine glands, adrenaline, thyroxine, growth hormone, insulin, testosterone, estrogen).
+     * How do Organisms Reproduce?: Reproduction in animals and plants (asexual: fission, fragmentation, regeneration, budding, vegetative propagation, spore formation; and sexual reproduction in flowering plants - pollination & fertilization; human male and female reproductive systems); reproductive health - need and methods of family planning (barrier, chemical, surgical). Safe sex vs HIV/AIDS. Child bearing and women's health.
+     * Heredity: Heredity; Mendel's contribution - Laws for inheritance of traits (monohybrid & dihybrid cross, phenotype & genotype ratios); Sex determination: brief introduction (XX and XY chromosomes).
+     * STRICT EXCLUSIONS: Evolution; evolution and classification; and evolution should not be equated with progress are strictly EXCLUDED from evaluation.
+   - Unit V: Natural Resources (5 Marks):
+     * Our Environment: Eco-system (biotic and abiotic components, food chains and food webs, trophic levels, 10% law of energy flow), Environmental problems, Ozone depletion (CFCs, Montreal protocol), waste production and their solutions. Biodegradable and non-biodegradable substances.
+     * STRICT EXCLUSION: NCERT Chapter 16 "Management of Natural Resources" will NOT be assessed in the year-end examination (assigned for portfolio/internal assessment only).
+     * NCERT box information across textbooks is for conceptual clarity only and will not be assessed in the year-end examination.
+
+${targetChaptersDirective}
+
+======================================================================
+MANDATORY 5-SECTION, 39-QUESTION BLUEPRINT STRUCTURE (EXACTLY 80 MARKS)
+======================================================================
+The paper MUST consist of exactly 5 sections (Section A to Section E) and exactly 39 sequentially numbered questions (Q1 to Q39):
+
+----------------------------------------------------------------------
+SECTION A: Multiple Choice & Assertion-Reason Questions (Q1 to Q20) — 20 Questions x 1 Mark = 20 Marks
+----------------------------------------------------------------------
+- Exactly 20 questions carrying 1 mark each.
+- All questions are compulsory.
+- Composition:
+  * Questions 1 to 16: Multiple Choice Questions (MCQs)
+    - Balanced distribution: ~5-6 Chemistry, ~5-6 Biology, ~5-6 Physics.
+    - Provide exactly 4 options in the "choices" array: ["(A) ...", "(B) ...", "(C) ...", "(D) ..."].
+  * Questions 17 to 20: Assertion-Reason Questions (A-R)
+    - Distributed across subjects: 1 Chemistry, 1-2 Biology, 1-2 Physics.
+    - Exactly 4 standard CBSE options in the "choices" array:
+      "(A) Both Assertion (A) and Reason (R) are true and Reason (R) is the correct explanation of Assertion (A)."
+      "(B) Both Assertion (A) and Reason (R) are true but Reason (R) is not the correct explanation of Assertion (A)."
+      "(C) Assertion (A) is true but Reason (R) is false."
+      "(D) Assertion (A) is false but Reason (R) is true."
+
+----------------------------------------------------------------------
+SECTION B: Very Short Answer Type Questions (Q21 to Q26) — 6 Questions x 2 Marks = 12 Marks
+----------------------------------------------------------------------
+- Exactly 6 VSA questions carrying 2 marks each.
+- Word limit: 30 to 50 words each.
+- SUBJECT DISTRIBUTION: EXACTLY 2 Chemistry + 2 Biology + 2 Physics!
+  * Q21: Chemistry (Chemical Reactions / Acids & Bases)
+  * Q22: Chemistry (Metals & Non-metals / Carbon) with internal choice
+  * Q23: Biology (Life Processes / Control & Coordination)
+  * Q24: Biology (Reproduction / Our Environment)
+  * Q25: Physics (Light - Reflection & Refraction / Human Eye)
+  * Q26: Physics (Electricity / Magnetic Effects) with internal choice
+- Provide internal choice ("orQuestion" and "orSolution") in at least 2 questions from the same chapter/subject.
+
+----------------------------------------------------------------------
+SECTION C: Short Answer Type Questions (Q27 to Q33) — 7 Questions x 3 Marks = 21 Marks
+----------------------------------------------------------------------
+- Exactly 7 SA questions carrying 3 marks each.
+- Word limit: 50 to 80 words each.
+- SUBJECT DISTRIBUTION: Balanced across components (2-3 Physics, 2-3 Chemistry, 2-3 Biology):
+  * Q27: Chemistry (e.g. Balanced reactions, properties of salts, metallurgy) with internal choice
+  * Q28: Chemistry (e.g. Carbon bonding, isomerism, functional groups)
+  * Q29: Biology (e.g. Nutrition, respiration, circulation, or excretion) with internal choice
+  * Q30: Biology (e.g. Plant/animal hormones, nervous system, reflex action)
+  * Q31: Biology (e.g. Mendel's cross, sex determination, or ecological pyramid/10% law)
+  * Q32: Physics (e.g. Refractive index calculation, lens/mirror numerical, defect of vision correction)
+  * Q33: Physics (e.g. Resistors combination numerical, heating effect, magnetic field rules)
+- Provide internal choice ("orQuestion" and "orSolution") in at least 2 questions from the same chapter/subject.
+
+----------------------------------------------------------------------
+SECTION D: Long Answer Type Questions (Q34 to Q36) — 3 Questions x 5 Marks = 15 Marks
+----------------------------------------------------------------------
+- Exactly 3 LA questions carrying 5 marks each.
+- Word limit: 80 to 120 words each (structured into multi-parts, e.g. (a) 2 marks, (b) 2 marks, (c) 1 mark, or (a) 3 marks, (b) 2 marks).
+- COMPONENT ALLOCATION: EXACTLY ONE QUESTION PER COMPONENT:
+  * Q34: Chemistry (5 Marks) — Structured multi-part question with a compulsory INTERNAL CHOICE ("orQuestion") from Chemistry!
+  * Q35: Biology (5 Marks) — Structured multi-part question with a compulsory INTERNAL CHOICE ("orQuestion") from Biology!
+  * Q36: Physics (5 Marks) — Structured multi-part question (conceptual + numerical / ray diagram) with a compulsory INTERNAL CHOICE ("orQuestion") from Physics!
+- EVERY question in Section D MUST have an internal choice ("orQuestion" and "orSolution") from the same subject component!
+
+----------------------------------------------------------------------
+SECTION E: Case-Based / Source-Based Assessment Units (Q37 to Q39) — 3 Questions x 4 Marks = 12 Marks
+----------------------------------------------------------------------
+- Exactly 3 Case-Based questions carrying 4 marks each.
+- Each case consists of a factual/experimental scenario (approx. 80-120 words), followed by 3 sub-questions:
+  * Sub-question (i): 1 Mark
+  * Sub-question (ii): 1 Mark
+  * Sub-question (iii): 2 Marks (with an internal choice: (iii) OR (iii))
+- COMPONENT ALLOCATION: EXACTLY ONE CASE STUDY PER COMPONENT:
+  * Q37: Physics Case Study (4 Marks) — Practical experiment or real-world application (e.g. domestic wiring & fuse rating, Ohm's law V-I graph analysis, or convex/concave lens image positioning in optical bench).
+  * Q38: Chemistry Case Study (4 Marks) — Experimental setup or reaction data (e.g. chlor-alkali process products, reactivity series displacement experiments, pH changes in digestive system, or cleansing action of soaps vs detergents).
+  * Q39: Biology Case Study (4 Marks) — Biological study or experimental data (e.g. Mendel's dihybrid seed shape/color cross, human nephron filtration rate, food chain energy transfer & biomagnification, or reflex action pathway).
+- Sub-question (iii) of each case study MUST include an internal choice ("OR" alternative sub-question for 2 marks).
+
+======================================================================
+CRITICAL CBSE QUALITY & ACCURACY REQUIREMENTS
+======================================================================
+1. Physics Precision:
+   - Ensure numerical problems have unambiguous given data and mathematically consistent values.
+   - All ray diagrams must follow standard Cartesian sign conventions (f < 0 for concave, f > 0 for convex).
+   - Use standard SI units (A, V, Ω, Ω·m, W, kWh, J, D for dioptre).
+2. Chemistry Precision:
+   - Chemical equations MUST be properly balanced with state symbols where appropriate.
+   - IUPAC nomenclature, homologous series, and functional group definitions must be completely accurate.
+   - Chemical tests and color changes (e.g. blue to white for copper sulphate, lime water turning milky, litmus colors) must be factually correct.
+3. Biology Precision:
+   - Terminology, anatomical structures, and physiological processes must follow NCERT standards.
+   - Genetics crosses must clearly specify parent traits, genotypes, gametes, and phenotypic/genotypic ratios.
+   - 10% law calculations and trophic level transfers must be mathematically consistent.
+4. JSON Escaping:
+   - Double-escape all backslashes in mathematical symbols or LaTeX: write \\\\Omega for Ω, \\\\mu for μ, etc.
+5. Strict Question Numbering:
+   - Number questions sequentially from 1 to 39 across all 5 sections.
+6. ${solutionDirective}
+
+======================================================================
+MANDATORY JSON OUTPUT FORMAT
+======================================================================
+Output MUST be strictly a single valid JSON object following this exact schema. Do NOT wrap the JSON in markdown fences, do NOT add introductory or concluding text:
+
+{
+  "sections": [
+    {
+      "name": "Section A",
+      "description": "Multiple Choice Questions & Assertion-Reason (1 Mark each, Q1 to Q20 - All questions are compulsory)",
+      "marksPerQuestion": 1,
+      "questions": [
+        {
+          "id": "q1",
+          "text": "1. [Chemistry MCQ text]",
+          "marks": 1,
+          "type": "mcq",
+          "choices": ["(A) Option 1", "(B) Option 2", "(C) Option 3", "(D) Option 4"],
+          "orQuestion": null,
+          "solution": "(A) Option 1 - [Reasoning/explanation]",
+          "orSolution": null
+        },
+        ...
+        {
+          "id": "q17",
+          "text": "17. Assertion (A): [Assertion text]\\nReason (R): [Reason text]",
+          "marks": 1,
+          "type": "mcq",
+          "choices": [
+            "(A) Both Assertion (A) and Reason (R) are true and Reason (R) is the correct explanation of Assertion (A).",
+            "(B) Both Assertion (A) and Reason (R) are true but Reason (R) is not the correct explanation of Assertion (A).",
+            "(C) Assertion (A) is true but Reason (R) is false.",
+            "(D) Assertion (A) is false but Reason (R) is true."
+          ],
+          "orQuestion": null,
+          "solution": "(A) Both Assertion (A) and Reason (R) are true and Reason (R) is the correct explanation of Assertion (A).",
+          "orSolution": null
+        }
+      ]
+    },
+    {
+      "name": "Section B",
+      "description": "Very Short Answer Type Questions (2 Marks each, Q21 to Q26 - 30 to 50 words)",
+      "marksPerQuestion": 2,
+      "questions": [
+        {
+          "id": "q21",
+          "text": "21. [Chemistry 2-Mark VSA Question]",
+          "marks": 2,
+          "type": "vsa",
+          "choices": null,
+          "orQuestion": null,
+          "solution": "[Point-wise 2-Mark marking scheme answer]",
+          "orSolution": null
+        },
+        {
+          "id": "q22",
+          "text": "22. [Chemistry 2-Mark VSA Question with Internal Choice]",
+          "marks": 2,
+          "type": "vsa",
+          "choices": null,
+          "orQuestion": "[Alternative Chemistry 2-Mark VSA Question]",
+          "solution": "[Solution for main question: 1 Mark per point]",
+          "orSolution": "[Solution for alternative question: 1 Mark per point]"
+        },
+        {
+          "id": "q23",
+          "text": "23. [Biology 2-Mark VSA Question]",
+          "marks": 2,
+          "type": "vsa",
+          "choices": null,
+          "orQuestion": null,
+          "solution": "[Point-wise 2-Mark answer]",
+          "orSolution": null
+        },
+        {
+          "id": "q24",
+          "text": "24. [Biology 2-Mark VSA Question]",
+          "marks": 2,
+          "type": "vsa",
+          "choices": null,
+          "orQuestion": null,
+          "solution": "[Point-wise 2-Mark answer]",
+          "orSolution": null
+        },
+        {
+          "id": "q25",
+          "text": "25. [Physics 2-Mark VSA Question]",
+          "marks": 2,
+          "type": "vsa",
+          "choices": null,
+          "orQuestion": null,
+          "solution": "[Point-wise 2-Mark answer / formula with calculation]",
+          "orSolution": null
+        },
+        {
+          "id": "q26",
+          "text": "26. [Physics 2-Mark VSA Question with Internal Choice]",
+          "marks": 2,
+          "type": "vsa",
+          "choices": null,
+          "orQuestion": "[Alternative Physics 2-Mark VSA Question]",
+          "solution": "[Solution for main question]",
+          "orSolution": "[Solution for alternative question]"
+        }
+      ]
+    },
+    {
+      "name": "Section C",
+      "description": "Short Answer Type Questions (3 Marks each, Q27 to Q33 - 50 to 80 words)",
+      "marksPerQuestion": 3,
+      "questions": [
+        {
+          "id": "q27",
+          "text": "27. [Chemistry 3-Mark SA Question with Internal Choice]",
+          "marks": 3,
+          "type": "sa",
+          "choices": null,
+          "orQuestion": "[Alternative Chemistry 3-Mark SA Question]",
+          "solution": "[Detailed 3-Mark solution: 1 Mark each for 3 points/steps]",
+          "orSolution": "[Detailed 3-Mark solution for alternative]"
+        },
+        {
+          "id": "q28",
+          "text": "28. [Chemistry 3-Mark SA Question]",
+          "marks": 3,
+          "type": "sa",
+          "choices": null,
+          "orQuestion": null,
+          "solution": "[Detailed 3-Mark solution]",
+          "orSolution": null
+        },
+        {
+          "id": "q29",
+          "text": "29. [Biology 3-Mark SA Question with Internal Choice]",
+          "marks": 3,
+          "type": "sa",
+          "choices": null,
+          "orQuestion": "[Alternative Biology 3-Mark SA Question]",
+          "solution": "[Detailed 3-Mark solution]",
+          "orSolution": "[Detailed 3-Mark solution for alternative]"
+        },
+        {
+          "id": "q30",
+          "text": "30. [Biology 3-Mark SA Question]",
+          "marks": 3,
+          "type": "sa",
+          "choices": null,
+          "orQuestion": null,
+          "solution": "[Detailed 3-Mark solution]",
+          "orSolution": null
+        },
+        {
+          "id": "q31",
+          "text": "31. [Biology 3-Mark SA Question]",
+          "marks": 3,
+          "type": "sa",
+          "choices": null,
+          "orQuestion": null,
+          "solution": "[Detailed 3-Mark solution]",
+          "orSolution": null
+        },
+        {
+          "id": "q32",
+          "text": "32. [Physics 3-Mark SA Question (Numerical / Conceptual)]",
+          "marks": 3,
+          "type": "sa",
+          "choices": null,
+          "orQuestion": null,
+          "solution": "[Step-by-step numerical solution with formula and units: 1M formula, 1M substitution, 1M final answer with unit]",
+          "orSolution": null
+        },
+        {
+          "id": "q33",
+          "text": "33. [Physics 3-Mark SA Question]",
+          "marks": 3,
+          "type": "sa",
+          "choices": null,
+          "orQuestion": null,
+          "solution": "[Detailed 3-Mark solution]",
+          "orSolution": null
+        }
+      ]
+    },
+    {
+      "name": "Section D",
+      "description": "Long Answer Type Questions (5 Marks each, Q34 to Q36 - 80 to 120 words)",
+      "marksPerQuestion": 5,
+      "questions": [
+        {
+          "id": "q34",
+          "text": "34. (a) [Chemistry sub-part (a)] (3 Marks)\\n(b) [Chemistry sub-part (b)] (2 Marks)",
+          "marks": 5,
+          "type": "la",
+          "choices": null,
+          "orQuestion": "(a) [Alternative Chemistry sub-part (a)] (3 Marks)\\n(b) [Alternative Chemistry sub-part (b)] (2 Marks)",
+          "solution": "Marking Scheme Breakdown:\\n(a) [Detailed 3-Mark answer]\\n(b) [Detailed 2-Mark answer]",
+          "orSolution": "Marking Scheme Breakdown for Alternative:\\n(a) [Detailed 3-Mark answer]\\n(b) [Detailed 2-Mark answer]"
+        },
+        {
+          "id": "q35",
+          "text": "35. (a) [Biology sub-part (a)] (3 Marks)\\n(b) [Biology sub-part (b)] (2 Marks)",
+          "marks": 5,
+          "type": "la",
+          "choices": null,
+          "orQuestion": "(a) [Alternative Biology sub-part (a)] (3 Marks)\\n(b) [Alternative Biology sub-part (b)] (2 Marks)",
+          "solution": "Marking Scheme Breakdown:\\n(a) [Detailed 3-Mark answer]\\n(b) [Detailed 2-Mark answer]",
+          "orSolution": "Marking Scheme Breakdown for Alternative:\\n(a) [Detailed 3-Mark answer]\\n(b) [Detailed 2-Mark answer]"
+        },
+        {
+          "id": "q36",
+          "text": "36. (a) [Physics sub-part (a) - Conceptual/Ray diagram] (3 Marks)\\n(b) [Physics sub-part (b) - Numerical problem] (2 Marks)",
+          "marks": 5,
+          "type": "la",
+          "choices": null,
+          "orQuestion": "(a) [Alternative Physics sub-part (a)] (3 Marks)\\n(b) [Alternative Physics sub-part (b)] (2 Marks)",
+          "solution": "Marking Scheme Breakdown:\\n(a) [Detailed 3-Mark answer]\\n(b) [Step-by-step 2-Mark numerical working]",
+          "orSolution": "Marking Scheme Breakdown for Alternative:\\n(a) [Detailed 3-Mark answer]\\n(b) [Detailed 2-Mark answer]"
+        }
+      ]
+    },
+    {
+      "name": "Section E",
+      "description": "Case-Based / Source-Based Assessment Units (4 Marks each, Q37 to Q39 - All questions compulsory with internal choice in sub-question iii)",
+      "marksPerQuestion": 4,
+      "questions": [
+        {
+          "id": "q37",
+          "text": "37. Read the following source and answer the questions that follow:\\n\\n[Authentic Physics case study passage/context, approx 80-120 words]\\n\\n(i) [Sub-question (i)] (1 Mark)\\n(ii) [Sub-question (ii)] (1 Mark)\\n(iii) [Sub-question (iii)] (2 Marks)\\nOR\\n[Alternative Sub-question (iii)] (2 Marks)",
+          "marks": 4,
+          "type": "caseStudy",
+          "choices": null,
+          "orQuestion": null,
+          "solution": "(i) [1-Mark answer]\\n(ii) [1-Mark answer]\\n(iii) [2-Mark answer with explanation] OR [Alternative 2-Mark answer]",
+          "orSolution": null
+        },
+        {
+          "id": "q38",
+          "text": "38. Read the following source and answer the questions that follow:\\n\\n[Authentic Chemistry experimental context/case study passage, approx 80-120 words]\\n\\n(i) [Sub-question (i)] (1 Mark)\\n(ii) [Sub-question (ii)] (1 Mark)\\n(iii) [Sub-question (iii)] (2 Marks)\\nOR\\n[Alternative Sub-question (iii)] (2 Marks)",
+          "marks": 4,
+          "type": "caseStudy",
+          "choices": null,
+          "orQuestion": null,
+          "solution": "(i) [1-Mark answer]\\n(ii) [1-Mark answer]\\n(iii) [2-Mark answer with chemical equation] OR [Alternative 2-Mark answer]",
+          "orSolution": null
+        },
+        {
+          "id": "q39",
+          "text": "39. Read the following source and answer the questions that follow:\\n\\n[Authentic Biology case study passage on genetics/ecosystem/life processes, approx 80-120 words]\\n\\n(i) [Sub-question (i)] (1 Mark)\\n(ii) [Sub-question (ii)] (1 Mark)\\n(iii) [Sub-question (iii)] (2 Marks)\\nOR\\n[Alternative Sub-question (iii)] (2 Marks)",
+          "marks": 4,
+          "type": "caseStudy",
+          "choices": null,
+          "orQuestion": null,
+          "solution": "(i) [1-Mark answer]\\n(ii) [1-Mark answer]\\n(iii) [2-Mark answer with explanation] OR [Alternative 2-Mark answer]",
+          "orSolution": null
+        }
+      ]
+    }
+  ]
+}
+`;
+}
+
+/**
+ * Builds the official 70-Mark, 5-Section, 33-Question examination paper prompt for CBSE Class 12 Chemistry (Subject Code 043).
+ * Follows the official CBSE 2024-25 / 2025-26 / 2026-27 design, question paper blueprint, and competency guidelines:
+ * Total Marks: 70 | Time Allowed: 3 Hours
+ * - Section A: Questions 1 to 16 (16 Objective Type Questions x 1 Mark = 16 Marks):
+ *     * Q1 to Q12: Multiple Choice Questions (12 MCQs distributed across Physical, Inorganic, Organic)
+ *     * Q13 to Q16: Assertion-Reasoning Questions (4 A-R Questions with standard options A, B, C, D)
+ * - Section B: Questions 17 to 21 (5 Very Short Answer Questions x 2 Marks = 10 Marks, 30–50 words):
+ *     * Questions across Physical, Inorganic, and Organic Chemistry with internal choice in 1-2 questions.
+ * - Section C: Questions 22 to 28 (7 Short Answer Questions x 3 Marks = 21 Marks, 50–80 words):
+ *     * Balanced across branches (Physical 2, Inorganic 2, Organic 3) with internal choices in 2 questions.
+ * - Section D: Questions 29 to 30 (2 Case-Based / Source-Based Assessment Units x 4 Marks = 8 Marks):
+ *     * Q29: Physical or Inorganic Chemistry Case Study (4 Marks) with sub-questions and internal choice
+ *     * Q30: Organic Chemistry Case Study (4 Marks) with sub-questions and internal choice
+ * - Section E: Questions 31 to 33 (3 Long Answer Questions x 5 Marks = 15 Marks, 80–120 words):
+ *     * Q31: Physical Chemistry (5 Marks) with compulsory internal choice
+ *     * Q32: Inorganic Chemistry (5 Marks) with compulsory internal choice
+ *     * Q33: Organic Chemistry (5 Marks) with compulsory internal choice
+ * Total: 16 + 10 + 21 + 8 + 15 = 70 Marks (33 Questions total).
+ * Unit-wise distribution guideline: Solutions 7M, Electrochemistry 9M, Kinetics 7M, d- & f-Block 7M, Coordination 7M, Haloalkanes 6M, Alcohols 6M, Aldehydes 8M, Amines 6M, Biomolecules 7M = 70 Marks.
+ */
+function buildClass12ChemistryFullExamPrompt(config: PaperConfig, solutionDirective: string): string {
+  const targetChaptersDirective =
+    config.selectedChapters &&
+    config.selectedChapters.length > 0 &&
+    !config.selectedChapters.includes("all")
+      ? `--- USER SELECTED CHAPTER/UNIT FOCUS ---
+When generating questions across all sections, strictly prioritize these selected units/chapters chosen by the user:
+${config.selectedChapters.map((c) => `- ${c}`).join("\n")}
+Ensure all generated questions originate strictly from these chosen units while maintaining the 5-section paper blueprint.`
+      : `--- FULL SYLLABUS COVERAGE (OFFICIAL 10 UNITS WEIGHTAGE) ---
+Ensure comprehensive, balanced coverage across all 10 prescribed units in strict accordance with official CBSE blueprints:
+- Unit 1: Solutions (7 Marks)
+- Unit 2: Electrochemistry (9 Marks)
+- Unit 3: Chemical Kinetics (7 Marks)
+- Unit 4: d- and f-Block Elements (7 Marks)
+- Unit 5: Coordination Compounds (7 Marks)
+- Unit 6: Haloalkanes and Haloarenes (6 Marks)
+- Unit 7: Alcohols, Phenols and Ethers (6 Marks)
+- Unit 8: Aldehydes, Ketones and Carboxylic Acids (8 Marks)
+- Unit 9: Amines (6 Marks)
+- Unit 10: Biomolecules (7 Marks)
+Total: 70 Marks Theory (plus 30 Marks Practical Assessment = 100 Marks).`;
+
+  return `
+You are a Senior CBSE Examination Paper Setter and Chief Examiner for Class 12 Chemistry (Subject Code 043) with 25+ years of experience.
+Your task is to generate the COMPLETE, OFFICIAL, 100% CBSE-COMPLIANT Class 12 Chemistry Question Paper for 2026.
+
+Total Marks: 70
+Time Allowed: 3 Hours
+Target Exam Type: ${config.examType}
+Difficulty Level: ${config.difficulty}
+Subject: Chemistry (Subject Code 043)
+Class: Class 12 (Class XII)
+
+======================================================================
+MANDATORY COMPETENCY DISTRIBUTION (70 MARKS)
+======================================================================
+1. Remembering and Understanding (40% - 28 Marks): Definitions, statements of laws, nomenclature, direct conceptual recall.
+2. Applying (30% - 21 Marks): Numericals, solving organic conversions, predicting products, calculating cell EMF, rate constants.
+3. Analysing, Evaluating and Creating (30% - 21 Marks): Deducing reaction mechanisms, reasoning transition metal anomalies, interpreting case-based experimental data.
+
+======================================================================
+OFFICIAL SYLLABUS & UNIT WEIGHTAGE (70 MARKS)
+======================================================================
+1. PHYSICAL CHEMISTRY (23 Marks):
+   - Unit 1: Solutions (7 Marks) - Types, Henry's law, Raoult's law, colligative properties (relative lowering of VP, elevation of boiling point Kb, depression of freezing point Kf, osmotic pressure), abnormal molar mass, van't Hoff factor (i).
+   - Unit 2: Electrochemistry (9 Marks) - Galvanic cells, Nernst equation, Gibbs energy, molar conductivity, Kohlrausch's law, Faraday's laws of electrolysis, batteries, fuel cells, corrosion.
+   - Unit 3: Chemical Kinetics (7 Marks) - Rate law, order and molecularity, integrated rate equations for zero and first order reactions, half-life, Arrhenius equation and activation energy (Ea), collision theory.
+
+2. INORGANIC CHEMISTRY (14 Marks):
+   - Unit 4: d- and f-Block Elements (7 Marks) - 3d series trends, oxidation states, standard electrode potentials, catalytic properties, interstitial compounds, K2Cr2O7 and KMnO4 preparation and oxidizing properties, Lanthanoids and Actinoids (lanthanoid contraction and consequences).
+   - Unit 5: Coordination Compounds (7 Marks) - Werner's theory, IUPAC nomenclature, isomerism (structural and stereoisomerism), Valence Bond Theory (hybridisation, magnetic moment), Crystal Field Theory (octahedral and tetrahedral splitting, spectrochemical series, colour), metal carbonyl bonding.
+
+3. ORGANIC CHEMISTRY (33 Marks):
+   - Unit 6: Haloalkanes and Haloarenes (6 Marks) - Nomenclature, preparations, SN1 and SN2 mechanisms, stereochemistry, elimination reactions, organometallics (Grignard), electrophilic substitution in haloarenes, polyhalogen compounds.
+   - Unit 7: Alcohols, Phenols and Ethers (6 Marks) - Nomenclature, preparations, acidity of phenols vs alcohols, Lucas test, dehydration mechanism, Kolbe's and Reimer-Tiemann reactions, Williamson ether synthesis, ether cleavage by HI.
+   - Unit 8: Aldehydes, Ketones and Carboxylic Acids (8 Marks) - Carbonyl reactions: nucleophilic addition, Clemmensen and Wolff-Kishner reduction, Tollens' and Fehling's tests, haloform reaction, aldol condensation, Cannizzaro reaction, carboxylic acid acidity and HVZ reaction.
+   - Unit 9: Amines (6 Marks) - Classification, basic character in gas and aqueous phases, Gabriel phthalimide and Hoffmann bromamide reactions, carbylamine test, Hinsberg's reagent test, diazonium salts preparation and synthetic applications (Sandmeyer, Gattermann, coupling reactions).
+   - Unit 10: Biomolecules (7 Marks) - Carbohydrates (glucose structure proof, anomers, Haworth formulas, sucrose, starch, cellulose), proteins (amino acids, zwitterion, peptide bond, primary/secondary/tertiary structures, denaturation), enzymes, vitamins, nucleic acids (DNA/RNA, replication, transcription), hormones.
+
+STRICTLY FORMATIVE-ONLY TOPICS (NEVER GENERATE BOARD EXAM QUESTIONS FROM THESE):
+- Surface Chemistry
+- General Principles and Processes of Isolation of Elements (Metallurgy)
+- Polymers
+- Chemistry in Everyday Life
+(These four units are strictly for formative assessment and MUST NEVER appear in year-end board examination papers!)
+
+${targetChaptersDirective}
+
+======================================================================
+MANDATORY 5-SECTION, 33-QUESTION BLUEPRINT STRUCTURE (EXACTLY 70 MARKS)
+======================================================================
+The paper MUST consist of exactly 5 sections (Section A to Section E) and exactly 33 sequentially numbered questions (Q1 to Q33):
+
+----------------------------------------------------------------------
+SECTION A: Objective Type Questions (Q1 to Q16) — 16 Questions x 1 Mark = 16 Marks
+----------------------------------------------------------------------
+- Exactly 16 questions carrying 1 mark each. All compulsory.
+- Composition:
+  * Questions 1 to 12: Multiple Choice Questions (12 MCQs)
+    - Balanced distribution: Physical (~4 MCQs), Inorganic (~3 MCQs), Organic (~5 MCQs).
+    - Provide exactly 4 options in the "choices" array: ["(A) ...", "(B) ...", "(C) ...", "(D) ..."].
+  * Questions 13 to 16: Assertion-Reason Questions (4 A-R Questions)
+    - Distributed across Physical, Inorganic, and Organic Chemistry.
+    - Exactly 4 standard CBSE options in the "choices" array:
+      "(A) Both Assertion (A) and Reason (R) are true and Reason (R) is the correct explanation of Assertion (A)."
+      "(B) Both Assertion (A) and Reason (R) are true but Reason (R) is not the correct explanation of Assertion (A)."
+      "(C) Assertion (A) is true but Reason (R) is false."
+      "(D) Assertion (A) is false but Reason (R) is true."
+
+----------------------------------------------------------------------
+SECTION B: Very Short Answer Type Questions (Q17 to Q21) — 5 Questions x 2 Marks = 10 Marks
+----------------------------------------------------------------------
+- Exactly 5 VSA questions carrying 2 marks each.
+- Word limit: 30 to 50 words each.
+- Subject distribution:
+  * Q17: Physical Chemistry (Solutions / Electrochemistry / Chemical Kinetics)
+  * Q18: Inorganic Chemistry (d & f Block Elements / Coordination Compounds)
+  * Q19: Organic Chemistry (Haloalkanes / Alcohols / Phenols)
+  * Q20: Organic Chemistry (Aldehydes, Ketones, Carboxylic Acids) with internal choice
+  * Q21: Organic Chemistry (Amines / Biomolecules)
+- Provide internal choice ("orQuestion" and "orSolution") in at least 1 question.
+
+----------------------------------------------------------------------
+SECTION C: Short Answer Type Questions (Q22 to Q28) — 7 Questions x 3 Marks = 21 Marks
+----------------------------------------------------------------------
+- Exactly 7 SA questions carrying 3 marks each.
+- Word limit: 50 to 80 words each.
+- Subject distribution:
+  * Q22: Physical Chemistry (Numerical calculation on Colligative Properties or Nernst Equation)
+  * Q23: Physical Chemistry (Chemical Kinetics / Rate Law / Arrhenius Equation) with internal choice
+  * Q24: Inorganic Chemistry (d- and f-Block trends / Lanthanoid Contraction / Potassium Permanganate)
+  * Q25: Inorganic Chemistry (Coordination Compounds - IUPAC nomenclature / CFT / Isomerism)
+  * Q26: Organic Chemistry (Reaction mechanisms - SN1/SN2 or acid-catalysed dehydration, or chemical distinguishing tests)
+  * Q27: Organic Chemistry (Conversions / Named Reactions / Aldol / Cannizzaro) with internal choice
+  * Q28: Organic Chemistry (Biomolecules - Glucose reactions, peptide bonds, denaturation, vitamins, DNA/RNA)
+- Provide internal choice ("orQuestion" and "orSolution") in at least 2 questions.
+
+----------------------------------------------------------------------
+SECTION D: Case-Based / Source-Based Assessment Units (Q29 to Q30) — 2 Questions x 4 Marks = 8 Marks
+----------------------------------------------------------------------
+- Exactly 2 Case-Based questions carrying 4 marks each.
+- Each case consists of a factual/experimental scenario (approx. 80-120 words), followed by 3 sub-questions:
+  * Sub-question (i): 1 Mark
+  * Sub-question (ii): 1 Mark
+  * Sub-question (iii): 2 Marks (with an internal choice: (iii) OR (iii))
+- Allocation:
+  * Q29: Physical or Inorganic Chemistry Case Study (e.g. Molar conductivity & Kohlrausch law, or Fuel cells & batteries, or Crystal field splitting and colour of transition metal complexes).
+  * Q30: Organic Chemistry Case Study (e.g. Nucleophilic addition to carbonyls, acidity of carboxylic acids, nucleic acids DNA/RNA structures, or synthetic diazonium transformations).
+- Sub-question (iii) of each case study MUST include an internal choice ("OR" alternative sub-question for 2 marks).
+
+----------------------------------------------------------------------
+SECTION E: Long Answer Type Questions (Q31 to Q33) — 3 Questions x 5 Marks = 15 Marks
+----------------------------------------------------------------------
+- Exactly 3 LA questions carrying 5 marks each.
+- Word limit: 80 to 120 words each (structured into multi-parts, e.g. (a) 2 marks, (b) 3 marks, or (a) 3 marks, (b) 2 marks).
+- EVERY QUESTION IN SECTION E MUST HAVE A COMPULSORY INTERNAL CHOICE ("orQuestion" and "orSolution") from the same branch:
+  * Q31: Physical Chemistry (Solutions / Electrochemistry / Chemical Kinetics - combination of numerical calculation + conceptual theory) with compulsory INTERNAL CHOICE!
+  * Q32: Inorganic Chemistry (d- and f-Block Elements / Coordination Compounds - reasoning on transition metal anomalies, electronic configurations, crystal field theory splitting, isomerism) with compulsory INTERNAL CHOICE!
+  * Q33: Organic Chemistry (Aldehydes, Ketones, Carboxylic Acids / Haloalkanes / Alcohols / Amines - road-map/A,B,C identification problem, organic conversions, and chemical distinguishing tests) with compulsory INTERNAL CHOICE!
+
+======================================================================
+CRITICAL CHEMISTRY ACCURACY DIRECTIVES
+======================================================================
+1. Physical Chemistry:
+   - All numerical calculations must have logically consistent data and realistic physical values.
+   - Use correct formulas and standard SI units (g/mol, S cm^2 mol^-1, mol L^-1 s^-1, J/mol, etc.).
+2. Inorganic Chemistry:
+   - Correctly balance redox equations (e.g. MnO4- and Cr2O7 2- reactions in acidic medium).
+   - Write accurate electronic configurations and IUPAC names for coordination complexes.
+3. Organic Chemistry:
+   - Chemical structures, IUPAC names, reagent conditions, and mechanisms must be 100% scientifically valid.
+   - Named reactions and conversions must proceed via authentic, syllabus-compliant pathways.
+4. JSON Escaping:
+   - Double-escape all backslashes in mathematical symbols or chemical representations: write \\\\Delta for Delta, \\\\alpha for alpha, \\\\mu for mu, etc.
+5. Strict Question Numbering:
+   - Number questions sequentially from 1 to 33 across all 5 sections.
+6. ${solutionDirective}
+
+======================================================================
+MANDATORY JSON OUTPUT FORMAT
+======================================================================
+Output MUST be strictly a single valid JSON object following this exact schema. Do NOT wrap the JSON in markdown fences, do NOT add introductory or concluding text:
+
+{
+  "sections": [
+    {
+      "name": "Section A",
+      "description": "Multiple Choice Questions & Assertion-Reason (1 Mark each, Q1 to Q16 - All questions compulsory)",
+      "marksPerQuestion": 1,
+      "questions": [
+        {
+          "id": "q1",
+          "text": "1. [Physical/Inorganic/Organic MCQ text]",
+          "marks": 1,
+          "type": "mcq",
+          "choices": ["(A) Option 1", "(B) Option 2", "(C) Option 3", "(D) Option 4"],
+          "orQuestion": null,
+          "solution": "(A) Option 1 - [Reasoning/explanation]",
+          "orSolution": null
+        },
+        ...
+        {
+          "id": "q13",
+          "text": "13. Assertion (A): [Assertion text]\\nReason (R): [Reason text]",
+          "marks": 1,
+          "type": "mcq",
+          "choices": [
+            "(A) Both Assertion (A) and Reason (R) are true and Reason (R) is the correct explanation of Assertion (A).",
+            "(B) Both Assertion (A) and Reason (R) are true but Reason (R) is not the correct explanation of Assertion (A).",
+            "(C) Assertion (A) is true but Reason (R) is false.",
+            "(D) Assertion (A) is false but Reason (R) is true."
+          ],
+          "orQuestion": null,
+          "solution": "(A) Both Assertion (A) and Reason (R) are true and Reason (R) is the correct explanation of Assertion (A).",
+          "orSolution": null
+        }
+      ]
+    },
+    {
+      "name": "Section B",
+      "description": "Very Short Answer Type Questions (2 Marks each, Q17 to Q21 - 30 to 50 words)",
+      "marksPerQuestion": 2,
+      "questions": [
+        {
+          "id": "q17",
+          "text": "17. [Physical Chemistry 2-Mark VSA Question]",
+          "marks": 2,
+          "type": "vsa",
+          "choices": null,
+          "orQuestion": null,
+          "solution": "[Point-wise 2-Mark marking scheme answer]",
+          "orSolution": null
+        },
+        ...
+        {
+          "id": "q20",
+          "text": "20. [Organic Chemistry 2-Mark VSA Question with Internal Choice]",
+          "marks": 2,
+          "type": "vsa",
+          "choices": null,
+          "orQuestion": "[Alternative Organic Chemistry 2-Mark VSA Question]",
+          "solution": "[Solution for main question: 1 Mark per point]",
+          "orSolution": "[Solution for alternative question: 1 Mark per point]"
+        }
+      ]
+    },
+    {
+      "name": "Section C",
+      "description": "Short Answer Type Questions (3 Marks each, Q22 to Q28 - 50 to 80 words)",
+      "marksPerQuestion": 3,
+      "questions": [
+        {
+          "id": "q22",
+          "text": "22. [Physical Chemistry 3-Mark Numerical/Conceptual Question]",
+          "marks": 3,
+          "type": "sa",
+          "choices": null,
+          "orQuestion": null,
+          "solution": "[Detailed 3-Mark step-by-step solution: 1M formula, 1M substitution, 1M final answer with unit]",
+          "orSolution": null
+        },
+        ...
+        {
+          "id": "q27",
+          "text": "27. [Organic Chemistry 3-Mark Question with Internal Choice]",
+          "marks": 3,
+          "type": "sa",
+          "choices": null,
+          "orQuestion": "[Alternative Organic Chemistry 3-Mark Question]",
+          "solution": "[Detailed 3-Mark solution]",
+          "orSolution": "[Detailed 3-Mark solution for alternative]"
+        }
+      ]
+    },
+    {
+      "name": "Section D",
+      "description": "Case-Based / Source-Based Assessment Units (4 Marks each, Q29 to Q30 - All questions compulsory with internal choice in sub-question iii)",
+      "marksPerQuestion": 4,
+      "questions": [
+        {
+          "id": "q29",
+          "text": "29. Read the following source and answer the questions that follow:\\n\\n[Authentic Physical or Inorganic Chemistry experimental/data passage, approx 80-120 words]\\n\\n(i) [Sub-question (i)] (1 Mark)\\n(ii) [Sub-question (ii)] (1 Mark)\\n(iii) [Sub-question (iii)] (2 Marks)\\nOR\\n[Alternative Sub-question (iii)] (2 Marks)",
+          "marks": 4,
+          "type": "caseStudy",
+          "choices": null,
+          "orQuestion": null,
+          "solution": "(i) [1-Mark answer]\\n(ii) [1-Mark answer]\\n(iii) [2-Mark answer with explanation] OR [Alternative 2-Mark answer]",
+          "orSolution": null
+        },
+        {
+          "id": "q30",
+          "text": "30. Read the following source and answer the questions that follow:\\n\\n[Authentic Organic Chemistry reaction context or biochemical passage, approx 80-120 words]\\n\\n(i) [Sub-question (i)] (1 Mark)\\n(ii) [Sub-question (ii)] (1 Mark)\\n(iii) [Sub-question (iii)] (2 Marks)\\nOR\\n[Alternative Sub-question (iii)] (2 Marks)",
+          "marks": 4,
+          "type": "caseStudy",
+          "choices": null,
+          "orQuestion": null,
+          "solution": "(i) [1-Mark answer]\\n(ii) [1-Mark answer]\\n(iii) [2-Mark answer with explanation] OR [Alternative 2-Mark answer]",
+          "orSolution": null
+        }
+      ]
+    },
+    {
+      "name": "Section E",
+      "description": "Long Answer Type Questions (5 Marks each, Q31 to Q33 - 80 to 120 words, with compulsory internal choice in each question)",
+      "marksPerQuestion": 5,
+      "questions": [
+        {
+          "id": "q31",
+          "text": "31. (a) [Physical Chemistry sub-part (a) - Conceptual/Theory] (3 Marks)\\n(b) [Physical Chemistry sub-part (b) - Numerical calculation] (2 Marks)",
+          "marks": 5,
+          "type": "la",
+          "choices": null,
+          "orQuestion": "(a) [Alternative Physical Chemistry sub-part (a)] (3 Marks)\\n(b) [Alternative Physical Chemistry sub-part (b)] (2 Marks)",
+          "solution": "Marking Scheme Breakdown:\\n(a) [Detailed 3-Mark answer]\\n(b) [Step-by-step 2-Mark numerical calculation with formula and unit]",
+          "orSolution": "Marking Scheme Breakdown for Alternative:\\n(a) [Detailed 3-Mark answer]\\n(b) [Detailed 2-Mark answer]"
+        },
+        {
+          "id": "q32",
+          "text": "32. (a) [Inorganic Chemistry sub-part (a) - Transition elements/CFT reasoning] (3 Marks)\\n(b) [Inorganic Chemistry sub-part (b) - Isomerism/balanced equation] (2 Marks)",
+          "marks": 5,
+          "type": "la",
+          "choices": null,
+          "orQuestion": "(a) [Alternative Inorganic Chemistry sub-part (a)] (3 Marks)\\n(b) [Alternative Inorganic Chemistry sub-part (b)] (2 Marks)",
+          "solution": "Marking Scheme Breakdown:\\n(a) [Detailed 3-Mark answer]\\n(b) [Detailed 2-Mark answer]",
+          "orSolution": "Marking Scheme Breakdown for Alternative:\\n(a) [Detailed 3-Mark answer]\\n(b) [Detailed 2-Mark answer]"
+        },
+        {
+          "id": "q33",
+          "text": "33. (a) [Organic Chemistry sub-part (a) - Road-map/A,B,C identification problem] (3 Marks)\\n(b) [Organic Chemistry sub-part (b) - Chemical test to distinguish compounds] (2 Marks)",
+          "marks": 5,
+          "type": "la",
+          "choices": null,
+          "orQuestion": "(a) [Alternative Organic Chemistry sub-part (a) - Conversions/Mechanism] (3 Marks)\\n(b) [Alternative Organic Chemistry sub-part (b) - Named reaction/Reasoning] (2 Marks)",
+          "solution": "Marking Scheme Breakdown:\\n(a) [Identification of A, B, C with chemical equations: 1 Mark each]\\n(b) [Chemical test with observation: 2 Marks]",
+          "orSolution": "Marking Scheme Breakdown for Alternative:\\n(a) [Step-by-step organic conversion: 3 Marks]\\n(b) [Detailed explanation: 2 Marks]"
+        }
+      ]
+    }
+  ]
+}
+`;
+}
+
+/**
+ * Builds an authentic, official CBSE Class 12 Accountancy Board / Pre-Board / Sample / Half-Yearly Exam Prompt.
+ * Theory Marks: 80 | Duration: 3 Hours | Total Questions: 34
+ *
+ * Course Structure (80 Marks Theory):
+ * - Part A: Accounting for Partnership Firms and Companies (60 Marks, Q1 to Q26)
+ *   * Unit 1: Accounting for Partnership Firms (36 Marks)
+ *   * Unit 2: Accounting for Companies (24 Marks)
+ * - Part B: Financial Statement Analysis (20 Marks, Q27 to Q34)
+ *   * Unit 3: Analysis of Financial Statements (12 Marks)
+ *   * Unit 4: Cash Flow Statement (8 Marks)
+ *
+ * Question Paper Typology (Image 1):
+ * - Remembering and Understanding: 32 Marks (40%)
+ * - Applying: 24 Marks (30%)
+ * - Analysing, Evaluating and Creating: 24 Marks (30%)
+ *
+ * Questions Breakdown (34 Questions Total):
+ * - 1-Mark Questions (20 Questions = 20 Marks): Q1-Q16 in Part A, Q27-Q30 in Part B (MCQs & Assertion-Reason)
+ * - 3-Mark Questions (6 Questions = 18 Marks): Q17-Q20 in Part A, Q31-Q32 in Part B (Short Answer SA-I)
+ * - 4-Mark Questions (3 Questions = 12 Marks): Q21-Q22 in Part A, Q33 in Part B (Short Answer SA-II)
+ * - 6-Mark Questions (5 Questions = 30 Marks): Q23-Q26 in Part A, Q34 in Part B (Long Answer LA)
+ * Internal Choices provided in at least 7 questions (3 in 3-mark, 2 in 4-mark, 3 in 6-mark).
+ */
+function buildClass12AccountancyFullExamPrompt(
+  config: PaperConfig,
+  solutionDirective: string
+): string {
+  const selectedChapters =
+    config.selectedChapters && config.selectedChapters.length > 0
+      ? config.selectedChapters.join(", ")
+      : "All Prescribed Units & Chapters (Full Syllabus - Part A: Partnership & Companies; Part B: Financial Statement Analysis & Cash Flow Statement)";
+
+  return `
+You are a Senior CBSE Examination Paper Setter and Chief Moderator for Class 12 Accountancy (Subject Code: 055) with over 20 years of experience.
+Your task is to generate an authentic, fully curriculum-compliant, and mathematically exact CBSE Class 12 Accountancy Question Paper (80 Marks, 3 Hours) strictly according to the latest CBSE Examination Blueprint and Course Structure.
+
+TARGET SUBJECT: CBSE Class 12 Accountancy (Subject Code: 055)
+EXAM TYPE: ${config.examType.toUpperCase().replace("_", " ")}
+TARGET CHAPTERS / SYLLABUS:
+${selectedChapters}
+
+--- OFFICIAL COURSE STRUCTURE & PRESCRIBED UNITS (80 MARKS TOTAL) ---
+PART A: ACCOUNTING FOR PARTNERSHIP FIRMS AND COMPANIES (60 MARKS - 150 PERIODS)
+1. Unit 1: Accounting for Partnership Firms (36 Marks)
+   - Partnership Fundamentals:
+     * Features of Partnership, Partnership Deed, Provisions of the Indian Partnership Act 1932 in absence of deed.
+     * Note: Interest on partner's loan is to be treated as a CHARGE AGAINST PROFITS (debited to P&L Account, not P&L Appropriation Account).
+     * Fixed vs Fluctuating capital accounts. Preparation of Profit and Loss Appropriation Account: division of profit, guarantee of profits.
+     * Past adjustments (relating to interest on capital, interest on drawing, salary, profit sharing ratio) using Statement Showing Adjustments.
+     * Goodwill: Meaning, nature, factors affecting, valuation methods (Average profit, Super profit, Capitalisation). Adjusted through partners' capital/current accounts strictly as per AS 26.
+   - Reconstitution & Dissolution of Partnership Firms:
+     * Change in Profit Sharing Ratio: Sacrificing ratio, gaining ratio, revaluation of assets and reassessment of liabilities, treatment of reserves and accumulated profits/losses, Revaluation Account & Balance Sheet.
+     * Admission of a Partner: New PSR, sacrificing ratio, treatment of goodwill as per AS 26, revaluation of assets/liabilities, reserves, adjustment of capital accounts, Balance Sheet.
+     * Retirement & Death of a Partner: Gaining ratio, goodwill treatment as per AS 26, revaluation, accumulated reserves/profits, capital adjustments, Retiring Partner's Loan Account.
+     * Deceased Partner: Calculation of deceased partner's share of profit till death (time or sales basis, via P&L Suspense A/c or gaining partners), preparation of Deceased Partner's Capital Account and his Executor's Account.
+     * Dissolution of a Partnership Firm: Types of dissolution, settlement of accounts, preparation of Realisation Account, Partners' Capital Accounts, and Cash/Bank Account.
+     * MANDATORY REALISATION RULES (CBSE OFFICIAL SYLLABUS NOTES):
+       (i) If realised value of tangible assets is not given, realise at book value itself.
+       (ii) If realised value of intangible assets is not given, realise at nil (zero value).
+       (iii) In case realisation expenses are borne by a partner, clear indication must be given regarding payment.
+
+2. Unit 2: Accounting for Companies (24 Marks)
+   - Accounting for Share Capital:
+     * Features and types of companies. Nature and types of share capital.
+     * Issue and allotment of equity and preference shares: Over-subscription (pro-rata allotment) and under-subscription; issue at par and at premium; calls in advance and calls in arrears (excluding interest); issue for consideration other than cash.
+     * Concept of Private Placement, Employee Stock Option Plan (ESOP), Sweat Equity.
+     * Accounting treatment of forfeiture and re-issue of shares:
+       - Forfeiture of shares issued at par and premium (premium received vs not received).
+       - Reissue of forfeited shares at par, premium, or discount (maximum discount cannot exceed forfeited amount on those shares).
+       - Transfer to Capital Reserve = (Amount forfeited on reissued shares - Discount allowed on reissue).
+     * Disclosure of share capital in the Balance Sheet of a company as per Schedule III Part I of Companies Act, 2013 (Notes to Accounts: Authorised, Issued, Subscribed and fully paid-up, Subscribed but not fully paid-up, Less Calls-in-arrears, Add Share Forfeited Account).
+   - Accounting for Debentures:
+     * Meaning, types. Issue at par, premium, discount. Issue for consideration other than cash.
+     * Issue of debentures with terms of redemption (different conditions: issued at par/discount/premium, redeemable at par/premium).
+     * Debentures as collateral security (concept, balance sheet presentation, journal entries).
+     * Interest on debentures (concept of TDS is excluded).
+     * MANDATORY DEBENTURES RULE (AS 16 DIRECTIVE):
+       Discount or loss on issue of debentures to be written off in the year debentures are allotted: FIRST from Securities Premium Reserve (if available) and then balance from Statement of Profit and Loss as Finance Cost (AS 16).
+
+PART B: FINANCIAL STATEMENT ANALYSIS (20 MARKS)
+3. Unit 3: Analysis of Financial Statements (12 Marks)
+   - Financial Statements of a Company:
+     * Meaning, nature, uses and importance. Statement of Profit and Loss and Balance Sheet in prescribed format with major headings and sub-headings as per Schedule III to Companies Act, 2013.
+   - Tools of Financial Statement Analysis: Comparative Statements, Common Size Statements, Ratio Analysis, Cash Flow Analysis.
+   - Accounting Ratios: Meaning, objectives, classification and computation:
+     * Liquidity Ratios: Current Ratio (Current Assets / Current Liabilities) and Quick Ratio (Quick Assets / Current Liabilities).
+     * Solvency Ratios: Debt to Equity Ratio, Total Assets to Debt Ratio, Proprietary Ratio, Interest Coverage Ratio (in times).
+     * Activity / Turnover Ratios (in Times): Inventory Turnover Ratio, Trade Receivables Turnover Ratio, Trade Payables Turnover Ratio, Working Capital Turnover Ratio.
+     * Profitability Ratios (in %): Gross Profit Ratio, Operating Ratio, Operating Profit Ratio, Net Profit Ratio, Return on Investment (ROI).
+
+4. Unit 4: Cash Flow Statement (8 Marks)
+   - Meaning, objectives, benefits, and preparation (Indirect Method only as per AS 3 Revised).
+   - Cash flows from Operating Activities, Investing Activities, and Financing Activities.
+   - Adjustments: Depreciation and amortization, profit/loss on sale of assets/investments, dividend (final proposed/paid and interim dividend), provision for tax and tax paid.
+   - MANDATORY CASH FLOW RULES (CBSE OFFICIAL SYLLABUS NOTES):
+     (i) Bank overdraft and cash credit are short-term borrowings under FINANCING ACTIVITIES.
+     (ii) Current investments are Marketable Securities / Cash Equivalents unless specified otherwise.
+     (iii) Proposed dividend of current year is ignored (contingent liability); only proposed dividend of previous year declared/paid is added in Operating and deducted in Financing.
+     (iv) Interim dividend paid during the year is added back to Net Profit in Operating and deducted in Financing.
+
+QUESTION PAPER TYPOLOGY & COMPETENCY DISTRIBUTION (80 MARKS TOTAL - IMAGE 1):
+1. Remembering and Understanding (40% - 32 Marks): Recalling accounting terms, rules of partnership act, Schedule III headings, journal entry rules, ratio definitions, theory of debentures and shares.
+2. Applying (30% - 24 Marks): Journal entries for issue/forfeiture/reissue of shares, issue of debentures with redemption terms, partnership revaluation/admission calculations, ratio computations, cash flow adjustments.
+3. Analysing, Evaluating and Creating (30% - 24 Marks): Case-based partnership profit appropriation, past adjustments statements, pro-rata allotment tables, dissolution realisation accounts, comprehensive Cash Flow Statement preparation.
+
+--- QUESTION PAPER STRUCTURE & SECTION ALLOCATION (34 QUESTIONS, 80 MARKS) ---
+The question paper is divided into TWO PARTS:
+
+PART A: Accounting for Partnership Firms and Companies (Questions 1 to 26 - 60 Marks)
+- Questions 1 to 16: 16 Questions × 1 Mark = 16 Marks (14 MCQs + 2 Assertion-Reason Questions)
+  * Q1: Partnership Deed & provisions in absence of deed (MCQ)
+  * Q2: P&L Appropriation / Interest on drawings calculation (MCQ)
+  * Q3: Goodwill calculation & valuation methods (MCQ)
+  * Q4: Change in PSR / Sacrificing & Gaining ratio calculation (MCQ)
+  * Q5: Admission of a partner / Hidden goodwill / New PSR (MCQ)
+  * Q6: Retirement of a partner / Gaining ratio calculation (MCQ)
+  * Q7: Death of a partner / Share of profit till death (MCQ)
+  * Q8: Dissolution / Realisation account profit or loss / Tangible vs Intangible asset realization rule (MCQ)
+  * Q9: Shares / Minimum subscription / Calls in advance / Calls in arrears (MCQ)
+  * Q10: Shares / Pro-rata allotment / Application money adjustment (MCQ)
+  * Q11: Shares / Forfeiture of shares issued at premium (MCQ)
+  * Q12: Shares / Maximum discount on reissue of forfeited shares / Capital reserve (MCQ)
+  * Q13: Debentures / Issue as collateral security / Debenture Suspense (MCQ)
+  * Q14: Debentures / Writing off discount on issue as per AS 16 (MCQ)
+  * Q15: Assertion-Reason on Partnership (e.g. Partner's loan is a charge against profit, AS 26 goodwill adjustment)
+  * Q16: Assertion-Reason on Companies (e.g. Securities Premium utilization / forfeiture & reissue / ESOP)
+- Questions 17 to 20: 4 Questions × 3 Marks = 12 Marks (Short Answer SA-I)
+  * Q17: Partnership Fundamentals: Past Adjustments (Statement Showing Adjustments + single adjusting journal entry) OR Guarantee of Profits to a Partner (3 Marks) [internal choice provided]
+  * Q18: Goodwill Valuation: Calculation of Goodwill by Super Profit Method or Capitalisation Method with adjustments for abnormal profits/losses (3 Marks)
+  * Q19: Accounting for Debentures: Issue of Debentures for consideration other than cash OR Issue of Debentures as Collateral Security with extract of Balance Sheet (3 Marks) [internal choice provided]
+  * Q20: Dissolution of Partnership Firm: 3 distinct journal entries for realization of assets, settlement of liabilities, or realization expenses borne by a partner (3 Marks)
+- Questions 21 to 22: 2 Questions × 4 Marks = 8 Marks (Short Answer SA-II)
+  * Q21: Accounting for Share Capital: Presentation of Share Capital in the Balance Sheet of a company as per Schedule III Part I of Companies Act, 2013 with complete Notes to Accounts (Authorised, Issued, Subscribed & fully paid-up, Subscribed but not fully paid-up, Less Calls-in-arrears, Add Forfeited shares) (4 Marks)
+  * Q22: Death of a Partner: Preparation of Deceased Partner's Capital Account and his Executor's Account (incorporating share of goodwill as per AS 26, revaluation profit, interest on capital, and share of profit till death via P&L Suspense A/c) OR Retirement of a Partner (preparation of capital accounts and retiring partner's loan account) (4 Marks) [internal choice provided]
+- Questions 23 to 26: 4 Questions × 6 Marks = 24 Marks (Long Answer LA)
+  * Q23: Reconstitution of Partnership: Comprehensive Admission of a Partner (Revaluation Account, Partners' Capital Accounts, and Balance Sheet of reconstituted firm with capital adjustments) OR Comprehensive Retirement of a Partner (Revaluation Account, Partners' Capital Accounts, Retiring Partner's Loan Account, and Balance Sheet) (6 Marks) [internal choice provided]
+  * Q24: Dissolution of a Partnership Firm: Comprehensive preparation of Realisation Account, Partners' Capital Accounts, and Cash/Bank Account, applying mandatory tangible asset (book value) and intangible asset (nil) realization rules (6 Marks)
+  * Q25: Accounting for Share Capital: Comprehensive Pro-rata Allotment problem (e.g., Company invited applications for shares, oversubscription, pro-rata allotment, excess adjusted towards allotment, one shareholder fails to pay allotment and calls, shares forfeited, reissued at discount, transfer to Capital Reserve) with complete Journal Entries, Working Notes, and calculations OR Alternative Pro-rata problem with multiple categories of applicants (6 Marks) [internal choice provided]
+  * Q26: Accounting for Debentures: Comprehensive Journal Entries for Issue of Debentures under three different redemption terms (e.g. issued at par redeemable at premium, issued at discount redeemable at premium, issued at premium redeemable at premium) and writing off Loss on Issue of Debentures as per AS 16 at year-end from Securities Premium and Statement of P&L OR Alternative Debentures problem (6 Marks) [internal choice provided]
+
+PART B: Financial Statement Analysis (Questions 27 to 34 - 20 Marks)
+- Questions 27 to 30: 4 Questions × 1 Mark = 4 Marks (3 MCQs + 1 Assertion-Reason Question)
+  * Q27: Schedule III Balance Sheet major heads and sub-heads classification (MCQ)
+  * Q28: Accounting Ratios: Effect of a transaction on Current Ratio / Quick Ratio (Increase, Decrease, No change) (MCQ)
+  * Q29: Cash Flow Statement: Classification of cash flow activity (Operating / Investing / Financing) or treatment of bank overdraft / marketable securities (MCQ)
+  * Q30: Assertion-Reason question on Financial Statement Analysis / Cash Flow Statement (MCQ)
+- Questions 31 to 32: 2 Questions × 3 Marks = 6 Marks (Short Answer SA-I)
+  * Q31: Schedule III Financial Statements: State the Major Head and Sub-head under which 6 specific items are presented in the Balance Sheet of a company as per Schedule III Part I of Companies Act, 2013 (0.5 Mark each = 3 Marks)
+  * Q32: Accounting Ratios: Calculation of Operating Ratio and Operating Profit Ratio OR Solvency Ratios (Debt to Equity Ratio and Proprietary Ratio) (3 Marks) [internal choice provided]
+- Question 33: 1 Question × 4 Marks = 4 Marks (Short Answer SA-II)
+  * Q33: Comprehensive Accounting Ratios: Calculation of Inventory Turnover Ratio and Trade Receivables Turnover Ratio (or Return on Investment) from given financial data, with internal choice (Alternative Ratio problem) (4 Marks) [internal choice provided]
+- Question 34: 1 Question × 6 Marks = 6 Marks (Long Answer LA)
+  * Q34: Comprehensive Cash Flow Statement: Preparation of Cash Flow Statement strictly as per AS 3 (Revised) Indirect Method from given comparative Balance Sheets, Notes to Accounts, and additional information (depreciation on machinery, tax paid / provision for tax, sale of fixed assets/investments, proposed dividend of previous year / interim dividend), with internal choice (Alternative Cash Flow problem) (6 Marks) [internal choice provided]
+
+--- CRITICAL ACCOUNTANCY ACCURACY & NUMERICAL INTEGRITY DIRECTIVES ---
+1. Double-Entry Accuracy: Every journal entry MUST balance (Debit total = Credit total). Always include brief, clear narrations ("Being...").
+2. Standard Ledger Accounts: Revaluation A/c, Realisation A/c, Partners' Capital A/cs, Cash/Bank A/c must have proper Dr. / Cr. and column headers.
+3. Schedule III Compliance: Balance sheet disclosure of share capital must provide Notes to Accounts with Authorised, Issued, Subscribed & fully paid-up, Subscribed but not fully paid-up, Less Calls-in-arrears, Add Share forfeited a/c.
+4. Mathematical & Data Consistency: Provide complete, logically consistent numbers. When calculating ratios or cash flow, all required balance sheet figures and adjustments must correlate perfectly.
+5. ${solutionDirective}
+
+--- STRICT JSON FORMATTING MANDATE ---
+Output strictly a SINGLE valid JSON object matching the schema below.
+Do NOT wrap the output in markdown code blocks (\`\`\`json). Output the raw JSON text directly.
+Do NOT use invalid escape sequences. Always double-escape backslashes (\\\\).
+
+{
+  "sections": [
+    {
+      "name": "PART A",
+      "description": "Accounting for Partnership Firms and Companies (Questions 1 to 26 - 60 Marks)",
+      "marksPerQuestion": 1,
+      "questions": [
+        {
+          "id": "q1",
+          "text": "1. [Partnership Deed / Absence of deed MCQ text]",
+          "marks": 1,
+          "type": "mcq",
+          "choices": ["(A) Option A", "(B) Option B", "(C) Option C", "(D) Option D"],
+          "orQuestion": null,
+          "solution": "(A) Option A - [Explanation/reasoning]",
+          "orSolution": null
+        },
+        ...
+        {
+          "id": "q15",
+          "text": "15. Assertion (A): [Assertion text regarding Partnership]\\nReason (R): [Reason text]",
+          "marks": 1,
+          "type": "mcq",
+          "choices": [
+            "(A) Both Assertion (A) and Reason (R) are true and Reason (R) is the correct explanation of Assertion (A).",
+            "(B) Both Assertion (A) and Reason (R) are true but Reason (R) is not the correct explanation of Assertion (A).",
+            "(C) Assertion (A) is true but Reason (R) is false.",
+            "(D) Assertion (A) is false but Reason (R) is true."
+          ],
+          "orQuestion": null,
+          "solution": "(A) [Correct option with 1-2 sentence justification]",
+          "orSolution": null
+        },
+        {
+          "id": "q16",
+          "text": "16. Assertion (A): [Assertion text regarding Company Accounts]\\nReason (R): [Reason text]",
+          "marks": 1,
+          "type": "mcq",
+          "choices": [
+            "(A) Both Assertion (A) and Reason (R) are true and Reason (R) is the correct explanation of Assertion (A).",
+            "(B) Both Assertion (A) and Reason (R) are true but Reason (R) is not the correct explanation of Assertion (A).",
+            "(C) Assertion (A) is true but Reason (R) is false.",
+            "(D) Assertion (A) is false but Reason (R) is true."
+          ],
+          "orQuestion": null,
+          "solution": "(A) [Correct option with justification]",
+          "orSolution": null
+        },
+        {
+          "id": "q17",
+          "text": "17. [Partnership Past Adjustment / Guarantee Question, 3 Marks]",
+          "marks": 3,
+          "type": "sa",
+          "choices": null,
+          "orQuestion": "[Alternative Guarantee / Past Adjustment Question, 3 Marks]",
+          "solution": "Statement Showing Adjustments:\\n[Table]\\nAdjusting Journal Entry:\\n[Entry with narration]\\nMarking Scheme: [1.5M Table + 1.5M Journal Entry]",
+          "orSolution": "[Detailed 3-Mark step-by-step solution for alternative question]"
+        },
+        ...
+        {
+          "id": "q21",
+          "text": "21. [Share Capital Balance Sheet Disclosure Question as per Schedule III, 4 Marks]",
+          "marks": 4,
+          "type": "sa",
+          "choices": null,
+          "orQuestion": null,
+          "solution": "An Extract of Balance Sheet of Company as at ... :\\n[Balance sheet extract]\\nNotes to Accounts:\\n1. Share Capital:\\n   Authorised Capital ...\\n   Issued Capital ...\\n   Subscribed Capital ...\\nMarking Scheme: [1M Balance Sheet + 3M Notes to Accounts]",
+          "orSolution": null
+        },
+        ...
+        {
+          "id": "q23",
+          "text": "23. [Comprehensive Admission of Partner Question, 6 Marks]",
+          "marks": 6,
+          "type": "la",
+          "choices": null,
+          "orQuestion": "[Alternative Comprehensive Retirement of Partner Question, 6 Marks]",
+          "solution": "Dr. Revaluation Account Cr.:\\n[Full ledger]\\nDr. Partners' Capital Accounts Cr.:\\n[Full ledger]\\nBalance Sheet of new firm as at ... :\\n[Full balance sheet]\\nMarking Scheme: [2M Revaluation A/c + 2.5M Capital A/cs + 1.5M Balance Sheet]",
+          "orSolution": "[Detailed 6-Mark solution for alternative retirement question with Revaluation, Capital, and Loan A/c]"
+        },
+        {
+          "id": "q24",
+          "text": "24. [Comprehensive Dissolution of Firm Question, 6 Marks]",
+          "marks": 6,
+          "type": "la",
+          "choices": null,
+          "orQuestion": null,
+          "solution": "Dr. Realisation Account Cr.:\\n[Full ledger following tangible book value and intangible nil rule]\\nDr. Partners' Capital Accounts Cr.:\\n[Full ledger]\\nDr. Cash/Bank Account Cr.:\\n[Full ledger]\\nMarking Scheme: [3M Realisation A/c + 2M Capital A/cs + 1M Cash/Bank A/c]",
+          "orSolution": null
+        },
+        {
+          "id": "q25",
+          "text": "25. [Comprehensive Pro-rata Allotment Share Capital Problem with Forfeiture & Reissue, 6 Marks]",
+          "marks": 6,
+          "type": "la",
+          "choices": null,
+          "orQuestion": "[Alternative Comprehensive Pro-rata Allotment Problem, 6 Marks]",
+          "solution": "Journal of Company Ltd.:\\n[Complete Journal entries with proper Date, Particulars, L.F., Debit ₹, Credit ₹ and narrations]\\nWorking Notes:\\n1. Table showing application money received and adjusted\\n2. Calls in arrears calculation on allotment\\n3. Forfeiture calculation\\n4. Capital Reserve calculation\\nMarking Scheme: [4M Journal Entries + 2M Working Notes]",
+          "orSolution": "[Complete Journal entries and working notes for alternative pro-rata question]"
+        },
+        {
+          "id": "q26",
+          "text": "26. [Comprehensive Accounting for Debentures with terms of redemption and writing off loss as per AS 16, 6 Marks]",
+          "marks": 6,
+          "type": "la",
+          "choices": null,
+          "orQuestion": "[Alternative Debentures Comprehensive Problem, 6 Marks]",
+          "solution": "Journal Entries:\\n[Case (a) Issue entries: 2 Marks]\\n[Case (b) Issue entries: 2 Marks]\\n[Case (c) Issue entries and writing off loss from Securities Premium & Statement of P&L as per AS 16: 2 Marks]",
+          "orSolution": "[Complete journal entries for alternative debentures question]"
+        }
+      ]
+    },
+    {
+      "name": "PART B",
+      "description": "Financial Statement Analysis (Questions 27 to 34 - 20 Marks)",
+      "marksPerQuestion": 1,
+      "questions": [
+        {
+          "id": "q27",
+          "text": "27. [Schedule III Major Head / Sub-head MCQ text]",
+          "marks": 1,
+          "type": "mcq",
+          "choices": ["(A) Option A", "(B) Option B", "(C) Option C", "(D) Option D"],
+          "orQuestion": null,
+          "solution": "(A) Option A - [Explanation]",
+          "orSolution": null
+        },
+        ...
+        {
+          "id": "q30",
+          "text": "30. Assertion (A): [Assertion text regarding Cash Flow / Financial Statements]\\nReason (R): [Reason text]",
+          "marks": 1,
+          "type": "mcq",
+          "choices": [
+            "(A) Both Assertion (A) and Reason (R) are true and Reason (R) is the correct explanation of Assertion (A).",
+            "(B) Both Assertion (A) and Reason (R) are true but Reason (R) is not the correct explanation of Assertion (A).",
+            "(C) Assertion (A) is true but Reason (R) is false.",
+            "(D) Assertion (A) is false but Reason (R) is true."
+          ],
+          "orQuestion": null,
+          "solution": "(A) [Correct option with explanation]",
+          "orSolution": null
+        },
+        {
+          "id": "q31",
+          "text": "31. Under which Major Heads and Sub-heads will the following items be shown in the Balance Sheet of a company as per Schedule III Part I of the Companies Act, 2013?\\n(i) [Item 1]\\n(ii) [Item 2]\\n(iii) [Item 3]\\n(iv) [Item 4]\\n(v) [Item 5]\\n(vi) [Item 6]",
+          "marks": 3,
+          "type": "sa",
+          "choices": null,
+          "orQuestion": null,
+          "solution": "Item | Major Head | Sub-head\\n(i) ... | ... | ...\\n(ii) ... | ... | ...\\n(iii) ... | ... | ...\\n(iv) ... | ... | ...\\n(v) ... | ... | ...\\n(vi) ... | ... | ...\\nMarking Scheme: [0.5 Mark for each correct item, total 3 Marks]",
+          "orSolution": null
+        },
+        {
+          "id": "q32",
+          "text": "32. [Accounting Ratios Problem (e.g. Operating Ratio & Operating Profit Ratio), 3 Marks]",
+          "marks": 3,
+          "type": "sa",
+          "choices": null,
+          "orQuestion": "[Alternative Solvency Ratios Problem (e.g. Debt to Equity & Proprietary Ratio), 3 Marks]",
+          "solution": "Formula & Calculation:\\n1. Operating Ratio = [(Cost of Revenue from Operations + Operating Expenses) / Revenue from Operations] * 100 = ...% [1.5 Marks]\\n2. Operating Profit Ratio = 100 - Operating Ratio = ...% [1.5 Marks]",
+          "orSolution": "[Detailed 3-Mark solution for alternative ratios problem with formulas and steps]"
+        },
+        {
+          "id": "q33",
+          "text": "33. [Comprehensive Accounting Ratios Problem (e.g. Inventory Turnover Ratio & Trade Receivables Turnover Ratio / ROI), 4 Marks]",
+          "marks": 4,
+          "type": "sa",
+          "choices": null,
+          "orQuestion": "[Alternative Comprehensive Ratios Problem, 4 Marks]",
+          "solution": "Step-by-step Formulas & Working:\\n1. Calculation of Cost of Revenue from Operations ...\\n2. Inventory Turnover Ratio = Cost of Revenue from Operations / Average Inventory = ... Times [2 Marks]\\n3. Trade Receivables Turnover Ratio = Net Credit Revenue from Operations / Average Trade Receivables = ... Times [2 Marks]",
+          "orSolution": "[Detailed 4-Mark step-by-step solution for alternative question]"
+        },
+        {
+          "id": "q34",
+          "text": "34. From the following Balance Sheets and additional information of ABC Ltd., prepare a Cash Flow Statement as per AS 3 (Revised) (Indirect Method):\\n\\n[Complete Comparative Balance Sheet as at 31st March 2024 and 31st March 2025 with Notes to Accounts]\\n\\nAdditional Information:\\n1. During the year a piece of machinery costing ₹... was sold for ₹... (Accumulated depreciation thereon was ₹...).\\n2. Tax paid during the year was ₹...\\n3. Proposed dividend for the year ended 31st March 2024 was ₹... and for 31st March 2025 was ₹...",
+          "marks": 6,
+          "type": "la",
+          "choices": null,
+          "orQuestion": "[Alternative Comprehensive Cash Flow Statement Problem from given financial data, 6 Marks]",
+          "solution": "ABC Ltd.\\nCASH FLOW STATEMENT for the year ended 31st March 2025 (As per AS 3 Revised - Indirect Method):\\n\\nI. Cash Flow from Operating Activities:\\n   Net Profit before Tax & Extraordinary Items: ₹...\\n   Adjustments for Non-cash and Non-operating items:\\n   Add: Depreciation: ₹...\\n   Operating Profit before Working Capital Changes: ₹...\\n   Cash Generated from Operations: ₹...\\n   Less: Tax Paid: (₹...)\\n   Net Cash from Operating Activities: ₹... [3 Marks]\\n\\nII. Cash Flow from Investing Activities:\\n   Sale of Machinery: ₹...\\n   Purchase of Machinery / Non-current Investments: (₹...)\\n   Net Cash from / (used in) Investing Activities: ₹... [1.5 Marks]\\n\\nIII. Cash Flow from Financing Activities:\\n   Issue of Share Capital: ₹...\\n   Redemption of Debentures: (₹...)\\n   Dividend Paid: (₹...)\\n   Bank Overdraft (increase/decrease): ₹...\\n   Net Cash from / (used in) Financing Activities: ₹... [1.5 Marks]\\n\\nNet Increase/(Decrease) in Cash and Cash Equivalents: ₹...\\nAdd: Cash and Cash Equivalents at the beginning: ₹...\\nCash and Cash Equivalents at the end: ₹...\\n\\nWorking Notes:\\n1. Calculation of Net Profit before Tax\\n2. Machinery Account & Accumulated Depreciation Account\\n3. Provision for Tax Account",
+          "orSolution": "[Complete step-by-step Cash Flow Statement and working notes for alternative question]"
         }
       ]
     }

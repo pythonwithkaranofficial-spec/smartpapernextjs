@@ -205,24 +205,21 @@ export const CURRICULUM_DATA: Record<string, Record<string, SubjectCurriculum>> 
     },
     science: {
       chapters: [
-        "Chemical Reactions and Equations",
-        "Acids, Bases and Salts",
-        "Metals and Non-metals",
-        "Carbon and its Compounds",
-        "Life Processes",
-        "Control and Coordination",
-        "Reproduction",
-        "Heredity",
-        "Light – Reflection and Refraction",
-        "The Human Eye and the Colourful World",
-        "Electricity",
-        "Magnetic Effects of Electric Current",
-        "Our Environment",
-        "Periodic Classification of Elements (Formative)",
-        "Evolution (Formative)",
-        "Motor, Electromagnetic Induction and Electric Generator (Formative)"
+        "Physics: Light – Reflection and Refraction",
+        "Physics: The Human Eye and the Colourful World",
+        "Physics: Electricity",
+        "Physics: Magnetic Effects of Electric Current",
+        "Chemistry: Chemical Reactions and Equations",
+        "Chemistry: Acids, Bases and Salts",
+        "Chemistry: Metals and Non-Metals",
+        "Chemistry: Carbon and its Compounds",
+        "Biology: Life Processes",
+        "Biology: Control and Coordination",
+        "Biology: How do Organisms Reproduce?",
+        "Biology: Heredity",
+        "Biology: Our Environment"
       ],
-      notes: "CBSE Class 10 Science curriculum covering Units I-V (Chemical Substances, World of Living, Natural Phenomena, Effects of Current, Natural Resources) and Formative Assessment topics."
+      notes: "CBSE Class 10 Science (Subject Code 086) comprises three distinct components: Physics (25 Marks: Natural Phenomena 12M, Effects of Current 13M), Chemistry (25 Marks: Chemical Substances 25M), and Biology (30 Marks: World of Living 25M, Natural Resources 5M). Total Theory: 80 Marks (3 Hours) + 20 Marks Internal Assessment. Note: Evolution, colour of sun at sunrise/sunset, and Management of Natural Resources are excluded from year-end board examination."
     },
     it: {
       chapters: [
@@ -262,7 +259,7 @@ export const CURRICULUM_DATA: Record<string, Record<string, SubjectCurriculum>> 
       chapters: [
         "History: The Rise of Nationalism in Europe",
         "History: Nationalism in India",
-        "History: The Making of a Global World (Subtopics 1 to 1.3 for Board Exam)",
+        "History: The Making of a Global World (Subtopics 1 to 1.3: Pre-modern World to Conquest, Disease and Trade)",
         "History: The Age of Industrialisation (Periodic Assessment)",
         "History: Print Culture and the Modern World",
         "Geography: Resources and Development",
@@ -271,7 +268,7 @@ export const CURRICULUM_DATA: Record<string, Record<string, SubjectCurriculum>> 
         "Geography: Agriculture",
         "Geography: Minerals and Energy Resources",
         "Geography: Manufacturing Industries",
-        "Geography: Lifelines of National Economy (Map Pointing)",
+        "Geography: Lifelines of National Economy (Map Pointing for Board Exam)",
         "Political Science: Power-sharing",
         "Political Science: Federalism",
         "Political Science: Gender, Religion and Caste",
@@ -280,9 +277,10 @@ export const CURRICULUM_DATA: Record<string, Record<string, SubjectCurriculum>> 
         "Economics: Development",
         "Economics: Sectors of the Indian Economy",
         "Economics: Money and Credit",
-        "Economics: Globalisation and the Indian Economy"
+        "Economics: Globalisation and the Indian Economy (What is Globalization? & Factors that have enabled Globalisation)",
+        "Economics: Consumer Rights (Project Work - Internal Assessment)"
       ],
-      notes: "CBSE Class 10 Social Science curriculum (History, Geography, Political Science, Economics)."
+      notes: "CBSE Class 10 Social Science (Code 087) comprises 4 distinct components: History (18 + 2 Map = 20 Marks), Geography (17 + 3 Map = 20 Marks), Political Science (20 Marks), and Economics (20 Marks). Total Theory: 80 Marks (3 Hours) + 20 Marks Internal Assessment."
     },
     hindi: {
       chapters: [
@@ -806,40 +804,40 @@ export const CURRICULUM_DATA: Record<string, Record<string, SubjectCurriculum>> 
         "Unit VIII - Atoms & Nuclei: Chapter-13 Nuclei",
         "Unit IX - Electronic Devices: Chapter-14 Semiconductor Electronics: Materials, Devices and Simple Circuits"
       ],
-      notes: "CBSE Class 12 Physics (Subject Code 042) 2025-26 Syllabus. Total Theory Marks: 70 (3 Hours), Internal/Practical: 30 Marks. Units: I & II (16M), III & IV (17M), V & VI (18M), VII & VIII (12M), IX (7M)."
+      notes: "CBSE Class 12 Physics (Subject Code 042) 2025-26 / 2026-27 Syllabus. Total Theory Marks: 70 (3 Hours), Internal/Practical: 30 Marks, Total: 100 Marks. Units: I & II (16M), III & IV (17M), V & VI (18M), VII & VIII (12M), IX (7M)."
     },
     chemistry: {
       chapters: [
-        "Solutions",
-        "Electrochemistry",
-        "Chemical Kinetics",
-        "d- and f-Block Elements",
-        "Coordination Compounds",
-        "Haloalkanes and Haloarenes",
-        "Alcohols, Phenols and Ethers",
-        "Aldehydes, Ketones and Carboxylic Acids",
-        "Amines",
-        "Biomolecules"
+        "Physical Chemistry: Unit 1 - Solutions",
+        "Physical Chemistry: Unit 2 - Electrochemistry",
+        "Physical Chemistry: Unit 3 - Chemical Kinetics",
+        "Inorganic Chemistry: Unit 4 - d- and f-Block Elements",
+        "Inorganic Chemistry: Unit 5 - Coordination Compounds",
+        "Organic Chemistry: Unit 6 - Haloalkanes and Haloarenes",
+        "Organic Chemistry: Unit 7 - Alcohols, Phenols and Ethers",
+        "Organic Chemistry: Unit 8 - Aldehydes, Ketones and Carboxylic Acids",
+        "Organic Chemistry: Unit 9 - Amines",
+        "Organic Chemistry: Unit 10 - Biomolecules"
       ],
-      notes: "CBSE Chemistry Subject Code 043 for Class 12. Covers Physical, Organic, and Inorganic Chemistry."
+      notes: "CBSE Class 12 Chemistry (Subject Code 043) Official 2025-26 Syllabus. Total Theory Marks: 70 (3 Hours), Practical: 30 Marks. Prescribed Units: Unit 1 Solutions (7M), Unit 2 Electrochemistry (9M), Unit 3 Chemical Kinetics (7M), Unit 4 d- and f-Block Elements (7M), Unit 5 Coordination Compounds (7M), Unit 6 Haloalkanes & Haloarenes (6M), Unit 7 Alcohols, Phenols & Ethers (6M), Unit 8 Aldehydes, Ketones & Carboxylic Acids (8M), Unit 9 Amines (6M), Unit 10 Biomolecules (7M). Note: Surface Chemistry, Principles of Isolation of Elements, Polymers, and Chemistry in Everyday Life are strictly Formative only (excluded from board examination)."
     },
     biology: {
       chapters: [
-        "Unit I - Reproduction: Chapter-1 Sexual Reproduction in Flowering Plants",
-        "Unit I - Reproduction: Chapter-2 Human Reproduction",
-        "Unit I - Reproduction: Chapter-3 Reproductive Health",
-        "Unit II - Genetics and Evolution: Chapter-4 Principles of Inheritance and Variation",
-        "Unit II - Genetics and Evolution: Chapter-5 Molecular Basis of Inheritance",
-        "Unit II - Genetics and Evolution: Chapter-6 Evolution",
-        "Unit III - Biology and Human Welfare: Chapter-7 Human Health and Diseases",
-        "Unit III - Biology and Human Welfare: Chapter-8 Microbes in Human Welfare",
-        "Unit IV - Biotechnology and its Applications: Chapter-9 Biotechnology - Principles and Processes",
-        "Unit IV - Biotechnology and its Applications: Chapter-10 Biotechnology and its Applications",
-        "Unit V - Ecology and Environment: Chapter-11 Organisms and Populations",
-        "Unit V - Ecology and Environment: Chapter-12 Ecosystem",
-        "Unit V - Ecology and Environment: Chapter-13 Biodiversity and Conservation"
+        "Unit VI - Reproduction: Chapter-1 Sexual Reproduction in Flowering Plants",
+        "Unit VI - Reproduction: Chapter-2 Human Reproduction",
+        "Unit VI - Reproduction: Chapter-3 Reproductive Health",
+        "Unit VII - Genetics and Evolution: Chapter-4 Principles of Inheritance and Variation",
+        "Unit VII - Genetics and Evolution: Chapter-5 Molecular Basis of Inheritance",
+        "Unit VII - Genetics and Evolution: Chapter-6 Evolution",
+        "Unit VIII - Biology and Human Welfare: Chapter-7 Human Health and Diseases",
+        "Unit VIII - Biology and Human Welfare: Chapter-8 Microbes in Human Welfare",
+        "Unit IX - Biotechnology and its Applications: Chapter-9 Biotechnology - Principles and Processes",
+        "Unit IX - Biotechnology and its Applications: Chapter-10 Biotechnology and its Application",
+        "Unit X - Ecology and Environment: Chapter-11 Organisms and Populations",
+        "Unit X - Ecology and Environment: Chapter-12 Ecosystem",
+        "Unit X - Ecology and Environment: Chapter-13 Biodiversity and its Conservation"
       ],
-      notes: "CBSE Class 12 Biology (Subject Code 044) 2025-26 Syllabus. Total Theory Marks: 70 (3 Hours), Practical: 30 Marks. Units: Unit I Reproduction (15M), Unit II Genetics & Evolution (20M), Unit III Biology & Human Welfare (14M), Unit IV Biotechnology & its Applications (11M), Unit V Ecology & Environment (10M)."
+      notes: "CBSE Class 12 Biology (Subject Code 044) Official 2026-27 Syllabus. Total Theory Marks: 70 (3 Hours), Practical: 30 Marks. Units: Unit VI Reproduction (16M), Unit VII Genetics and Evolution (20M), Unit VIII Biology and Human Welfare (12M), Unit IX Biotechnology and its Applications (12M), Unit X Ecology and Environment (10M). Competency Weightage: 50% Demonstrate Knowledge & Understanding (35M), 30% Application of Knowledge/Concepts (21M), 20% Analyse, Evaluate and Create (14M). Internal choice: ~33%. Formative Assessment: Environmental Issues is strictly formative (not assessed in summative board examination)."
     },
     maths: {
       chapters: [
@@ -1114,13 +1112,19 @@ export const CURRICULUM_DATA: Record<string, Record<string, SubjectCurriculum>> 
     },
     accounts: {
       chapters: [
-        "Part A - Accounting for Partnership Firms and Companies: Unit 1: Accounting for Partnership Firms",
-        "Part A - Accounting for Partnership Firms and Companies: Unit 2: Accounting for Companies",
-        "Part B - Financial Statement Analysis: Unit 3: Analysis of Financial Statements",
-        "Part B - Financial Statement Analysis: Unit 4: Cash Flow Statement",
-        "Part B - Computerized Accounting (Optional): Unit 4: Computerized Accounting"
+        "Part A - Unit 1 (Accounting for Partnership Firms): 1. Fundamentals of Partnership (Features, Partnership Deed, Provisions in Absence of Deed, P&L Appropriation A/c, Fixed vs Fluctuating Capital, Past Adjustments, Guarantee of Profits)",
+        "Part A - Unit 1 (Accounting for Partnership Firms): 2. Goodwill: Nature and Valuation (Meaning, Factors Affecting, Average Profit, Super Profit, Capitalisation Methods & Accounting Treatment as per AS 26)",
+        "Part A - Unit 1 (Accounting for Partnership Firms): 3. Reconstitution: Change in Profit Sharing Ratio (Sacrificing & Gaining Ratios, Accounting for Revaluation of Assets & Liabilities, Treatment of Reserves & Accumulated Profits/Losses, Revaluation Account & Balance Sheet)",
+        "Part A - Unit 1 (Accounting for Partnership Firms): 4. Reconstitution: Admission of a Partner (New PSR, Sacrificing Ratio, Treatment of Goodwill as per AS 26, Revaluation Account, Adjustment of Capital Accounts & Balance Sheet)",
+        "Part A - Unit 1 (Accounting for Partnership Firms): 5. Reconstitution: Retirement and Death of a Partner (Gaining Ratio, Goodwill Treatment as per AS 26, Revaluation A/c, Accumulated Profits/Reserves, Retiring Partner's Loan A/c, Deceased Partner's Profit till Death & Executor's A/c)",
+        "Part A - Unit 1 (Accounting for Partnership Firms): 6. Dissolution of a Partnership Firm (Types of Dissolution, Settlement of Accounts, Preparation of Realisation Account, Tangible/Intangible Assets Realisation Rules, Partner's Capital Accounts & Cash/Bank A/c)",
+        "Part A - Unit 2 (Accounting for Companies): 7. Accounting for Share Capital (Features & Types of Companies, Issue & Allotment of Equity/Preference Shares, Pro-rata Allotment, Calls in Arrears/Advance, Forfeiture & Reissue of Shares, Private Placement, ESOP, Sweat Equity, Schedule III Balance Sheet Disclosure)",
+        "Part A - Unit 2 (Accounting for Companies): 8. Accounting for Debentures (Meaning, Types, Issue at Par, Premium & Discount, Issue for Consideration other than Cash, Issue with Terms of Redemption, Collateral Security, Writing off Discount/Loss on Issue as per AS 16)",
+        "Part B - Unit 3 (Financial Statement Analysis): 9. Financial Statements of a Company (Meaning, Nature, Uses & Importance, Schedule III Part I Balance Sheet & Part II Statement of Profit and Loss Formats, Tools of Analysis)",
+        "Part B - Unit 3 (Financial Statement Analysis): 10. Accounting Ratios (Liquidity Ratios: Current & Quick; Solvency Ratios: Debt to Equity, Total Assets to Debt, Proprietary, Interest Coverage; Activity Ratios: Inventory, Debtors/Receivables, Creditors/Payables, Working Capital Turnover; Profitability Ratios: Gross Profit, Operating, Net Profit, ROI)",
+        "Part B - Unit 4 (Cash Flow Statement): 11. Cash Flow Statement (Meaning, Objectives, Preparation as per AS 3 Revised Indirect Method: Operating, Investing, and Financing Activities, Treatment of Depreciation, Tax, Final & Interim Dividend, Bank Overdraft/Cash Credit)"
       ],
-      notes: "CBSE Accountancy Subject Code 055 for Class 12."
+      notes: "CBSE Class 12 Accountancy (Code No. 055) 2025-26 Syllabus. Total Theory Marks: 80 (3 Hours), Project Work: 20 Marks. Part A: Accounting for Partnership Firms and Companies (60 Marks - Unit 1: Partnership Firms 36 Marks, Unit 2: Companies 24 Marks). Part B: Financial Statement Analysis (20 Marks - Unit 3: Analysis of Financial Statements 12 Marks, Unit 4: Cash Flow Statement 8 Marks). Typology: Remembering & Understanding (32 Marks, 40%), Applying (24 Marks, 30%), Analysing, Evaluating & Creating (24 Marks, 30%). Part C: Project Work (20 Marks: Project File 12 Marks, Viva Voce 8 Marks)."
     },
     polscience: {
       chapters: [
@@ -1144,18 +1148,58 @@ export const CURRICULUM_DATA: Record<string, Record<string, SubjectCurriculum>> 
     },
     phyedu: {
       chapters: [
-        "Management of Sporting Events",
-        "Children and Women in Sports",
-        "Yoga as Preventive Measure for Lifestyle Diseases",
-        "Physical Education & Sports for Children with Special Needs (CWSN)",
-        "Sports & Nutrition",
-        "Test & Measurement in Sports",
-        "Physiology & Injuries in Sports",
-        "Biomechanics and Sports",
-        "Psychology and Sports",
-        "Training in Sports"
+        "Unit 1 - Management of Sporting Events: Functions of Sports Events Management (Planning, Organising, Staffing, Directing and Controlling)",
+        "Unit 1 - Management of Sporting Events: Various Committees and their Responsibilities (pre, during and post)",
+        "Unit 1 - Management of Sporting Events: Fixtures and their Procedures – Knock-Out (Bye & Seeding) and League (Staircase, Cyclic, Tabular) & Combination Tournaments",
+        "Unit 1 - Management of Sporting Events: Intramural and Extramural Tournaments – Meaning, Objectives and Its Significance",
+        "Unit 1 - Management of Sporting Events: Community Sports Program (Sports Day, Health Run, Run for Fun, Specific Cause, Run for Unity)",
+        "Unit 2 - Children and Women in Sports: Exercise Guidelines of WHO for Different Age Groups",
+        "Unit 2 - Children and Women in Sports: Common Postural Deformities (Knock Knees, Flat Foot, Round Shoulders, Lordosis, Kyphosis, Scoliosis, Bow Legs) & Corrective Measures",
+        "Unit 2 - Children and Women in Sports: Women's Participation in Sports – Physical, Psychological and Social Benefits",
+        "Unit 2 - Children and Women in Sports: Special Consideration (Menarche and Menstrual Dysfunction)",
+        "Unit 2 - Children and Women in Sports: Female Athlete Triad (Osteoporosis, Amenorrhea, Eating Disorders)",
+        "Unit 3 - Yoga as Preventive measure for Lifestyle Disease: Obesity – Procedure, Benefits & Contraindications (Tadasana, Katichakrasana, Pavanmuktasana, Matsyasana, Halasana, Paschimottanasana, Ardha-Matsyendrasana, Dhanurasana, Ushtrasana, Suryabhedan Pranayama)",
+        "Unit 3 - Yoga as Preventive measure for Lifestyle Disease: Diabetes – Procedure, Benefits & Contraindications (Katichakrasana, Pavanmuktasana, Bhujangasana, Shalabhasana, Dhanurasana, Suptavajrasana, Paschimottanasana, Ardha-Matsyendrasana, Mandukasana, Gomukhasana, Yogmudra, Ushtrasana, Kapalbhati)",
+        "Unit 3 - Yoga as Preventive measure for Lifestyle Disease: Asthma – Procedure, Benefits & Contraindications (Tadasana, Urdhwahastottanasana, UttanMandukasana, Bhujangasana, Dhanurasana, Ushtrasana, Vakrasana, Kapalbhati, Gomukhasana, Matsyasana, Anuloma-Viloma)",
+        "Unit 3 - Yoga as Preventive measure for Lifestyle Disease: Hypertension – Procedure, Benefits & Contraindications (Tadasana, Katichakrasana, Uttanpadasana, Ardha Halasana, Sarala Matsyasana, Gomukhasana, UttanMandukasana, Vakrasana, Bhujangasana, Makarasana, Shavasana, Nadishodhanapranayama, Sheetali Pranayama)",
+        "Unit 3 - Yoga as Preventive measure for Lifestyle Disease: Back Pain and Arthritis – Procedure, Benefits & Contraindications (Tadasana, Urdhwahastottanasana, Ardha-Chakrasana, Ushtrasana, Vakrasana, Sarala Matsyendrasana, Bhujangasana, Gomukhasana, Bhadrasana, Makarasana, Nadi-Shodhana Pranayama)",
+        "Unit 4 - Physical Education and Sports for CWSN (Children with Special Needs - Divyang): Organizations Promoting Disability Sports (Special Olympics, Paralympics, Deaflympics)",
+        "Unit 4 - Physical Education and Sports for CWSN (Children with Special Needs - Divyang): Concept of Classification and Divisioning in Sports",
+        "Unit 4 - Physical Education and Sports for CWSN (Children with Special Needs - Divyang): Concept of Inclusion in Sports, its Need and Implementation",
+        "Unit 4 - Physical Education and Sports for CWSN (Children with Special Needs - Divyang): Advantages of Physical Activities for Children with Special Needs",
+        "Unit 4 - Physical Education and Sports for CWSN (Children with Special Needs - Divyang): Strategies to Make Physical Activities Accessible for Children with Special Needs",
+        "Unit 5 - Sports and Nutrition: Concept of Balanced Diet and Nutrition",
+        "Unit 5 - Sports and Nutrition: Macro and Micro Nutrients – Food Sources and Functions",
+        "Unit 5 - Sports and Nutrition: Nutritive and Non-Nutritive Components of Diet",
+        "Unit 5 - Sports and Nutrition: Eating for Weight Control – A Healthy Weight, The Pitfalls of Dieting, Food Intolerance, and Food Myths",
+        "Unit 5 - Sports and Nutrition: Importance of Diet in Sports – Pre, During and Post Competition Requirements",
+        "Unit 6 - Test and Measurement in Sports: Fitness Test – SAI Khelo India Fitness Test in School (5-8 yrs & 9-18 yrs Battery)",
+        "Unit 6 - Test and Measurement in Sports: Measurement of Cardio-Vascular Fitness – Harvard Step Test (Computation Formula)",
+        "Unit 6 - Test and Measurement in Sports: Computing Basal Metabolic Rate (BMR)",
+        "Unit 6 - Test and Measurement in Sports: Rikli and Jones - Senior Citizen Fitness Test (6 Functional Test Items)",
+        "Unit 6 - Test and Measurement in Sports: Johnsen-Methney Test of Motor Educability (Front Roll, Roll, Jumping Half-Turn, Jumping Full-Turn)",
+        "Unit 7 - Physiology and Injuries in Sport: Physiological Factors Determining Components of Physical Fitness",
+        "Unit 7 - Physiology and Injuries in Sport: Effect of Exercise on the Muscular System",
+        "Unit 7 - Physiology and Injuries in Sport: Effect of Exercise on the Cardio-Respiratory System",
+        "Unit 7 - Physiology and Injuries in Sport: Physiological Changes Due to Aging",
+        "Unit 7 - Physiology and Injuries in Sport: Sports Injuries Classification (Soft Tissue & Bone/Joint Injuries) and Management",
+        "Unit 8 - Biomechanics and Sports: Newton's Laws of Motion and Their Application in Sports",
+        "Unit 8 - Biomechanics and Sports: Types of Levers (Class I, II, III) and Their Application in Sports",
+        "Unit 8 - Biomechanics and Sports: Equilibrium (Dynamic and Static) & Centre of Gravity and Their Application in Sports",
+        "Unit 8 - Biomechanics and Sports: Friction and Sports",
+        "Unit 8 - Biomechanics and Sports: Projectile in Sports",
+        "Unit 9 - Psychology and Sports: Personality – Definition and Types (Jung Classification and Big Five Theory)",
+        "Unit 9 - Psychology and Sports: Motivation – Types and Techniques in Sports",
+        "Unit 9 - Psychology and Sports: Exercise Adherence – Reasons, Benefits and Strategies for Enhancing It",
+        "Unit 9 - Psychology and Sports: Meaning, Concept and Types of Aggressions in Sports (Hostile, Instrumental, Assertive)",
+        "Unit 9 - Psychology and Sports: Psychological Attributes in Sports (Self-Esteem, Mental Imagery, Self-Talk, Goal Setting)",
+        "Unit 10 - Training in Sports: Concept of Talent Identification and Talent Development in Sports",
+        "Unit 10 - Training in Sports: Introduction to Sports Training Cycle (Micro, Meso, Macro Cycle)",
+        "Unit 10 - Training in Sports: Types and Methods to Develop Strength, Endurance, and Speed",
+        "Unit 10 - Training in Sports: Types and Methods to Develop Flexibility and Coordinative Ability",
+        "Unit 10 - Training in Sports: Circuit Training – Introduction and Its Importance"
       ],
-      notes: "CBSE Physical Education Subject Code 048 for Class 12."
+      notes: "CBSE Class 12 Physical Education (Subject Code 048). Total Marks: 100 (Theory: 70 Marks, 3 Hours; Practical: 30 Marks). Unit Weightages: Unit 1 (05+04b*), Unit 2 (7), Unit 3 (06+01b*), Unit 4 (04+04b*), Unit 5 (7), Unit 6 (8), Unit 7 (04+04b*), Unit 8 (10), Unit 9 (7), Unit 10 (9). Note: b* represents Concept-based questions like Tactile diagram/data interpretation/case base study for visually Impaired Child. Practical Assessment includes SAI Khelo India Test / BPFT (6M), Proficiency in Games/Sports of choice (7M), Yogic Practices (7M), Record File (5M), Viva Voce (5M)."
     },
     finearts: {
       chapters: [

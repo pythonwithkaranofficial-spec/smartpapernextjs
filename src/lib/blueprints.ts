@@ -64,7 +64,7 @@ export const BLUEPRINTS: Blueprint[] = [
     classId: "12",
     subject: "physics",
     examType: ["annual_exam", "pre_board", "sample_paper", "half_yearly"],
-    title: "CBSE Class 12 Physics (Code 042) Official Blueprint 2025-26",
+    title: "CBSE Class 12 Physics (Code 042) Official Blueprint 2025-26 / 2026-27",
     board: "CBSE",
     year: 2026,
     totalMarks: 70,
@@ -101,47 +101,7 @@ export const BLUEPRINTS: Blueprint[] = [
     classId: "12",
     subject: "chemistry",
     examType: ["annual_exam", "pre_board", "sample_paper", "half_yearly"],
-    title: "CBSE Class 12 Chemistry Official Blueprint 2026",
-    board: "CBSE",
-    year: 2026,
-    totalMarks: 70,
-    duration: "3 Hours",
-    questionDistribution: {
-      mcq: 16,
-      assertionReason: 0,
-      vsa: 5,
-      sa: 7,
-      la: 3,
-      caseStudy: 2,
-    },
-    selectedChapters: ["all"],
-    unitWeightage: [
-      { unit: "1", topic: "Solutions", marks: 7 },
-      { unit: "2", topic: "Electrochemistry", marks: 9 },
-      { unit: "3", topic: "Chemical Kinetics", marks: 7 },
-      { unit: "4", topic: "d & f Block Elements", marks: 7 },
-      { unit: "5", topic: "Coordination Compounds", marks: 7 },
-      { unit: "6", topic: "Haloalkanes & Haloarenes", marks: 6 },
-      { unit: "7", topic: "Alcohols, Phenols & Ethers", marks: 6 },
-      { unit: "8", topic: "Aldehydes & Ketones", marks: 8 },
-      { unit: "9", topic: "Amines", marks: 6 },
-      { unit: "10", topic: "Biomolecules", marks: 7 },
-    ],
-    defaultInstructions: `1. This question paper contains 33 questions divided into 5 Sections: A, B, C, D and E.
-2. Section A comprises 16 MCQs of 1 mark each.
-3. Section B comprises 5 Very Short Answer (VSA) type questions of 2 marks each.
-4. Section C comprises 7 Short Answer (SA) type questions of 3 marks each.
-5. Section D comprises 2 Case-Based questions of 4 marks each.
-6. Section E comprises 3 Long Answer (LA) type questions of 5 marks each.
-7. All questions are compulsory. Internal choices are provided in some questions.
-8. Log tables may be used if necessary. Use of calculators is strictly prohibited.`,
-  },
-  {
-    id: "cbse-12-biology-2026",
-    classId: "12",
-    subject: "biology",
-    examType: ["annual_exam", "pre_board", "sample_paper", "half_yearly"],
-    title: "CBSE Class 12 Biology (Code 044) Official Blueprint 2025-26",
+    title: "CBSE Class 12 Chemistry (Code 043) Official Blueprint 2025-26",
     board: "CBSE",
     year: 2026,
     totalMarks: 70,
@@ -156,11 +116,51 @@ export const BLUEPRINTS: Blueprint[] = [
     },
     selectedChapters: ["all"],
     unitWeightage: [
-      { unit: "Unit I", topic: "Reproduction (Chapters 1, 2, 3)", marks: 15 },
-      { unit: "Unit II", topic: "Genetics and Evolution (Chapters 4, 5, 6)", marks: 20 },
-      { unit: "Unit III", topic: "Biology and Human Welfare (Chapters 7, 8)", marks: 14 },
-      { unit: "Unit IV", topic: "Biotechnology and its Applications (Chapters 9, 10)", marks: 11 },
-      { unit: "Unit V", topic: "Ecology and Environment (Chapters 11, 12, 13)", marks: 10 },
+      { unit: "Unit 1", topic: "Physical Chemistry: Solutions", marks: 7 },
+      { unit: "Unit 2", topic: "Physical Chemistry: Electrochemistry", marks: 9 },
+      { unit: "Unit 3", topic: "Physical Chemistry: Chemical Kinetics", marks: 7 },
+      { unit: "Unit 4", topic: "Inorganic Chemistry: d- and f-Block Elements", marks: 7 },
+      { unit: "Unit 5", topic: "Inorganic Chemistry: Coordination Compounds", marks: 7 },
+      { unit: "Unit 6", topic: "Organic Chemistry: Haloalkanes and Haloarenes", marks: 6 },
+      { unit: "Unit 7", topic: "Organic Chemistry: Alcohols, Phenols and Ethers", marks: 6 },
+      { unit: "Unit 8", topic: "Organic Chemistry: Aldehydes, Ketones and Carboxylic Acids", marks: 8 },
+      { unit: "Unit 9", topic: "Organic Chemistry: Amines", marks: 6 },
+      { unit: "Unit 10", topic: "Organic Chemistry: Biomolecules", marks: 7 },
+    ],
+    defaultInstructions: `1. There are 33 questions in this question paper with internal choice.
+2. SECTION A consists of 16 multiple-choice questions carrying 1 mark each (Q1 to Q12 are MCQs, Q13 to Q16 are Assertion-Reason questions).
+3. SECTION B consists of 5 very short answer questions carrying 2 marks each (Q17 to Q21 - 30 to 50 words).
+4. SECTION C consists of 7 short answer questions carrying 3 marks each (Q22 to Q28 - 50 to 80 words).
+5. SECTION D consists of 2 case-based questions carrying 4 marks each (Q29 and Q30).
+6. SECTION E consists of 3 long answer questions carrying 5 marks each (Q31 to Q33 - 80 to 120 words).
+7. All questions are compulsory. Internal choices of approximately 33% are provided in Sections B, C, D and E.
+8. Use of log tables and calculators is not permitted.`,
+  },
+  {
+    id: "cbse-12-biology-2026",
+    classId: "12",
+    subject: "biology",
+    examType: ["annual_exam", "pre_board", "sample_paper", "half_yearly"],
+    title: "CBSE Class 12 Biology (Code 044) Official Blueprint 2026-27",
+    board: "CBSE",
+    year: 2026,
+    totalMarks: 70,
+    duration: "3 Hours",
+    questionDistribution: {
+      mcq: 12,
+      assertionReason: 4,
+      vsa: 5,
+      sa: 7,
+      caseStudy: 2,
+      la: 3,
+    },
+    selectedChapters: ["all"],
+    unitWeightage: [
+      { unit: "Unit VI", topic: "Reproduction (Chapters 1, 2, 3)", marks: 16 },
+      { unit: "Unit VII", topic: "Genetics and Evolution (Chapters 4, 5, 6)", marks: 20 },
+      { unit: "Unit VIII", topic: "Biology and Human Welfare (Chapters 7, 8)", marks: 12 },
+      { unit: "Unit IX", topic: "Biotechnology and its Applications (Chapters 9, 10)", marks: 12 },
+      { unit: "Unit X", topic: "Ecology and Environment (Chapters 11, 12, 13)", marks: 10 },
     ],
     defaultInstructions: `1. All questions are compulsory.
 2. The question paper has five sections and 33 questions: Section A, Section B, Section C, Section D and Section E.
@@ -169,7 +169,7 @@ export const BLUEPRINTS: Blueprint[] = [
 5. Section C has 7 Short Answer (SA) questions of 3 marks each (Q22 to Q28).
 6. Section D has 2 Case-Based questions of 4 marks each with sub-parts (Q29 and Q30).
 7. Section E has 3 Long Answer (LA) questions of 5 marks each (Q31 to Q33).
-8. There is no overall choice. However, internal choices have been provided in some questions. A student has to attempt only one of the alternatives in such questions.
+8. There is no overall choice. However, internal choices of approximately 33% have been provided in some questions. A student has to attempt only one of the alternatives in such questions.
 9. Wherever necessary, neat and properly labeled diagrams should be drawn.`,
   },
   {
@@ -604,19 +604,19 @@ export const BLUEPRINTS: Blueprint[] = [
     },
     selectedChapters: ["all"],
     unitWeightage: [
-      { unit: "I", topic: "Chemical Substances - Nature and Behaviour", marks: 25 },
-      { unit: "II", topic: "World of Living", marks: 25 },
-      { unit: "III", topic: "Natural Phenomena", marks: 12 },
-      { unit: "IV", topic: "Effects of Current", marks: 13 },
-      { unit: "V", topic: "Natural Resources", marks: 5 },
+      { unit: "I", topic: "Chemical Substances - Nature and Behaviour (Chemistry)", marks: 25 },
+      { unit: "II", topic: "World of Living (Biology)", marks: 25 },
+      { unit: "III", topic: "Natural Phenomena (Physics)", marks: 12 },
+      { unit: "IV", topic: "Effects of Current (Physics)", marks: 13 },
+      { unit: "V", topic: "Natural Resources (Biology)", marks: 5 },
     ],
     defaultInstructions: `1. This question paper consists of 39 questions in 5 Sections: A, B, C, D and E.
-2. All questions are compulsory. However, an internal choice is provided in some questions.
-3. Section A consists of 20 objective type questions carrying 1 mark each (MCQs and Assertion-Reason).
-4. Section B consists of 6 Very Short Answer type questions carrying 02 marks each.
-5. Section C consists of 7 Short Answer type questions carrying 03 marks each.
-6. Section D consists of 3 Long Answer type questions carrying 05 marks each.
-7. Section E consists of 3 Source-based / Case-based units of assessment of 04 marks each with sub-parts.`,
+2. All questions are compulsory. However, an internal choice of approximately 33% is provided in some questions.
+3. Section A consists of 20 objective type questions carrying 1 mark each (Questions 1 to 20, comprising 16 Multiple Choice Questions and 4 Assertion-Reasoning questions).
+4. Section B consists of 6 Very Short Answer (VSA) type questions carrying 2 marks each (Questions 21 to 26, word limit 30–50 words).
+5. Section C consists of 7 Short Answer (SA) type questions carrying 3 marks each (Questions 27 to 33, word limit 50–80 words).
+6. Section D consists of 3 Long Answer (LA) type questions carrying 5 marks each (Questions 34 to 36, word limit 80–120 words). One question each from Physics, Chemistry, and Biology.
+7. Section E consists of 3 Source-based / Case-based units of assessment carrying 4 marks each with sub-parts (Questions 37 to 39). One question each from Physics, Chemistry, and Biology.`,
   },
   {
     id: "cbse-10-social-2026",
@@ -638,18 +638,20 @@ export const BLUEPRINTS: Blueprint[] = [
     },
     selectedChapters: ["all"],
     unitWeightage: [
-      { unit: "I", topic: "India and the Contemporary World II (History)", marks: 20 },
-      { unit: "II", topic: "Contemporary India II (Geography)", marks: 20 },
-      { unit: "III", topic: "Democratic Politics II (Civics)", marks: 20 },
+      { unit: "I", topic: "India and the Contemporary World - II (History: 18 Theory + 2 Map)", marks: 20 },
+      { unit: "II", topic: "Contemporary India - II (Geography: 17 Theory + 3 Map)", marks: 20 },
+      { unit: "III", topic: "Democratic Politics - II (Political Science)", marks: 20 },
       { unit: "IV", topic: "Understanding Economic Development (Economics)", marks: 20 },
     ],
-    defaultInstructions: `1. Question paper comprises 6 Sections: A, B, C, D, E and F. There are 37 questions in the paper. All questions are compulsory.
-2. Section A - Question 1 to 20 are MCQs of 1 mark each.
-3. Section B - Question 21 to 24 are Very Short Answer Type Questions, carrying 2 marks each.
-4. Section C - Question 25 to 29 are Short Answer Type Questions, carrying 3 marks each.
-5. Section D - Question 30 to 33 are Long Answer Type Questions, carrying 5 marks each.
-6. Section E - Question 34 to 36 are Case-Based questions with three sub-questions carrying 4 marks each.
-7. Section F - Question 37 is Map-based, carrying 5 marks with two parts (37a History 2 marks, 37b Geography 3 marks).`,
+    defaultInstructions: `1. The question paper comprises Six Sections – A, B, C, D, E and F. There are 37 questions in the question paper. All questions are compulsory.
+2. Section A – From questions 1 to 20 are MCQs of 1 mark each (inclusive of Assertion-Reason, Statement-based, and Matching questions).
+3. Section B – Question no. 21 to 24 are Very Short Answer Type Questions, carrying 2 marks each. Answer to each question should not exceed 40 words.
+4. Section C – Contains Q.25 to Q.29 are Short Answer Type Questions, carrying 3 marks each. Answer to each question should not exceed 60 words.
+5. Section D – Question no. 30 to 33 are Long Answer Type Questions, carrying 5 marks each. Answer to each question should not exceed 120 words.
+6. Section E – Questions no. 34 to 36 are Case-Based questions with three sub-questions and are of 4 marks each. Answer to each question should not exceed 100 words.
+7. Section F – Question no. 37 is Map skill-based with two parts: 37(a) from History (2 marks) and 37(b) from Geography (3 marks).
+8. There is no overall choice in the question paper. However, an internal choice has been provided in few questions. Only one of the choices in such questions have to be attempted.
+9. In addition to this, separate instructions are given with each section and question, wherever necessary.`,
   },
   {
     id: "cbse-10-english-2026",
@@ -838,30 +840,31 @@ export const BLUEPRINTS: Blueprint[] = [
     questionDistribution: {
       mcq: 18,
       assertionReason: 0,
-      vsa: 5,
-      sa: 5,
-      la: 3,
+      vsa: 6,
+      sa: 6,
       caseStudy: 3,
+      la: 4,
     },
     selectedChapters: ["all"],
     unitWeightage: [
-      { unit: "U1", topic: "Management of Sporting Events", marks: 5 },
+      { unit: "U1", topic: "Management of Sporting Events (05 + 04 b*)", marks: 9 },
       { unit: "U2", topic: "Children and Women in Sports", marks: 7 },
-      { unit: "U3", topic: "Yoga as Preventive measure for Lifestyle Disease", marks: 6 },
-      { unit: "U4", topic: "Physical Education & Sports for CWSN", marks: 4 },
-      { unit: "U5", topic: "Sports & Nutrition", marks: 7 },
+      { unit: "U3", topic: "Yoga as Preventive measure for Lifestyle Disease (06 + 01 b*)", marks: 7 },
+      { unit: "U4", topic: "Physical Education and Sports for CWSN (04 + 04 b*)", marks: 8 },
+      { unit: "U5", topic: "Sports and Nutrition", marks: 7 },
       { unit: "U6", topic: "Test and Measurement in Sports", marks: 8 },
-      { unit: "U7", topic: "Physiology & Injuries in Sport", marks: 4 },
+      { unit: "U7", topic: "Physiology and Injuries in Sport (04 + 04 b*)", marks: 8 },
       { unit: "U8", topic: "Biomechanics and Sports", marks: 10 },
       { unit: "U9", topic: "Psychology and Sports", marks: 7 },
       { unit: "U10", topic: "Training in Sports", marks: 9 },
     ],
-    defaultInstructions: `1. The question paper consists of 34 questions divided into 5 Sections: A, B, C, D and E.
-2. Section A consists of Question 1 to 18 carrying 1 mark each and are Multiple Choice Questions.
-3. Section B consists of Question 19 to 23 carrying 2 marks each and are Very Short Answer Type.
-4. Section C consists of Question 24 to 28 carrying 3 marks each and are Short Answer Type.
-5. Section D consists of Question 29 to 31 carrying 4 marks each and are Case-Based/Data-Based.
-6. Section E consists of Question 32 to 34 carrying 5 marks each and are Long Answer Type.`,
+    defaultInstructions: `1. The question paper consists of 37 questions divided into 5 Sections: A, B, C, D and E.
+2. Section A consists of Questions 1 to 18 carrying 1 mark each and are Multiple Choice Questions. All questions are compulsory.
+3. Section B consists of Questions 19 to 24 carrying 2 marks each and are Very Short Answer Type (attempt any 5 questions, 60–90 words).
+4. Section C consists of Questions 25 to 30 carrying 3 marks each and are Short Answer Type (attempt any 5 questions, 100–150 words).
+5. Section D consists of Questions 31 to 33 carrying 4 marks each and are Case-Based/Competency-Based questions with internal choice in sub-questions.
+6. Section E consists of Questions 34 to 37 carrying 5 marks each and are Long Answer Type (attempt any 3 questions, 200–300 words).
+7. There is no overall choice. However, internal/sectional choices have been provided in Sections B, C, D, and E.`,
   },
   {
     id: "cbse-11-ip-2026",
@@ -1165,7 +1168,7 @@ export const BLUEPRINTS: Blueprint[] = [
     classId: "12",
     subject: "chemistry",
     examType: ["annual_exam", "pre_board", "sample_paper", "half_yearly"],
-    title: "CBSE Class 12 Chemistry (Code 043) Official Blueprint 2026-2027",
+    title: "CBSE Class 12 Chemistry (Code 043) Official Blueprint 2025-26",
     board: "CBSE",
     year: 2026,
     totalMarks: 70,
@@ -1175,28 +1178,30 @@ export const BLUEPRINTS: Blueprint[] = [
       assertionReason: 4,
       vsa: 5,
       sa: 7,
-      la: 3,
       caseStudy: 2,
+      la: 3,
     },
     selectedChapters: ["all"],
     unitWeightage: [
-      { unit: "U1", topic: "Solutions", marks: 7 },
-      { unit: "U2", topic: "Electrochemistry", marks: 9 },
-      { unit: "U3", topic: "Chemical Kinetics", marks: 7 },
-      { unit: "U4", topic: "d- and f-Block Elements", marks: 7 },
-      { unit: "U5", topic: "Coordination Compounds", marks: 7 },
-      { unit: "U6", topic: "Haloalkanes and Haloarenes", marks: 6 },
-      { unit: "U7", topic: "Alcohols, Phenols and Ethers", marks: 6 },
-      { unit: "U8", topic: "Aldehydes, Ketones and Carboxylic Acids", marks: 8 },
-      { unit: "U9", topic: "Amines", marks: 6 },
-      { unit: "U10", topic: "Biomolecules", marks: 7 },
+      { unit: "Unit 1", topic: "Physical Chemistry: Solutions", marks: 7 },
+      { unit: "Unit 2", topic: "Physical Chemistry: Electrochemistry", marks: 9 },
+      { unit: "Unit 3", topic: "Physical Chemistry: Chemical Kinetics", marks: 7 },
+      { unit: "Unit 4", topic: "Inorganic Chemistry: d- and f-Block Elements", marks: 7 },
+      { unit: "Unit 5", topic: "Inorganic Chemistry: Coordination Compounds", marks: 7 },
+      { unit: "Unit 6", topic: "Organic Chemistry: Haloalkanes and Haloarenes", marks: 6 },
+      { unit: "Unit 7", topic: "Organic Chemistry: Alcohols, Phenols and Ethers", marks: 6 },
+      { unit: "Unit 8", topic: "Organic Chemistry: Aldehydes, Ketones and Carboxylic Acids", marks: 8 },
+      { unit: "Unit 9", topic: "Organic Chemistry: Amines", marks: 6 },
+      { unit: "Unit 10", topic: "Organic Chemistry: Biomolecules", marks: 7 },
     ],
-    defaultInstructions: `1. The Question Paper contains 33 questions divided into 5 Sections: A, B, C, D and E.
-2. Section A contains 16 questions (12 MCQs and 4 Assertion-Reasoning) of 1 mark each.
-3. Section B contains 5 Short Answer Type questions of 2 marks each.
-4. Section C contains 7 Short Answer Type questions of 3 marks each.
-5. Section D contains 2 Case-Based questions of 4 marks each.
-6. Section E contains 3 Long Answer Type questions of 5 marks each. Total theory marks: 70.`,
+    defaultInstructions: `1. There are 33 questions in this question paper with internal choice.
+2. SECTION A consists of 16 multiple-choice questions carrying 1 mark each (Q1 to Q12 are MCQs, Q13 to Q16 are Assertion-Reason questions).
+3. SECTION B consists of 5 very short answer questions carrying 2 marks each (Q17 to Q21 - 30 to 50 words).
+4. SECTION C consists of 7 short answer questions carrying 3 marks each (Q22 to Q28 - 50 to 80 words).
+5. SECTION D consists of 2 case-based questions carrying 4 marks each (Q29 and Q30).
+6. SECTION E consists of 3 long answer questions carrying 5 marks each (Q31 to Q33 - 80 to 120 words).
+7. All questions are compulsory. Internal choices of approximately 33% are provided in Sections B, C, D and E.
+8. Use of log tables and calculators is not permitted.`,
   },
   {
     id: "cbse-11-business-2026",
@@ -1423,7 +1428,7 @@ export const BLUEPRINTS: Blueprint[] = [
     classId: "12",
     subject: "biology",
     examType: ["annual_exam", "pre_board", "sample_paper", "half_yearly"],
-    title: "CBSE Class 12 Biology (Code 044) Official Blueprint 2025-26",
+    title: "CBSE Class 12 Biology (Code 044) Official Blueprint 2026-27",
     board: "CBSE",
     year: 2026,
     totalMarks: 70,
@@ -1438,11 +1443,11 @@ export const BLUEPRINTS: Blueprint[] = [
     },
     selectedChapters: ["all"],
     unitWeightage: [
-      { unit: "Unit I", topic: "Reproduction (Chapters 1, 2, 3)", marks: 15 },
-      { unit: "Unit II", topic: "Genetics and Evolution (Chapters 4, 5, 6)", marks: 20 },
-      { unit: "Unit III", topic: "Biology and Human Welfare (Chapters 7, 8)", marks: 14 },
-      { unit: "Unit IV", topic: "Biotechnology and its Applications (Chapters 9, 10)", marks: 11 },
-      { unit: "Unit V", topic: "Ecology and Environment (Chapters 11, 12, 13)", marks: 10 },
+      { unit: "Unit VI", topic: "Reproduction (Chapters 1, 2, 3)", marks: 16 },
+      { unit: "Unit VII", topic: "Genetics and Evolution (Chapters 4, 5, 6)", marks: 20 },
+      { unit: "Unit VIII", topic: "Biology and Human Welfare (Chapters 7, 8)", marks: 12 },
+      { unit: "Unit IX", topic: "Biotechnology and its Applications (Chapters 9, 10)", marks: 12 },
+      { unit: "Unit X", topic: "Ecology and Environment (Chapters 11, 12, 13)", marks: 10 },
     ],
     defaultInstructions: `1. All questions are compulsory.
 2. The question paper has five sections and 33 questions: Section A, Section B, Section C, Section D and Section E.
@@ -1451,7 +1456,7 @@ export const BLUEPRINTS: Blueprint[] = [
 5. Section C has 7 Short Answer (SA) questions of 3 marks each (Q22 to Q28).
 6. Section D has 2 Case-Based questions of 4 marks each with sub-parts (Q29 and Q30).
 7. Section E has 3 Long Answer (LA) questions of 5 marks each (Q31 to Q33).
-8. There is no overall choice. However, internal choices have been provided in some questions. A student has to attempt only one of the alternatives in such questions.
+8. There is no overall choice. However, internal choices of approximately 33% have been provided in some questions. A student has to attempt only one of the alternatives in such questions.
 9. Wherever necessary, neat and properly labeled diagrams should be drawn.`,
   },
   {
@@ -1485,27 +1490,36 @@ export const BLUEPRINTS: Blueprint[] = [
     classId: "12",
     subject: "accountancy",
     examType: ["annual_exam", "pre_board", "sample_paper", "half_yearly"],
-    title: "CBSE Class 12 Accountancy (Code 055) Official Blueprint 2026-2027",
+    title: "CBSE Class 12 Accountancy (Code 055) Official Blueprint 2025-2026",
     board: "CBSE",
     year: 2026,
     totalMarks: 80,
     duration: "3 Hours",
     questionDistribution: {
-      mcq: 20,
-      assertionReason: 0,
-      vsa: 4,
+      mcq: 16,
+      assertionReason: 4,
+      vsa: 0,
       sa: 6,
-      la: 4,
       caseStudy: 3,
+      la: 5,
     },
     selectedChapters: ["all"],
     unitWeightage: [
-      { unit: "Part A1", topic: "Accounting for Partnership Firms (Fundamentals, Reconstitution & Dissolution)", marks: 36 },
-      { unit: "Part A2", topic: "Accounting for Companies (Share Capital & Debentures)", marks: 24 },
-      { unit: "Part B1", topic: "Analysis of Financial Statements (Financial Statements & Accounting Ratios)", marks: 12 },
-      { unit: "Part B2", topic: "Cash Flow Statement", marks: 8 },
+      { unit: "Part A (Unit 1)", topic: "Accounting for Partnership Firms (Fundamentals, Reconstitution & Dissolution)", marks: 36 },
+      { unit: "Part A (Unit 2)", topic: "Accounting for Companies (Share Capital & Debentures)", marks: 24 },
+      { unit: "Part B (Unit 3)", topic: "Analysis of Financial Statements (Financial Statements of a Company & Accounting Ratios)", marks: 12 },
+      { unit: "Part B (Unit 4)", topic: "Cash Flow Statement (AS 3 Revised Indirect Method)", marks: 8 },
     ],
-    defaultInstructions: "1. This question paper contains 34 questions divided into 5 Sections: A, B, C, D and E. Total theory marks: 80.",
+    defaultInstructions: `1. This question paper contains 34 questions. All questions are compulsory.
+2. This question paper is divided into two parts, Part A and Part B:
+   - Part A: Accounting for Partnership Firms and Companies (Questions 1 to 26 - 60 Marks)
+   - Part B: Financial Statement Analysis (Questions 27 to 34 - 20 Marks)
+3. Questions 1 to 16 and 27 to 30 are 1 mark questions (including Multiple Choice Questions and Assertion-Reason Questions).
+4. Questions 17 to 20 and 31 to 32 are Short Answer (SA-I) questions carrying 3 marks each.
+5. Questions 21 to 22 and 33 are Short Answer (SA-II) questions carrying 4 marks each.
+6. Questions 23 to 26 and 34 are Long Answer (LA) questions carrying 6 marks each.
+7. There is no overall choice. However, an internal choice has been provided in 7 questions: 3 questions of 3 marks, 1 question of 4 marks, and 2 questions of 6 marks in Part A, and 1 question of 3 marks, 1 question of 4 marks, and 1 question of 6 marks in Part B.
+8. Working notes should form part of the answer wherever required. All parts of a question should be attempted together.`,
   },
   {
     id: "cbse-11-englishcore-2026",
