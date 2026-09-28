@@ -610,13 +610,11 @@ export const BLUEPRINTS: Blueprint[] = [
       { unit: "IV", topic: "Effects of Current (Physics)", marks: 13 },
       { unit: "V", topic: "Natural Resources (Biology)", marks: 5 },
     ],
-    defaultInstructions: `1. This question paper consists of 39 questions in 5 Sections: A, B, C, D and E.
-2. All questions are compulsory. However, an internal choice of approximately 33% is provided in some questions.
-3. Section A consists of 20 objective type questions carrying 1 mark each (Questions 1 to 20, comprising 16 Multiple Choice Questions and 4 Assertion-Reasoning questions).
-4. Section B consists of 6 Very Short Answer (VSA) type questions carrying 2 marks each (Questions 21 to 26, word limit 30–50 words).
-5. Section C consists of 7 Short Answer (SA) type questions carrying 3 marks each (Questions 27 to 33, word limit 50–80 words).
-6. Section D consists of 3 Long Answer (LA) type questions carrying 5 marks each (Questions 34 to 36, word limit 80–120 words). One question each from Physics, Chemistry, and Biology.
-7. Section E consists of 3 Source-based / Case-based units of assessment carrying 4 marks each with sub-parts (Questions 37 to 39). One question each from Physics, Chemistry, and Biology.`,
+    defaultInstructions: `1. This question paper consists of 39 questions in 3 sections: Section A is Biology, Section B is Chemistry and Section C is Physics.
+2. All questions are compulsory. However, an internal choice is provided in some questions. A student is expected to attempt only one of the alternatives in these questions.
+3. Section A consists of Biology carrying 30 marks (Questions 1 to 16).
+4. Section B consists of Chemistry carrying 25 marks (Questions 17 to 29).
+5. Section C consists of Physics carrying 25 marks (Questions 30 to 39).`,
   },
   {
     id: "cbse-10-social-2026",

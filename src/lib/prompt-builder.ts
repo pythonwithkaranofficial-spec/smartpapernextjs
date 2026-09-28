@@ -173,11 +173,12 @@ Ensure the questions generated across all sections roughly total these exact mar
 
   const isFullClass10ScienceExam =
     isClass10Science &&
-    (config.examType === "annual_exam" ||
-      config.examType === "pre_board" ||
-      config.examType === "sample_paper" ||
-      config.examType === "half_yearly" ||
-      config.totalMarks >= 70);
+    (config.totalMarks >= 70 ||
+      ((config.examType === "annual_exam" ||
+        config.examType === "pre_board" ||
+        config.examType === "sample_paper" ||
+        config.examType === "half_yearly") &&
+        (config.totalMarks >= 60 || !config.totalMarks)));
 
   const isChemistry =
     normSubject === "chemistry" ||
@@ -1114,7 +1115,7 @@ CRITICAL ACCOUNTANCY ACCURACY & NUMERICAL INTEGRITY DIRECTIVE:
     return buildClass12PhyEduFullExamPrompt(config, solutionDirective);
   }
 
-  // Specialized prompt for Full Class 10 Science Board / Pre-Board / Sample / Half-Yearly Papers (80 Marks, 5 Sections, 39 Questions)
+  // Specialized prompt for Full Class 10 Science Board / Pre-Board / Sample / Half-Yearly Papers (80 Marks, 3 Sections: Biology 30M, Chemistry 25M, Physics 25M, 39 Questions)
   if (isFullClass10ScienceExam) {
     return buildClass10ScienceFullExamPrompt(config, solutionDirective);
   }
@@ -4237,26 +4238,39 @@ Output strictly a valid JSON object matching the following structure. Do not wra
 }
 
 /**
- * Builds the official 80-Mark, 5-Section, 39-Question examination paper prompt for CBSE Class 10 Science (Subject Code 086).
- * Follows the official CBSE 2024-25 / 2025-26 / 2026-27 design and question paper blueprint:
- * Total Marks: 80 | Time Allowed: 3 Hours
- * - Section A: Questions 1 to 20 (20 Objective Type Questions x 1 Mark = 20 Marks):
- *     * Q1 to Q16: Multiple Choice Questions (16 MCQs distributed across Chemistry, Biology, Physics)
- *     * Q17 to Q20: Assertion-Reasoning Questions (4 A-R Questions with standard options A, B, C, D)
- * - Section B: Questions 21 to 26 (6 Very Short Answer Questions x 2 Marks = 12 Marks, 30–50 words):
- *     * Exactly 2 Physics, 2 Chemistry, 2 Biology questions with internal choices in 2 questions.
- * - Section C: Questions 27 to 33 (7 Short Answer Questions x 3 Marks = 21 Marks, 50–80 words):
- *     * Distributed across components (e.g. 2 Physics, 2-3 Chemistry, 2-3 Biology) with internal choices in 2 questions.
- * - Section D: Questions 34 to 36 (3 Long Answer Questions x 5 Marks = 15 Marks, 80–120 words):
- *     * Q34: Chemistry (5 Marks) with internal choice
- *     * Q35: Biology (5 Marks) with internal choice
- *     * Q36: Physics (5 Marks) with internal choice
- * - Section E: Questions 37 to 39 (3 Case-Based / Source-Based Assessment Units x 4 Marks = 12 Marks):
- *     * Q37: Physics Case Study (4 Marks) with sub-questions and internal choice
- *     * Q38: Chemistry Case Study (4 Marks) with sub-questions and internal choice
- *     * Q39: Biology Case Study (4 Marks) with sub-questions and internal choice
- * Total: 20 + 12 + 21 + 15 + 12 = 80 Marks (39 Questions total).
- * Subject-wise distribution: Physics: 25 Marks | Chemistry: 25 Marks | Biology: 30 Marks = 80 Marks.
+ * Builds the official 80-Mark, 3-Section, 39-Question examination paper prompt for CBSE Class 10 Science (Subject Code 086).
+ * Follows the official CBSE 2026-27 design and deterministic question paper structure:
+ * Total Marks: 80 | Time Allowed: 3 Hours | Total Questions: 39 | Total Sections: 3
+ * - Section A — Biology: Questions 1 to 16 = 30 Marks
+ *     * Q1–Q7: Objective MCQs (7 x 1 = 7 Marks, including visual/diagram MCQ with text-based alternative for visually impaired)
+ *     * Q8–Q9: Assertion–Reasoning Questions (2 x 1 = 2 Marks with standard options A, B, C, D)
+ *     * Q10: Two-part question A + B (2 Marks)
+ *     * Q11: Complete Option A OR B question (2 Marks)
+ *     * Q12: Direct Short Answer question (2 Marks)
+ *     * Q13: Explanation / Process / Conceptual question (3 Marks)
+ *     * Q14: Multi-subpart question A + B + C (3 Marks)
+ *     * Q15: Case/Stimulus/Application question A(1) + B(1) + [C(2) OR D(2)] = 4 Marks
+ *     * Q16: Complete Option A (I, II) OR Option B (I, II) = 5 Marks (with text-based alternative for visually impaired)
+ * - Section B — Chemistry: Questions 17 to 29 = 25 Marks
+ *     * Q17–Q23: Objective MCQs (7 x 1 = 7 Marks)
+ *     * Q24: Assertion–Reasoning Question (1 Mark with standard options A, B, C, D)
+ *     * Q25: Conceptual / Explanatory question (2 Marks)
+ *     * Q26: Complete Option A ((i),(ii),(iii)) OR Option B ((i),(ii)) = 3 Marks (with visually impaired alternative)
+ *     * Q27: Three-part reasoning question Give reason for A, B, C (3 Marks)
+ *     * Q28: Case/Stimulus/Experiment question A(1) + B(1) + [C(2) OR D(2)] = 4 Marks
+ *     * Q29: Complete Option A (I, II) OR Option B (I, II) = 5 Marks
+ * - Section C — Physics: Questions 30 to 39 = 25 Marks
+ *     * Q30: Objective MCQ (1 Mark)
+ *     * Q31: Numerical / Conceptual MCQ (1 Mark)
+ *     * Q32: Assertion–Reasoning Question (1 Mark with standard options A, B, C, D)
+ *     * Q33: Two-part question A + B (2 Marks)
+ *     * Q34: Complete Option A (I, II) OR Option B (I, II) = 2 Marks
+ *     * Q35: Numerical / Diagram-based question A + B + C (3 Marks, with text alternative for visually impaired)
+ *     * Q36: Two-part question A + B (3 Marks)
+ *     * Q37: Circuit / Diagram / Numerical question A + B (3 Marks, with text alternative for visually impaired)
+ *     * Q38: Case/Stimulus/Application question A(1) + B(1) + [C(2) OR D(2)] = 4 Marks (with text alternative for visually impaired)
+ *     * Q39: Complete Option A (I, II, III, IV) OR Option B (I, II, III, IV) = 5 Marks (with text-based alternative for visually impaired)
+ * Total: 30 + 25 + 25 = 80 Marks (39 Questions total).
  */
 function buildClass10ScienceFullExamPrompt(config: PaperConfig, solutionDirective: string): string {
   const targetChaptersDirective =
@@ -4264,427 +4278,389 @@ function buildClass10ScienceFullExamPrompt(config: PaperConfig, solutionDirectiv
     config.selectedChapters.length > 0 &&
     !config.selectedChapters.includes("all")
       ? `--- USER SELECTED CHAPTER FOCUS ---
-When generating questions across the three components, strictly prioritize these selected chapters/topics chosen by the user:
+When generating questions across the three sections, strictly prioritize these selected chapters/topics chosen by the user:
 ${config.selectedChapters.map((c) => `- ${c}`).join("\n")}
 Ensure all generated questions originate strictly from these chosen chapters while maintaining the component structure.`
-      : `--- FULL SYLLABUS COVERAGE (3-COMPONENT BALANCE: PHYSICS 25M, CHEMISTRY 25M, BIOLOGY 30M) ---
-Cover all prescribed chapters across Physics, Chemistry, and Biology in strict accordance with the official CBSE blueprint.`;
+      : `--- FULL SYLLABUS COVERAGE (3-COMPONENT BALANCE: BIOLOGY 30M, CHEMISTRY 25M, PHYSICS 25M) ---
+Cover all prescribed chapters across Biology, Chemistry, and Physics in strict accordance with the official CBSE curriculum.`;
 
   return `
 You are a Senior CBSE Examination Paper Setter and Chief Examiner for Class 10 Science (Subject Code 086) with 25+ years of experience.
-Your task is to generate the COMPLETE, OFFICIAL, 100% CBSE-COMPLIANT Class 10 Science Question Paper for 2026.
+Your task is to generate the COMPLETE, OFFICIAL, 100% CBSE-COMPLIANT Class 10 Science Question Paper for Session 2026–27.
 
-Total Marks: 80
+Subject: Science (Subject Code 086)
+Class: Class 10 (Class X)
+Session: 2026–27
+Maximum Marks: 80
 Time Allowed: 3 Hours
 Target Exam Type: ${config.examType}
 Difficulty Level: ${config.difficulty}
-Subject: Science (Subject Code 086)
-Class: Class 10 (Class X)
+Total Questions: Exactly 39
+Total Sections: Exactly 3
 
 ======================================================================
-MANDATORY THREE-COMPONENT STRUCTURE & SUBJECT-WISE WEIGHTAGE (80 MARKS)
+MANDATORY FRONT PAGE & GENERAL INSTRUCTIONS SPECIFICATION
 ======================================================================
-Science is a COMBINED subject consisting of THREE distinct, independent components:
-1. Physics: 25 Marks Theory
-   - Unit III: Natural Phenomena (12 Marks)
-   - Unit IV: Effects of Current (13 Marks)
-2. Chemistry: 25 Marks Theory
-   - Unit I: Chemical Substances - Nature and Behaviour (25 Marks)
-3. Biology: 30 Marks Theory
-   - Unit II: World of Living (25 Marks)
-   - Unit V: Natural Resources (05 Marks)
-TOTAL: Exactly 80 Marks Theory (plus 20 Marks Internal Assessment = 100 Marks).
+SCIENCE – CODE NO. 086
+SAMPLE QUESTION PAPER
+CLASS – X (2026–27)
 
-CRITICAL INDEPENDENCE RULE:
-Physics ≠ Chemistry ≠ Biology!
-Each component must maintain its own syllabus and question pool. You must NEVER mix concepts between components (e.g., do not put an electricity question under chemistry, or a chemical reaction under biology). Maintain the exact blueprint balance.
+Max. Marks: 80                         Time Allowed: 3 hours
+
+General Instructions:
+(i) This question paper consists of 39 questions in 3 sections.
+    Section A is Biology, Section B is Chemistry and Section C is Physics.
+(ii) All questions are compulsory. However, an internal choice is provided in some questions. A student is expected to attempt only one of the alternatives in these questions.
+(iii) Section A consists of Biology carrying 30 marks (Questions 1 to 16).
+(iv) Section B consists of Chemistry carrying 25 marks (Questions 17 to 29).
+(v) Section C consists of Physics carrying 25 marks (Questions 30 to 39).
+
+======================================================================
+CORE ARCHITECTURAL RULE — STRICTLY DETERMINISTIC QUESTION SLOTS
+======================================================================
+DO NOT DECIDE OR ALTER THE PAPER STRUCTURE DYNAMICALLY!
+The paper structure is 100% PREDEFINED into exactly 39 numbered structural slots across 3 sections.
+The application controls the paper structure, question count (39), section arrangement (Biology -> Chemistry -> Physics), question numbers (1 to 39), marks (80), and choice formats.
+You MUST generate question content ONLY inside these predefined structural slots:
+
+- SECTION A — BIOLOGY: Questions 1 to 16 = Exactly 30 Marks
+  Q1 to Q7:   7 x 1 = 7 Marks (Objective MCQs)
+  Q8 to Q9:   2 x 1 = 2 Marks (Assertion–Reason)
+  Q10:        2 Marks (Two-part question A + B)
+  Q11:        2 Marks (Complete Option A OR Option B)
+  Q12:        2 Marks (Direct Short Answer)
+  Q13:        3 Marks (Explanation / Process / Conceptual)
+  Q14:        3 Marks (Multi-subpart A + B + C)
+  Q15:        4 Marks (Case / Stimulus / Application: A(1) + B(1) + [C(2) OR D(2)])
+  Q16:        5 Marks (Complete Option A (I, II) OR Option B (I, II))
+  Section Total = 7 + 2 + 2 + 2 + 2 + 3 + 3 + 4 + 5 = 30 MARKS.
+
+- SECTION B — CHEMISTRY: Questions 17 to 29 = Exactly 25 Marks
+  Q17 to Q23: 7 x 1 = 7 Marks (Objective MCQs)
+  Q24:        1 Mark (Assertion–Reason)
+  Q25:        2 Marks (Conceptual / Explanatory Short Answer)
+  Q26:        3 Marks (Complete Option A ((i),(ii),(iii)) OR Option B ((i),(ii)))
+  Q27:        3 Marks (Three-part reasoning Give reason for A, B, C)
+  Q28:        4 Marks (Case / Experiment / Application: A(1) + B(1) + [C(2) OR D(2)])
+  Q29:        5 Marks (Complete Option A (I, II) OR Option B (I, II))
+  Section Total = 7 + 1 + 2 + 3 + 3 + 4 + 5 = 25 MARKS.
+
+- SECTION C — PHYSICS: Questions 30 to 39 = Exactly 25 Marks
+  Q30:        1 Mark (Objective MCQ)
+  Q31:        1 Mark (Numerical / Conceptual MCQ)
+  Q32:        1 Mark (Assertion–Reason)
+  Q33:        2 Marks (Two-part question A + B)
+  Q34:        2 Marks (Complete Option A (I, II) OR Option B (I, II))
+  Q35:        3 Marks (Numerical / Diagram-based: A + B + C)
+  Q36:        3 Marks (Two-part question A + B)
+  Q37:        3 Marks (Circuit / Diagram / Numerical: A + B)
+  Q38:        4 Marks (Case / Stimulus / Application: A(1) + B(1) + [C(2) OR D(2)])
+  Q39:        5 Marks (Complete Option A (I, II, III, IV) OR Option B (I, II, III, IV))
+  Section Total = 2 + 1 + 2 + 2 + 3 + 3 + 3 + 4 + 5 = 25 MARKS.
+
+OVERALL TOTAL: 30 + 25 + 25 = EXACTLY 80 MARKS | EXACTLY 39 QUESTIONS.
 
 ======================================================================
 OFFICIAL SYLLABUS BOUNDARIES & PRESCRIBED NCERT TOPICS
 ======================================================================
-1. PHYSICS (Themes: Natural Phenomena & How Things Work - 25 Marks):
-   - Unit III: Natural Phenomena (12 Marks):
-     * Light – Reflection and Refraction: Reflection of light by curved surfaces; Images formed by spherical mirrors, centre of curvature, principal axis, principal focus, focal length, mirror formula (derivation not required), magnification. Refraction; Laws of refraction, refractive index. Refraction of light by spherical lens; Image formed by spherical lenses; Lens formula (derivation not required); Magnification. Power of a lens.
-     * The Human Eye and the Colourful World: Functioning of a lens in human eye, defects of vision (myopia, hypermetropia, presbyopia) and their corrections, applications of spherical mirrors and lenses. Refraction of light through a prism, dispersion of light, scattering of light, applications in daily life (Tyndall effect, blue colour of clear sky).
-     * STRICT EXCLUSION: Colour of the sun at sunrise and sunset is EXCLUDED.
-   - Unit IV: Effects of Current (13 Marks):
-     * Electricity: Electric current, potential difference and electric current. Ohm's law; Resistance, Resistivity, Factors on which the resistance of a conductor depends. Series combination of resistors, parallel combination of resistors and its applications in daily life. Heating effect of electric current and its applications in daily life (Joule's law of heating). Electric power, Interrelation between P, V, I and R.
-     * Magnetic Effects of Electric Current: Magnetic field, field lines, field due to a current carrying conductor, field due to current carrying coil or solenoid; Force on current carrying conductor, Fleming's Left Hand Rule, Direct current. Alternating current: frequency of AC. Advantage of AC over DC. Domestic electric circuits (earth wire, fuse, short circuit, overloading).
+1. BIOLOGY (Unit II: World of Living - 25 Marks & Unit V: Natural Resources - 05 Marks = 30 Marks):
+   - Life Processes: Nutrition (autotrophic & heterotrophic, stomata, human digestive system), respiration (aerobic & anaerobic, ATP, human respiratory system), transport (circulatory system in humans, blood, lymph, heart, transport of water and food in plants - xylem & phloem) and excretion (human excretory system, nephron structure, excretion in plants).
+   - Control and Coordination: Tropic movements in plants (phototropism, geotropism, hydrotropism, thigmotropism, chemotropism); Plant hormones (auxin, gibberellin, cytokinin, abscisic acid); Animal nervous system, reflex arc, reflex action; Endocrine glands and animal hormones (adrenaline, thyroxine, growth hormone, insulin, testosterone, estrogen).
+   - How do Organisms Reproduce?: Asexual reproduction (fission, fragmentation, regeneration, budding, vegetative propagation, spore formation); Sexual reproduction in flowering plants (pollination & fertilization); Human male and female reproductive systems; Reproductive health, contraception methods, safe sex vs STDs/HIV.
+   - Heredity: Mendel's laws of inheritance (monohybrid & dihybrid cross, phenotype & genotype ratios); Sex determination in human beings (XX and XY chromosomes).
+   - STRICT EXCLUSIONS: Evolution; evolution and classification; and evolution equated with progress are strictly EXCLUDED.
+   - Our Environment (Unit V - 5 Marks): Ecosystem components (biotic & abiotic), food chains, food webs, trophic levels, 10% law of energy flow, biological magnification, ozone layer depletion (CFCs, Montreal Protocol), biodegradable vs non-biodegradable waste management.
+   - STRICT EXCLUSION: "Management of Natural Resources" will NOT be assessed in year-end examination.
 
-2. CHEMISTRY (Theme: Materials - 25 Marks):
-   - Unit I: Chemical Substances - Nature and Behaviour (25 Marks):
-     * Chemical Reactions and Equations: Chemical equation, Balanced chemical equation, implications of a balanced chemical equation, types of chemical reactions: combination, decomposition (thermal, electrolytic, photolytic), displacement, double displacement, precipitation, endothermic and exothermic reactions, oxidation and reduction, redox reactions.
-     * Acids, Bases and Salts: Definitions in terms of furnishing of H+ and OH- ions, General properties, examples and uses, neutralization, concept of pH scale (definition relating to logarithm not required), importance of pH in everyday life; preparation and uses of Sodium Hydroxide (chlor-alkali process), Bleaching powder, Baking soda, Washing soda, and Plaster of Paris (water of crystallization).
-     * Metals and Non-Metals: Properties of metals and non-metals; Reactivity series; Formation and properties of ionic compounds; Basic metallurgical processes (crushing, concentration, roasting, calcination, reduction, refining); Corrosion and its prevention (galvanization, alloying).
-     * Carbon and its Compounds: Covalent bonding in carbon compounds (tetravalency and catenation). Versatile nature of carbon. Homologous series. Nomenclature of carbon compounds containing functional groups (halogens, alcohol, ketones, aldehydes, alkanes, alkenes and alkynes), difference between saturated hydrocarbons and unsaturated hydrocarbons. Chemical properties of carbon compounds (combustion, oxidation, addition and substitution reaction). Ethanol and Ethanoic acid (only properties and uses - esterification, saponification), soaps and detergents (micelle formation and cleansing action).
+2. CHEMISTRY (Unit I: Chemical Substances - Nature and Behaviour = 25 Marks):
+   - Chemical Reactions and Equations: Chemical equation, balanced equations, types of reactions: combination, decomposition (thermal, electrolytic, photolytic), displacement, double displacement, precipitation, endothermic and exothermic reactions, redox reactions (oxidation & reduction).
+   - Acids, Bases and Salts: Definitions in terms of H+ and OH- ions, general properties, neutralization, pH scale concept and applications in everyday life; Preparation, properties and uses of Sodium Hydroxide (chlor-alkali process), Bleaching powder, Baking soda, Washing soda, and Plaster of Paris (water of crystallization).
+   - Metals and Non-Metals: Physical & chemical properties of metals and non-metals; Reactivity series; Formation and properties of ionic compounds; Basic metallurgical processes (roasting, calcination, reduction, electrolytic refining); Corrosion and its prevention (galvanization, alloying).
+   - Carbon and its Compounds: Covalent bonding in carbon (tetravalency & catenation); Homologous series; Functional groups (halogens, alcohol, ketones, aldehydes, alkanes, alkenes, alkynes); Saturated vs unsaturated hydrocarbons; Chemical properties (combustion, oxidation, addition, substitution); Properties and reactions of Ethanol and Ethanoic acid (esterification, saponification); Soaps and detergents (micelle structure and cleansing action).
 
-3. BIOLOGY (Themes: The World of the Living & Natural Resources - 30 Marks):
-   - Unit II: World of Living (25 Marks):
-     * Life Processes: 'Living Being'. Basic concept of nutrition (autotrophic & heterotrophic, stomata, human digestive system), respiration (aerobic & anaerobic, ATP, human respiratory system), transport (circulatory system in humans, blood, lymph, heart, transport of water and food in plants - xylem & phloem) and excretion (human excretory system, nephron structure, excretion in plants).
-     * Control and Coordination: Tropic movements in plants (phototropism, geotropism, hydrotropism, thigmotropism, chemotropism); Introduction of plant hormones (auxin, gibberellin, cytokinin, abscisic acid); Control and co-ordination in animals: Nervous system; Voluntary, involuntary and reflex action (reflex arc); Chemical co-ordination: animal hormones (endocrine glands, adrenaline, thyroxine, growth hormone, insulin, testosterone, estrogen).
-     * How do Organisms Reproduce?: Reproduction in animals and plants (asexual: fission, fragmentation, regeneration, budding, vegetative propagation, spore formation; and sexual reproduction in flowering plants - pollination & fertilization; human male and female reproductive systems); reproductive health - need and methods of family planning (barrier, chemical, surgical). Safe sex vs HIV/AIDS. Child bearing and women's health.
-     * Heredity: Heredity; Mendel's contribution - Laws for inheritance of traits (monohybrid & dihybrid cross, phenotype & genotype ratios); Sex determination: brief introduction (XX and XY chromosomes).
-     * STRICT EXCLUSIONS: Evolution; evolution and classification; and evolution should not be equated with progress are strictly EXCLUDED from evaluation.
-   - Unit V: Natural Resources (5 Marks):
-     * Our Environment: Eco-system (biotic and abiotic components, food chains and food webs, trophic levels, 10% law of energy flow), Environmental problems, Ozone depletion (CFCs, Montreal protocol), waste production and their solutions. Biodegradable and non-biodegradable substances.
-     * STRICT EXCLUSION: NCERT Chapter 16 "Management of Natural Resources" will NOT be assessed in the year-end examination (assigned for portfolio/internal assessment only).
-     * NCERT box information across textbooks is for conceptual clarity only and will not be assessed in the year-end examination.
+3. PHYSICS (Unit III: Natural Phenomena - 12 Marks & Unit IV: Effects of Current - 13 Marks = 25 Marks):
+   - Light – Reflection and Refraction: Spherical mirrors (concave and convex), focal length, mirror formula, magnification. Laws of refraction, refractive index. Spherical lenses, lens formula, magnification, power of a lens (dioptre).
+   - The Human Eye and the Colourful World: Functioning of eye lens, defects of vision (myopia, hypermetropia, presbyopia) and corrections. Refraction through glass prism, dispersion of white light, atmospheric refraction (twinkling of stars, advance sunrise), scattering of light (Tyndall effect, blue colour of sky).
+   - STRICT EXCLUSION: Colour of the sun at sunrise and sunset is EXCLUDED.
+   - Electricity: Electric current, potential difference, Ohm's law, resistance, resistivity, factors affecting resistance. Series and parallel combination of resistors and applications. Heating effect of electric current (Joule's law of heating), electric power (P = VI = I^2*R = V^2/R), commercial unit of energy (kWh).
+   - Magnetic Effects of Electric Current: Magnetic field, field lines, field due to straight conductor, circular coil, and solenoid. Force on current-carrying conductor in magnetic field, Fleming's Left-Hand Rule. Electric motor principles, AC vs DC, domestic electric circuits (live, neutral, earth wires, fuse, overloading, short circuit).
 
 ${targetChaptersDirective}
 
 ======================================================================
-MANDATORY 5-SECTION, 39-QUESTION BLUEPRINT STRUCTURE (EXACTLY 80 MARKS)
+DETAILED QUESTION-WISE ARCHITECTURE & SPECIFICATIONS
 ======================================================================
-The paper MUST consist of exactly 5 sections (Section A to Section E) and exactly 39 sequentially numbered questions (Q1 to Q39):
 
-----------------------------------------------------------------------
-SECTION A: Multiple Choice & Assertion-Reason Questions (Q1 to Q20) — 20 Questions x 1 Mark = 20 Marks
-----------------------------------------------------------------------
-- Exactly 20 questions carrying 1 mark each.
-- All questions are compulsory.
-- Composition:
-  * Questions 1 to 16: Multiple Choice Questions (MCQs)
-    - Balanced distribution: ~5-6 Chemistry, ~5-6 Biology, ~5-6 Physics.
-    - Provide exactly 4 options in the "choices" array: ["(A) ...", "(B) ...", "(C) ...", "(D) ..."].
-  * Questions 17 to 20: Assertion-Reason Questions (A-R)
-    - Distributed across subjects: 1 Chemistry, 1-2 Biology, 1-2 Physics.
-    - Exactly 4 standard CBSE options in the "choices" array:
-      "(A) Both Assertion (A) and Reason (R) are true and Reason (R) is the correct explanation of Assertion (A)."
-      "(B) Both Assertion (A) and Reason (R) are true but Reason (R) is not the correct explanation of Assertion (A)."
-      "(C) Assertion (A) is true but Reason (R) is false."
-      "(D) Assertion (A) is false but Reason (R) is true."
+--- SECTION A — BIOLOGY (Q1 to Q16 = 30 Marks) ---
+Q1: 1-mark objective MCQ on Biology concepts.
+Q2: 1-mark visual/diagram/experimental MCQ on Biology. Must include descriptive figure/setup context AND provide the mandatory text-based alternative for visually impaired students.
+Q3 to Q7: 1-mark objective MCQs on Biology concepts, experiments, or daily life applications.
+ASSERTION–REASON BLOCK BEFORE Q8 & Q9:
+Use the standard CBSE instructions:
+"The following two questions consist of two statements – Assertion (A) and Reason (R). Answer these questions by selecting the appropriate option given below:
+A. Both A and R are true, and R is the correct explanation of A.
+B. Both A and R are true, and R is not the correct explanation of A.
+C. A is true but R is false.
+D. A is false but R is true."
+Q8: 1-mark Assertion–Reason question on Biology.
+Q9: 1-mark Assertion–Reason question on Biology.
+Q10: 2-mark two-part question (Common introductory question/situation followed by sub-parts A and B, total 2 marks).
+Q11: 2-mark complete internal-choice question:
+"Attempt either option A or B.
+A. [Biology Question]
+OR
+B. [Alternative Biology Question]"
+Student attempts only one complete option (Option A OR Option B). Set option A in "text" and option B in "orQuestion".
+Q12: 2-mark direct short-answer question on Biology.
+Q13: 3-mark explanation / process / conceptual question on Biology.
+Q14: 3-mark multi-subpart question on Biology: Case / situation / diagram / stimulus followed by three separately labelled sub-parts: A, B, C (Total 3 marks).
+Q15: 4-mark case / stimulus / application-based question on Biology:
+Detailed experimental or real-world situation followed by:
+A. [Sub-question] (1 Mark)
+B. [Sub-question] (1 Mark)
+Attempt either sub-part C or D:
+C. [Sub-question] (2 Marks)
+OR
+D. [Alternative sub-question] (2 Marks)
+Total = 4 Marks (A=1, B=1, C or D=2).
+Q16: 5-mark complete internal-choice question on Biology:
+"Attempt either option A or B.
+A. [Diagram / case / experiment]
+   I. [Sub-question]
+   II. [Sub-question]
+OR
+B. [Alternative diagram / case / experiment]
+   I. [Sub-question]
+   II. [Sub-question]"
+Where visual/diagram is involved, provide the text-based version:
+"For visually impaired students:
+A.
+I. [Text-based alternative]
+II. [Text-based alternative]
+OR
+B.
+I. [Text-based alternative]
+II. [Text-based alternative]"
+Set Option A in "text" and Option B in "orQuestion".
 
-----------------------------------------------------------------------
-SECTION B: Very Short Answer Type Questions (Q21 to Q26) — 6 Questions x 2 Marks = 12 Marks
-----------------------------------------------------------------------
-- Exactly 6 VSA questions carrying 2 marks each.
-- Word limit: 30 to 50 words each.
-- SUBJECT DISTRIBUTION: EXACTLY 2 Chemistry + 2 Biology + 2 Physics!
-  * Q21: Chemistry (Chemical Reactions / Acids & Bases)
-  * Q22: Chemistry (Metals & Non-metals / Carbon) with internal choice
-  * Q23: Biology (Life Processes / Control & Coordination)
-  * Q24: Biology (Reproduction / Our Environment)
-  * Q25: Physics (Light - Reflection & Refraction / Human Eye)
-  * Q26: Physics (Electricity / Magnetic Effects) with internal choice
-- Provide internal choice ("orQuestion" and "orSolution") in at least 2 questions from the same chapter/subject.
+--- SECTION B — CHEMISTRY (Q17 to Q29 = 25 Marks) ---
+Q17 to Q23: 1-mark objective MCQs on Chemistry (Chemical reactions, acids/bases/salts, metals/non-metals, carbon compounds).
+ASSERTION–REASON BLOCK BEFORE Q24:
+Standard CBSE instructions:
+"The following question consists of two statements – Assertion (A) and Reason (R). Answer this question by selecting the appropriate option given below:
+A. Both A and R are true, and R is the correct explanation of A.
+B. Both A and R are true, and R is not the correct explanation of A.
+C. A is true but R is false.
+D. A is false but R is true."
+Q24: 1-mark Assertion–Reason question on Chemistry.
+Q25: 2-mark conceptual / explanatory short-answer question on Chemistry.
+Q26: 3-mark complete Option A OR Option B question on Chemistry:
+"Attempt either option A or B.
+A. [Case / question]
+   (i) [Sub-question]
+   (ii) [Sub-question]
+   (iii) [Sub-question]
+OR
+B. [Alternative case / question]
+   (i) [Sub-question]
+   (ii) [Sub-question]"
+(If visual/diagram is involved, provide corresponding visually impaired text-based alternative). Set Option A in "text" and Option B in "orQuestion".
+Q27: 3-mark three-part reasoning question on Chemistry:
+"Give reason for the following:
+A. [Reason-based question]
+B. [Reason-based question]
+C. [Reason-based question]"
+Total = 3 Marks.
+Q28: 4-mark case / stimulus + experiment / application question on Chemistry:
+Detailed experimental or industrial setup context followed by:
+A. [Question] (1 Mark)
+B. [Question] (1 Mark)
+Attempt either sub-part C or D:
+C. [Question] (2 Marks)
+OR
+D. [Alternative question] (2 Marks)
+Total = 4 Marks (A=1, B=1, C or D=2).
+Q29: 5-mark complete internal-choice question on Chemistry:
+"Attempt either option A or B.
+A.
+   I. [Sub-question]
+   II. [Sub-question]
+OR
+B.
+   I. [Sub-question]
+   II. [Sub-question]"
+Set Option A in "text" and Option B in "orQuestion".
 
-----------------------------------------------------------------------
-SECTION C: Short Answer Type Questions (Q27 to Q33) — 7 Questions x 3 Marks = 21 Marks
-----------------------------------------------------------------------
-- Exactly 7 SA questions carrying 3 marks each.
-- Word limit: 50 to 80 words each.
-- SUBJECT DISTRIBUTION: Balanced across components (2-3 Physics, 2-3 Chemistry, 2-3 Biology):
-  * Q27: Chemistry (e.g. Balanced reactions, properties of salts, metallurgy) with internal choice
-  * Q28: Chemistry (e.g. Carbon bonding, isomerism, functional groups)
-  * Q29: Biology (e.g. Nutrition, respiration, circulation, or excretion) with internal choice
-  * Q30: Biology (e.g. Plant/animal hormones, nervous system, reflex action)
-  * Q31: Biology (e.g. Mendel's cross, sex determination, or ecological pyramid/10% law)
-  * Q32: Physics (e.g. Refractive index calculation, lens/mirror numerical, defect of vision correction)
-  * Q33: Physics (e.g. Resistors combination numerical, heating effect, magnetic field rules)
-- Provide internal choice ("orQuestion" and "orSolution") in at least 2 questions from the same chapter/subject.
-
-----------------------------------------------------------------------
-SECTION D: Long Answer Type Questions (Q34 to Q36) — 3 Questions x 5 Marks = 15 Marks
-----------------------------------------------------------------------
-- Exactly 3 LA questions carrying 5 marks each.
-- Word limit: 80 to 120 words each (structured into multi-parts, e.g. (a) 2 marks, (b) 2 marks, (c) 1 mark, or (a) 3 marks, (b) 2 marks).
-- COMPONENT ALLOCATION: EXACTLY ONE QUESTION PER COMPONENT:
-  * Q34: Chemistry (5 Marks) — Structured multi-part question with a compulsory INTERNAL CHOICE ("orQuestion") from Chemistry!
-  * Q35: Biology (5 Marks) — Structured multi-part question with a compulsory INTERNAL CHOICE ("orQuestion") from Biology!
-  * Q36: Physics (5 Marks) — Structured multi-part question (conceptual + numerical / ray diagram) with a compulsory INTERNAL CHOICE ("orQuestion") from Physics!
-- EVERY question in Section D MUST have an internal choice ("orQuestion" and "orSolution") from the same subject component!
-
-----------------------------------------------------------------------
-SECTION E: Case-Based / Source-Based Assessment Units (Q37 to Q39) — 3 Questions x 4 Marks = 12 Marks
-----------------------------------------------------------------------
-- Exactly 3 Case-Based questions carrying 4 marks each.
-- Each case consists of a factual/experimental scenario (approx. 80-120 words), followed by 3 sub-questions:
-  * Sub-question (i): 1 Mark
-  * Sub-question (ii): 1 Mark
-  * Sub-question (iii): 2 Marks (with an internal choice: (iii) OR (iii))
-- COMPONENT ALLOCATION: EXACTLY ONE CASE STUDY PER COMPONENT:
-  * Q37: Physics Case Study (4 Marks) — Practical experiment or real-world application (e.g. domestic wiring & fuse rating, Ohm's law V-I graph analysis, or convex/concave lens image positioning in optical bench).
-  * Q38: Chemistry Case Study (4 Marks) — Experimental setup or reaction data (e.g. chlor-alkali process products, reactivity series displacement experiments, pH changes in digestive system, or cleansing action of soaps vs detergents).
-  * Q39: Biology Case Study (4 Marks) — Biological study or experimental data (e.g. Mendel's dihybrid seed shape/color cross, human nephron filtration rate, food chain energy transfer & biomagnification, or reflex action pathway).
-- Sub-question (iii) of each case study MUST include an internal choice ("OR" alternative sub-question for 2 marks).
+--- SECTION C — PHYSICS (Q30 to Q39 = 25 Marks) ---
+Q30: 1-mark objective MCQ on Physics (Light / Human eye / Electricity / Magnetism).
+Q31: 1-mark numerical / conceptual MCQ on Physics.
+ASSERTION–REASON BLOCK BEFORE Q32:
+Standard CBSE instructions:
+"The following question consists of two statements – Assertion (A) and Reason (R). Answer this question by selecting the appropriate option given below:
+A. Both A and R are true, and R is the correct explanation of A.
+B. Both A and R are true, and R is not the correct explanation of A.
+C. A is true but R is false.
+D. A is false but R is true."
+Q32: 1-mark Assertion–Reason question on Physics.
+Q33: 2-mark two-part question on Physics:
+A. [Definition / law / concept]
+B. [Definition / mathematical expression / concept]
+Total = 2 Marks.
+Q34: 2-mark complete Option A OR Option B question on Physics:
+"Attempt either option A or B.
+A.
+   I. [Question]
+   II. [Question]
+OR
+B.
+   I. [Question]
+   II. [Question]"
+Set Option A in "text" and Option B in "orQuestion". Total = 2 Marks.
+Q35: 3-mark numerical / diagram-based question on Physics (Light / Mirrors / Lenses):
+A. [Part]
+B. [Part]
+C. [Part]
+For visually impaired students (where ray diagram is required):
+Provide text-based equivalent numerical/question testing the exact same formula and concept.
+Total = 3 Marks.
+Q36: 3-mark two-part question on Physics (Electricity / Magnetism):
+A. [Concept / rule + explanation]
+B. [Application / explanation]
+Total = 3 Marks.
+Q37: 3-mark circuit / diagram / numerical question on Physics:
+Regular version: [Circuit diagram / numerical situation with resistors/cells] followed by A and B calculations.
+For visually impaired students:
+Provide text describing circuit parameters explicitly (e.g. "Three resistors of 4 ohms, 6 ohms, and 12 ohms are connected in parallel across a 6V battery...") followed by calculations A and B.
+Total = 3 Marks.
+Q38: 4-mark case / stimulus + internal choice question on Physics:
+Real-world application or experimental case study followed by:
+A. [Question] (1 Mark)
+B. [Question] (1 Mark)
+Attempt either sub-part C or D:
+C. [Question] (2 Marks)
+OR
+D. [Alternative question] (2 Marks)
+(For visually impaired students: provide text-based equivalent scenario).
+Total = 4 Marks (A=1, B=1, C or D=2).
+Q39: 5-mark complete Option A OR Option B long-answer question on Physics:
+"Attempt either option A or B.
+A.
+   I. [Question]
+   II. [Question]
+   III. [Question]
+   IV. [Question]
+OR
+B.
+   I. [Question]
+   II. [Question]
+   III. [Question]
+   IV. [Question]"
+(For visually impaired students: provide equivalent text-based alternatives for sub-parts relying on ray diagrams or field patterns).
+Set Option A in "text" and Option B in "orQuestion". Total = 5 Marks.
 
 ======================================================================
-CRITICAL CBSE QUALITY & ACCURACY REQUIREMENTS
+VISUALLY IMPAIRED ALTERNATIVE LOGIC
 ======================================================================
-1. Physics Precision:
-   - Ensure numerical problems have unambiguous given data and mathematically consistent values.
-   - All ray diagrams must follow standard Cartesian sign conventions (f < 0 for concave, f > 0 for convex).
-   - Use standard SI units (A, V, Ω, Ω·m, W, kWh, J, D for dioptre).
-2. Chemistry Precision:
-   - Chemical equations MUST be properly balanced with state symbols where appropriate.
-   - IUPAC nomenclature, homologous series, and functional group definitions must be completely accurate.
-   - Chemical tests and color changes (e.g. blue to white for copper sulphate, lime water turning milky, litmus colors) must be factually correct.
-3. Biology Precision:
-   - Terminology, anatomical structures, and physiological processes must follow NCERT standards.
-   - Genetics crosses must clearly specify parent traits, genotypes, gametes, and phenotypic/genotypic ratios.
-   - 10% law calculations and trophic level transfers must be mathematically consistent.
-4. JSON Escaping:
-   - Double-escape all backslashes in mathematical symbols or LaTeX: write \\\\Omega for Ω, \\\\mu for μ, etc.
-5. Strict Question Numbering:
-   - Number questions sequentially from 1 to 39 across all 5 sections.
-6. ${solutionDirective}
+Where a question depends on a diagram, figure, circuit, experimental setup, or graph (specifically in Q2, Q16, Q26, Q35, Q37, Q38, Q39):
+Include the explicit section within the question:
+"For visually impaired students:
+[Clear text-based equivalent question assessing the exact same concept, syllabus topic, and marks without visual dependence]"
+Preserve the exact question number, marks, sub-parts, and difficulty.
 
 ======================================================================
-MANDATORY JSON OUTPUT FORMAT
+INTERNAL CHOICE ARCHITECTURE
 ======================================================================
-Output MUST be strictly a single valid JSON object following this exact schema. Do NOT wrap the JSON in markdown fences, do NOT add introductory or concluding text:
+- TYPE 1: COMPLETE OPTION CHOICE (Q11, Q16, Q26, Q29, Q34, Q39)
+  The student attempts Complete Option A OR Complete Option B.
+  Place Option A in "text" and Option B in "orQuestion".
+  In the answer key: place Option A solution in "solution" and Option B solution in "orSolution".
+- TYPE 2: SUB-PART CHOICE (Q15, Q28, Q38)
+  The student attempts sub-parts A (1M) and B (1M), and chooses either sub-part C (2M) OR D (2M).
+  Keep the entire question inside "text", with "orQuestion": null.
+  In the answer key: provide answers for A, B, and C OR D inside "solution", with "orSolution": null.
 
+======================================================================
+ASSERTION–REASON OPTIONS STANDARD
+======================================================================
+For Q8, Q9, Q24, and Q32, choices MUST be exactly:
+[
+  "Both A and R are true, and R is the correct explanation of A.",
+  "Both A and R are true, and R is not the correct explanation of A.",
+  "A is true but R is false.",
+  "A is false but R is true."
+]
+
+======================================================================
+CRITICAL JSON FORMAT RULES
+======================================================================
+1. Output MUST be strictly a single valid JSON object. Do not wrap in markdown fences.
+2. In the "text" field, do NOT prepend leading question numbers like "1." or "Q1." as the application numbers them dynamically.
+3. Escape all LaTeX/backslashes properly (\\\\Omega for Ω, \\\\mu for μ).
+4. ${solutionDirective}
+
+======================================================================
+MANDATORY JSON OUTPUT SCHEMA
+======================================================================
 {
   "sections": [
     {
       "name": "Section A",
-      "description": "Multiple Choice Questions & Assertion-Reason (1 Mark each, Q1 to Q20 - All questions are compulsory)",
-      "marksPerQuestion": 1,
+      "description": "Biology (Q1 to Q16 = 30 Marks)",
+      "marksPerQuestion": 0,
       "questions": [
-        {
-          "id": "q1",
-          "text": "1. [Chemistry MCQ text]",
-          "marks": 1,
-          "type": "mcq",
-          "choices": ["(A) Option 1", "(B) Option 2", "(C) Option 3", "(D) Option 4"],
-          "orQuestion": null,
-          "solution": "(A) Option 1 - [Reasoning/explanation]",
-          "orSolution": null
-        },
-        ...
-        {
-          "id": "q17",
-          "text": "17. Assertion (A): [Assertion text]\\nReason (R): [Reason text]",
-          "marks": 1,
-          "type": "mcq",
-          "choices": [
-            "(A) Both Assertion (A) and Reason (R) are true and Reason (R) is the correct explanation of Assertion (A).",
-            "(B) Both Assertion (A) and Reason (R) are true but Reason (R) is not the correct explanation of Assertion (A).",
-            "(C) Assertion (A) is true but Reason (R) is false.",
-            "(D) Assertion (A) is false but Reason (R) is true."
-          ],
-          "orQuestion": null,
-          "solution": "(A) Both Assertion (A) and Reason (R) are true and Reason (R) is the correct explanation of Assertion (A).",
-          "orSolution": null
-        }
+        { "id": "q1", "number": 1, "text": "[Biology MCQ text]", "marks": 1, "type": "mcq", "choices": ["Option A", "Option B", "Option C", "Option D"], "orQuestion": null, "solution": "(A) Option A - [Explanation]", "orSolution": null },
+        { "id": "q2", "number": 2, "text": "[Biology Visual/Diagram MCQ text]\\n\\n[Figure/Setup description]\\n\\n(For visually impaired students:\\n[Text-based alternative question])", "marks": 1, "type": "mcq", "choices": ["Option A", "Option B", "Option C", "Option D"], "orQuestion": null, "solution": "(B) Option B - [Explanation]", "orSolution": null },
+        { "id": "q3", "number": 3, "text": "[Biology MCQ text]", "marks": 1, "type": "mcq", "choices": ["Option A", "Option B", "Option C", "Option D"], "orQuestion": null, "solution": "(C) Option C - [Explanation]", "orSolution": null },
+        { "id": "q4", "number": 4, "text": "[Biology MCQ text]", "marks": 1, "type": "mcq", "choices": ["Option A", "Option B", "Option C", "Option D"], "orQuestion": null, "solution": "(A) Option A - [Explanation]", "orSolution": null },
+        { "id": "q5", "number": 5, "text": "[Biology MCQ text]", "marks": 1, "type": "mcq", "choices": ["Option A", "Option B", "Option C", "Option D"], "orQuestion": null, "solution": "(D) Option D - [Explanation]", "orSolution": null },
+        { "id": "q6", "number": 6, "text": "[Biology MCQ text]", "marks": 1, "type": "mcq", "choices": ["Option A", "Option B", "Option C", "Option D"], "orQuestion": null, "solution": "(B) Option B - [Explanation]", "orSolution": null },
+        { "id": "q7", "number": 7, "text": "[Biology MCQ text]", "marks": 1, "type": "mcq", "choices": ["Option A", "Option B", "Option C", "Option D"], "orQuestion": null, "solution": "(C) Option C - [Explanation]", "orSolution": null },
+        { "id": "q8", "number": 8, "text": "The following question consists of two statements – Assertion (A) and Reason (R). Select the appropriate option:\\n\\nAssertion (A): [Biology Assertion Statement]\\nReason (R): [Biology Reason Statement]", "marks": 1, "type": "mcq", "choices": ["Both A and R are true, and R is the correct explanation of A.", "Both A and R are true, and R is not the correct explanation of A.", "A is true but R is false.", "A is false but R is true."], "orQuestion": null, "solution": "(A) Both A and R are true, and R is the correct explanation of A. - [Reasoning]", "orSolution": null },
+        { "id": "q9", "number": 9, "text": "The following question consists of two statements – Assertion (A) and Reason (R). Select the appropriate option:\\n\\nAssertion (A): [Biology Assertion Statement]\\nReason (R): [Biology Reason Statement]", "marks": 1, "type": "mcq", "choices": ["Both A and R are true, and R is the correct explanation of A.", "Both A and R are true, and R is not the correct explanation of A.", "A is true but R is false.", "A is false but R is true."], "orQuestion": null, "solution": "(B) Both A and R are true, and R is not the correct explanation of A. - [Reasoning]", "orSolution": null },
+        { "id": "q10", "number": 10, "text": "[Common introductory Biology context/question]\\n\\nA. [Sub-question A]\\n\\nB. [Sub-question B]", "marks": 2, "type": "vsa", "choices": null, "orQuestion": null, "solution": "A. [1-Mark answer]\\nB. [1-Mark answer]", "orSolution": null },
+        { "id": "q11", "number": 11, "text": "Attempt either option A or B.\\n\\nA. [Biology Question]", "marks": 2, "type": "vsa", "choices": null, "orQuestion": "B. [Alternative Biology Question]", "solution": "Option A: [2-Mark point-wise marking scheme solution]", "orSolution": "Option B: [2-Mark point-wise marking scheme solution]" },
+        { "id": "q12", "number": 12, "text": "[Direct Biology Short-Answer Question]", "marks": 2, "type": "vsa", "choices": null, "orQuestion": null, "solution": "[2-Mark point-wise marking scheme solution: 1 Mark each for two points]", "orSolution": null },
+        { "id": "q13", "number": 13, "text": "[Explanation / Process / Conceptual Biology Question]", "marks": 3, "type": "sa", "choices": null, "orQuestion": null, "solution": "[Detailed 3-Mark solution according to CBSE marking scheme: 1 Mark each for 3 points/steps]", "orSolution": null },
+        { "id": "q14", "number": 14, "text": "[Case / Situation / Diagram / Stimulus]\\n\\nA. [Sub-question A]\\n\\nB. [Sub-question B]\\n\\nC. [Sub-question C]", "marks": 3, "type": "sa", "choices": null, "orQuestion": null, "solution": "A. [1-Mark answer]\\nB. [1-Mark answer]\\nC. [1-Mark answer]", "orSolution": null },
+        { "id": "q15", "number": 15, "text": "Read the following scenario and answer the questions that follow:\\n\\n[Detailed case / experimental / application-based Biology context]\\n\\nA. [Sub-question A] (1 Mark)\\n\\nB. [Sub-question B] (1 Mark)\\n\\nAttempt either sub-part C or D:\\n\\nC. [Sub-question C] (2 Marks)\\n\\nOR\\n\\nD. [Alternative sub-question D] (2 Marks)", "marks": 4, "type": "caseStudy", "choices": null, "orQuestion": null, "solution": "A. [1-Mark answer]\\nB. [1-Mark answer]\\nC. [2-Mark answer with explanation] OR D. [Alternative 2-Mark answer]", "orSolution": null },
+        { "id": "q16", "number": 16, "text": "Attempt either option A or B.\\n\\nA. [Diagram / case / experiment]\\n   I. [Sub-question]\\n   II. [Sub-question]\\n\\n(For visually impaired students:\\nA.\\nI. [Text-based alternative]\\nII. [Text-based alternative])", "marks": 5, "type": "la", "choices": null, "orQuestion": "B. [Alternative diagram / case / experiment]\\n   I. [Sub-question]\\n   II. [Sub-question]\\n\\n(For visually impaired students:\\nB.\\nI. [Text-based alternative]\\nII. [Text-based alternative])", "solution": "Option A:\\nI. [Detailed solution with marks]\\nII. [Detailed solution with marks]", "orSolution": "Option B:\\nI. [Detailed solution with marks]\\nII. [Detailed solution with marks]" }
       ]
     },
     {
       "name": "Section B",
-      "description": "Very Short Answer Type Questions (2 Marks each, Q21 to Q26 - 30 to 50 words)",
-      "marksPerQuestion": 2,
+      "description": "Chemistry (Q17 to Q29 = 25 Marks)",
+      "marksPerQuestion": 0,
       "questions": [
-        {
-          "id": "q21",
-          "text": "21. [Chemistry 2-Mark VSA Question]",
-          "marks": 2,
-          "type": "vsa",
-          "choices": null,
-          "orQuestion": null,
-          "solution": "[Point-wise 2-Mark marking scheme answer]",
-          "orSolution": null
-        },
-        {
-          "id": "q22",
-          "text": "22. [Chemistry 2-Mark VSA Question with Internal Choice]",
-          "marks": 2,
-          "type": "vsa",
-          "choices": null,
-          "orQuestion": "[Alternative Chemistry 2-Mark VSA Question]",
-          "solution": "[Solution for main question: 1 Mark per point]",
-          "orSolution": "[Solution for alternative question: 1 Mark per point]"
-        },
-        {
-          "id": "q23",
-          "text": "23. [Biology 2-Mark VSA Question]",
-          "marks": 2,
-          "type": "vsa",
-          "choices": null,
-          "orQuestion": null,
-          "solution": "[Point-wise 2-Mark answer]",
-          "orSolution": null
-        },
-        {
-          "id": "q24",
-          "text": "24. [Biology 2-Mark VSA Question]",
-          "marks": 2,
-          "type": "vsa",
-          "choices": null,
-          "orQuestion": null,
-          "solution": "[Point-wise 2-Mark answer]",
-          "orSolution": null
-        },
-        {
-          "id": "q25",
-          "text": "25. [Physics 2-Mark VSA Question]",
-          "marks": 2,
-          "type": "vsa",
-          "choices": null,
-          "orQuestion": null,
-          "solution": "[Point-wise 2-Mark answer / formula with calculation]",
-          "orSolution": null
-        },
-        {
-          "id": "q26",
-          "text": "26. [Physics 2-Mark VSA Question with Internal Choice]",
-          "marks": 2,
-          "type": "vsa",
-          "choices": null,
-          "orQuestion": "[Alternative Physics 2-Mark VSA Question]",
-          "solution": "[Solution for main question]",
-          "orSolution": "[Solution for alternative question]"
-        }
+        { "id": "q17", "number": 17, "text": "[Chemistry MCQ text]", "marks": 1, "type": "mcq", "choices": ["Option A", "Option B", "Option C", "Option D"], "orQuestion": null, "solution": "(A) Option A - [Explanation]", "orSolution": null },
+        { "id": "q18", "number": 18, "text": "[Chemistry MCQ text]", "marks": 1, "type": "mcq", "choices": ["Option A", "Option B", "Option C", "Option D"], "orQuestion": null, "solution": "(B) Option B - [Explanation]", "orSolution": null },
+        { "id": "q19", "number": 19, "text": "[Chemistry MCQ text]", "marks": 1, "type": "mcq", "choices": ["Option A", "Option B", "Option C", "Option D"], "orQuestion": null, "solution": "(C) Option C - [Explanation]", "orSolution": null },
+        { "id": "q20", "number": 20, "text": "[Chemistry MCQ text]", "marks": 1, "type": "mcq", "choices": ["Option A", "Option B", "Option C", "Option D"], "orQuestion": null, "solution": "(D) Option D - [Explanation]", "orSolution": null },
+        { "id": "q21", "number": 21, "text": "[Chemistry MCQ text]", "marks": 1, "type": "mcq", "choices": ["Option A", "Option B", "Option C", "Option D"], "orQuestion": null, "solution": "(A) Option A - [Explanation]", "orSolution": null },
+        { "id": "q22", "number": 22, "text": "[Chemistry MCQ text]", "marks": 1, "type": "mcq", "choices": ["Option A", "Option B", "Option C", "Option D"], "orQuestion": null, "solution": "(B) Option B - [Explanation]", "orSolution": null },
+        { "id": "q23", "number": 23, "text": "[Chemistry MCQ text]", "marks": 1, "type": "mcq", "choices": ["Option A", "Option B", "Option C", "Option D"], "orQuestion": null, "solution": "(C) Option C - [Explanation]", "orSolution": null },
+        { "id": "q24", "number": 24, "text": "The following question consists of two statements – Assertion (A) and Reason (R). Select the appropriate option:\\n\\nAssertion (A): [Chemistry Assertion Statement]\\nReason (R): [Chemistry Reason Statement]", "marks": 1, "type": "mcq", "choices": ["Both A and R are true, and R is the correct explanation of A.", "Both A and R are true, and R is not the correct explanation of A.", "A is true but R is false.", "A is false but R is true."], "orQuestion": null, "solution": "(A) Both A and R are true, and R is the correct explanation of A. - [Chemical explanation]", "orSolution": null },
+        { "id": "q25", "number": 25, "text": "[Conceptual / Explanatory Chemistry Short-Answer Question]", "marks": 2, "type": "vsa", "choices": null, "orQuestion": null, "solution": "[2-Mark point-wise marking scheme solution with balanced chemical equation]", "orSolution": null },
+        { "id": "q26", "number": 26, "text": "Attempt either option A or B.\\n\\nA. [Chemistry Case / Question]\\n   (i) [Sub-question (i)]\\n   (ii) [Sub-question (ii)]\\n   (iii) [Sub-question (iii)]", "marks": 3, "type": "sa", "choices": null, "orQuestion": "B. [Alternative Chemistry Case / Question]\\n   (i) [Sub-question (i)]\\n   (ii) [Sub-question (ii)]", "solution": "Option A:\\n(i) [1-Mark answer]\\n(ii) [1-Mark answer]\\n(iii) [1-Mark answer]", "orSolution": "Option B:\\n(i) [1.5-Mark answer]\\n(ii) [1.5-Mark answer]" },
+        { "id": "q27", "number": 27, "text": "Give reason for the following:\\n\\nA. [Chemistry reason-based question A]\\n\\nB. [Chemistry reason-based question B]\\n\\nC. [Chemistry reason-based question C]", "marks": 3, "type": "sa", "choices": null, "orQuestion": null, "solution": "A. [1-Mark scientific reason]\\nB. [1-Mark scientific reason]\\nC. [1-Mark scientific reason]", "orSolution": null },
+        { "id": "q28", "number": 28, "text": "Read the following experimental scenario and answer the questions that follow:\\n\\n[Detailed experimental / real-life Chemistry context, data, or reaction setup]\\n\\nA. [Question A] (1 Mark)\\n\\nB. [Question B] (1 Mark)\\n\\nAttempt either sub-part C or D:\\n\\nC. [Question C] (2 Marks)\\n\\nOR\\n\\nD. [Alternative Question D] (2 Marks)", "marks": 4, "type": "caseStudy", "choices": null, "orQuestion": null, "solution": "A. [1-Mark answer]\\nB. [1-Mark answer]\\nC. [2-Mark answer with chemical equation] OR D. [Alternative 2-Mark answer]", "orSolution": null },
+        { "id": "q29", "number": 29, "text": "Attempt either option A or B.\\n\\nA.\\n   I. [Sub-question I]\\n   II. [Sub-question II]", "marks": 5, "type": "la", "choices": null, "orQuestion": "B.\\n   I. [Sub-question I]\\n   II. [Sub-question II]", "solution": "Option A:\\nI. [3-Mark detailed answer with balanced reaction]\\nII. [2-Mark detailed answer]", "orSolution": "Option B:\\nI. [3-Mark detailed answer with balanced reaction]\\nII. [2-Mark detailed answer]" }
       ]
     },
     {
       "name": "Section C",
-      "description": "Short Answer Type Questions (3 Marks each, Q27 to Q33 - 50 to 80 words)",
-      "marksPerQuestion": 3,
+      "description": "Physics (Q30 to Q39 = 25 Marks)",
+      "marksPerQuestion": 0,
       "questions": [
-        {
-          "id": "q27",
-          "text": "27. [Chemistry 3-Mark SA Question with Internal Choice]",
-          "marks": 3,
-          "type": "sa",
-          "choices": null,
-          "orQuestion": "[Alternative Chemistry 3-Mark SA Question]",
-          "solution": "[Detailed 3-Mark solution: 1 Mark each for 3 points/steps]",
-          "orSolution": "[Detailed 3-Mark solution for alternative]"
-        },
-        {
-          "id": "q28",
-          "text": "28. [Chemistry 3-Mark SA Question]",
-          "marks": 3,
-          "type": "sa",
-          "choices": null,
-          "orQuestion": null,
-          "solution": "[Detailed 3-Mark solution]",
-          "orSolution": null
-        },
-        {
-          "id": "q29",
-          "text": "29. [Biology 3-Mark SA Question with Internal Choice]",
-          "marks": 3,
-          "type": "sa",
-          "choices": null,
-          "orQuestion": "[Alternative Biology 3-Mark SA Question]",
-          "solution": "[Detailed 3-Mark solution]",
-          "orSolution": "[Detailed 3-Mark solution for alternative]"
-        },
-        {
-          "id": "q30",
-          "text": "30. [Biology 3-Mark SA Question]",
-          "marks": 3,
-          "type": "sa",
-          "choices": null,
-          "orQuestion": null,
-          "solution": "[Detailed 3-Mark solution]",
-          "orSolution": null
-        },
-        {
-          "id": "q31",
-          "text": "31. [Biology 3-Mark SA Question]",
-          "marks": 3,
-          "type": "sa",
-          "choices": null,
-          "orQuestion": null,
-          "solution": "[Detailed 3-Mark solution]",
-          "orSolution": null
-        },
-        {
-          "id": "q32",
-          "text": "32. [Physics 3-Mark SA Question (Numerical / Conceptual)]",
-          "marks": 3,
-          "type": "sa",
-          "choices": null,
-          "orQuestion": null,
-          "solution": "[Step-by-step numerical solution with formula and units: 1M formula, 1M substitution, 1M final answer with unit]",
-          "orSolution": null
-        },
-        {
-          "id": "q33",
-          "text": "33. [Physics 3-Mark SA Question]",
-          "marks": 3,
-          "type": "sa",
-          "choices": null,
-          "orQuestion": null,
-          "solution": "[Detailed 3-Mark solution]",
-          "orSolution": null
-        }
-      ]
-    },
-    {
-      "name": "Section D",
-      "description": "Long Answer Type Questions (5 Marks each, Q34 to Q36 - 80 to 120 words)",
-      "marksPerQuestion": 5,
-      "questions": [
-        {
-          "id": "q34",
-          "text": "34. (a) [Chemistry sub-part (a)] (3 Marks)\\n(b) [Chemistry sub-part (b)] (2 Marks)",
-          "marks": 5,
-          "type": "la",
-          "choices": null,
-          "orQuestion": "(a) [Alternative Chemistry sub-part (a)] (3 Marks)\\n(b) [Alternative Chemistry sub-part (b)] (2 Marks)",
-          "solution": "Marking Scheme Breakdown:\\n(a) [Detailed 3-Mark answer]\\n(b) [Detailed 2-Mark answer]",
-          "orSolution": "Marking Scheme Breakdown for Alternative:\\n(a) [Detailed 3-Mark answer]\\n(b) [Detailed 2-Mark answer]"
-        },
-        {
-          "id": "q35",
-          "text": "35. (a) [Biology sub-part (a)] (3 Marks)\\n(b) [Biology sub-part (b)] (2 Marks)",
-          "marks": 5,
-          "type": "la",
-          "choices": null,
-          "orQuestion": "(a) [Alternative Biology sub-part (a)] (3 Marks)\\n(b) [Alternative Biology sub-part (b)] (2 Marks)",
-          "solution": "Marking Scheme Breakdown:\\n(a) [Detailed 3-Mark answer]\\n(b) [Detailed 2-Mark answer]",
-          "orSolution": "Marking Scheme Breakdown for Alternative:\\n(a) [Detailed 3-Mark answer]\\n(b) [Detailed 2-Mark answer]"
-        },
-        {
-          "id": "q36",
-          "text": "36. (a) [Physics sub-part (a) - Conceptual/Ray diagram] (3 Marks)\\n(b) [Physics sub-part (b) - Numerical problem] (2 Marks)",
-          "marks": 5,
-          "type": "la",
-          "choices": null,
-          "orQuestion": "(a) [Alternative Physics sub-part (a)] (3 Marks)\\n(b) [Alternative Physics sub-part (b)] (2 Marks)",
-          "solution": "Marking Scheme Breakdown:\\n(a) [Detailed 3-Mark answer]\\n(b) [Step-by-step 2-Mark numerical working]",
-          "orSolution": "Marking Scheme Breakdown for Alternative:\\n(a) [Detailed 3-Mark answer]\\n(b) [Detailed 2-Mark answer]"
-        }
-      ]
-    },
-    {
-      "name": "Section E",
-      "description": "Case-Based / Source-Based Assessment Units (4 Marks each, Q37 to Q39 - All questions compulsory with internal choice in sub-question iii)",
-      "marksPerQuestion": 4,
-      "questions": [
-        {
-          "id": "q37",
-          "text": "37. Read the following source and answer the questions that follow:\\n\\n[Authentic Physics case study passage/context, approx 80-120 words]\\n\\n(i) [Sub-question (i)] (1 Mark)\\n(ii) [Sub-question (ii)] (1 Mark)\\n(iii) [Sub-question (iii)] (2 Marks)\\nOR\\n[Alternative Sub-question (iii)] (2 Marks)",
-          "marks": 4,
-          "type": "caseStudy",
-          "choices": null,
-          "orQuestion": null,
-          "solution": "(i) [1-Mark answer]\\n(ii) [1-Mark answer]\\n(iii) [2-Mark answer with explanation] OR [Alternative 2-Mark answer]",
-          "orSolution": null
-        },
-        {
-          "id": "q38",
-          "text": "38. Read the following source and answer the questions that follow:\\n\\n[Authentic Chemistry experimental context/case study passage, approx 80-120 words]\\n\\n(i) [Sub-question (i)] (1 Mark)\\n(ii) [Sub-question (ii)] (1 Mark)\\n(iii) [Sub-question (iii)] (2 Marks)\\nOR\\n[Alternative Sub-question (iii)] (2 Marks)",
-          "marks": 4,
-          "type": "caseStudy",
-          "choices": null,
-          "orQuestion": null,
-          "solution": "(i) [1-Mark answer]\\n(ii) [1-Mark answer]\\n(iii) [2-Mark answer with chemical equation] OR [Alternative 2-Mark answer]",
-          "orSolution": null
-        },
-        {
-          "id": "q39",
-          "text": "39. Read the following source and answer the questions that follow:\\n\\n[Authentic Biology case study passage on genetics/ecosystem/life processes, approx 80-120 words]\\n\\n(i) [Sub-question (i)] (1 Mark)\\n(ii) [Sub-question (ii)] (1 Mark)\\n(iii) [Sub-question (iii)] (2 Marks)\\nOR\\n[Alternative Sub-question (iii)] (2 Marks)",
-          "marks": 4,
-          "type": "caseStudy",
-          "choices": null,
-          "orQuestion": null,
-          "solution": "(i) [1-Mark answer]\\n(ii) [1-Mark answer]\\n(iii) [2-Mark answer with explanation] OR [Alternative 2-Mark answer]",
-          "orSolution": null
-        }
+        { "id": "q30", "number": 30, "text": "[Physics MCQ text]", "marks": 1, "type": "mcq", "choices": ["Option A", "Option B", "Option C", "Option D"], "orQuestion": null, "solution": "(A) Option A - [Explanation]", "orSolution": null },
+        { "id": "q31", "number": 31, "text": "[Physics Numerical / Conceptual MCQ text]", "marks": 1, "type": "mcq", "choices": ["Option A", "Option B", "Option C", "Option D"], "orQuestion": null, "solution": "(B) Option B - [Formula and calculation: ...]", "orSolution": null },
+        { "id": "q32", "number": 32, "text": "The following question consists of two statements – Assertion (A) and Reason (R). Select the appropriate option:\\n\\nAssertion (A): [Physics Assertion Statement]\\nReason (R): [Physics Reason Statement]", "marks": 1, "type": "mcq", "choices": ["Both A and R are true, and R is the correct explanation of A.", "Both A and R are true, and R is not the correct explanation of A.", "A is true but R is false.", "A is false but R is true."], "orQuestion": null, "solution": "(A) Both A and R are true, and R is the correct explanation of A. - [Physics reasoning]", "orSolution": null },
+        { "id": "q33", "number": 33, "text": "A. [Physics Definition / Law / Concept]\\n\\nB. [Physics Mathematical expression / Concept]", "marks": 2, "type": "vsa", "choices": null, "orQuestion": null, "solution": "A. [1-Mark answer]\\nB. [1-Mark answer with formula]", "orSolution": null },
+        { "id": "q34", "number": 34, "text": "Attempt either option A or B.\\n\\nA.\\n   I. [Physics Question I]\\n   II. [Physics Question II]", "marks": 2, "type": "vsa", "choices": null, "orQuestion": "B.\\n   I. [Physics Question I]\\n   II. [Physics Question II]", "solution": "Option A:\\nI. [1-Mark answer]\\nII. [1-Mark answer]", "orSolution": "Option B:\\nI. [1-Mark answer]\\nII. [1-Mark answer]" },
+        { "id": "q35", "number": 35, "text": "[Physics numerical / ray diagram / experimental situation]\\n\\nA. [Part A]\\nB. [Part B]\\nC. [Part C]\\n\\n(For visually impaired students:\\n[Text-based equivalent numerical/question testing the same concept without diagram])", "marks": 3, "type": "sa", "choices": null, "orQuestion": null, "solution": "A. [1-Mark answer / formula]\\nB. [1-Mark calculation with unit]\\nC. [1-Mark final result with ray diagram / convention]", "orSolution": null },
+        { "id": "q36", "number": 36, "text": "A. [Physics Concept / Rule + Explanation]\\n\\nB. [Physics Application / Explanation]", "marks": 3, "type": "sa", "choices": null, "orQuestion": null, "solution": "A. [1.5-Mark answer with statement of rule]\\nB. [1.5-Mark answer with application]", "orSolution": null },
+        { "id": "q37", "number": 37, "text": "[Physics circuit diagram / numerical situation]\\n\\nA. [Calculation A]\\nB. [Calculation B]\\n\\n(For visually impaired students:\\n[Clear text describing circuit parameters without visual]\\nA. [Calculation A]\\nB. [Calculation B])", "marks": 3, "type": "sa", "choices": null, "orQuestion": null, "solution": "A. [1.5-Mark calculation with step-by-step formula and SI unit]\\nB. [1.5-Mark calculation with step-by-step formula and SI unit]", "orSolution": null },
+        { "id": "q38", "number": 38, "text": "Read the following case and answer the questions that follow:\\n\\n[Detailed Physics real-life application / case study situation]\\n\\n(For visually impaired students: [Text-based scenario description])\\n\\nA. [Question A] (1 Mark)\\n\\nB. [Question B] (1 Mark)\\n\\nAttempt either sub-part C or D:\\n\\nC. [Question C] (2 Marks)\\n\\nOR\\n\\nD. [Alternative Question D] (2 Marks)", "marks": 4, "type": "caseStudy", "choices": null, "orQuestion": null, "solution": "A. [1-Mark answer]\\nB. [1-Mark answer]\\nC. [2-Mark calculation / working] OR D. [Alternative 2-Mark calculation / working]", "orSolution": null },
+        { "id": "q39", "number": 39, "text": "Attempt either option A or B.\\n\\nA.\\n   I. [Sub-question I]\\n   II. [Sub-question II]\\n   III. [Sub-question III]\\n   IV. [Sub-question IV]\\n\\n(For visually impaired students:\\nA.\\nI. [Text-based alternative]\\nII. [Text-based alternative]\\nIII. [Text-based alternative]\\nIV. [Text-based alternative])", "marks": 5, "type": "la", "choices": null, "orQuestion": "B.\\n   I. [Sub-question I]\\n   II. [Sub-question II]\\n   III. [Sub-question III]\\n   IV. [Sub-question IV]\\n\\n(For visually impaired students:\\nB.\\nI. [Text-based alternative]\\nII. [Text-based alternative]\\nIII. [Text-based alternative]\\nIV. [Text-based alternative])", "solution": "Option A:\\nI. [1.5-Mark answer]\\nII. [1.5-Mark answer]\\nIII. [1-Mark answer]\\nIV. [1-Mark answer]", "orSolution": "Option B:\\nI. [1.5-Mark answer]\\nII. [1.5-Mark answer]\\nIII. [1-Mark answer]\\nIV. [1-Mark answer]" }
       ]
     }
   ]
