@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getFirebaseAdminAuth } from '../firebase/admin';
 import { AuthError } from '../errors';
-import { DecodedIdToken } from 'firebase-admin/auth';
+import { verifyFirebaseIdToken, type FirebaseIdTokenClaims } from './verify-firebase-token';
 
 export interface AuthenticatedRequestContext {
   uid: string;
   email?: string;
   emailVerified?: boolean;
-  token: DecodedIdToken;
+  token: FirebaseIdTokenClaims;
 }
 
 /**
@@ -27,8 +26,7 @@ export async function verifyAuthToken(req: Request | NextRequest): Promise<Authe
   }
 
   try {
-    const adminAuth = getFirebaseAdminAuth();
-    const decodedToken = await adminAuth.verifyIdToken(token);
+    const decodedToken = await verifyFirebaseIdToken(token);
 
     return {
       uid: decodedToken.uid,

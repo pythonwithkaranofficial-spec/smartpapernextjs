@@ -1,5 +1,5 @@
-import { User } from 'firebase/auth';
-import { DecodedIdToken } from 'firebase-admin/auth';
+import type { User } from 'firebase/auth';
+import type { FirebaseIdTokenClaims as DecodedIdToken } from './verify-firebase-token';
 import { UserRepository } from '../db/user-repository';
 import { isTrustedSuperAdmin } from './super-admin';
 import { DatabaseUser } from '@/types/db';
@@ -30,7 +30,7 @@ export class UserSyncService {
     if ('providerData' in firebaseUser && (firebaseUser as User).providerData?.[0]?.providerId) {
       provider = (firebaseUser as User).providerData[0].providerId;
     } else if ('firebase' in firebaseUser && (firebaseUser as DecodedIdToken).firebase?.sign_in_provider) {
-      provider = (firebaseUser as DecodedIdToken).firebase.sign_in_provider;
+      provider = (firebaseUser as DecodedIdToken).firebase?.sign_in_provider || provider;
     } else if ('providerId' in firebaseUser && firebaseUser.providerId) {
       provider = firebaseUser.providerId;
     }
