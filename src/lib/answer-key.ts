@@ -35,7 +35,7 @@ COMPLETENESS (most important):
 4. Marks: use the marks printed in the paper (per question, or the section header such as "(2 marks each)"). Only estimate when the paper gives none.
 
 QUALITY:
-5. MCQ / Assertion-Reason: put the options in "choices" WITHOUT their labels (write "4", not "(a) 4"). Start the solution with "Correct Answer: (x) <option text>" and then a short reason.
+5. MCQ / Assertion-Reason: put the options in "choices" WITHOUT their labels (write "4", not "(a) 4"), and do NOT repeat the options inside "text". Start the solution with "Correct Answer: (x) <option text>" and then a short reason.
 6. Internal choice ("OR"): an OR alternative is NEVER a separate question and NEVER gets its own number. Put the main question in "text" with its answer in "solution", and the alternative in "orQuestion" with its own complete answer in "orSolution". Check the whole paper for every "OR" and handle each one this way.
 7. Solutions must be correct and step-by-step, with the key steps a teacher awards marks for, e.g. "[1 mark]" after a step for 3- and 5-mark questions. Length should match the marks: about 1-3 lines for 1 mark, 4-8 lines for 2-3 marks, and a full structured answer (given, formula, working, final answer, units) for 4-5 marks. Do not pad.
 8. Plain text only: NO markdown (no **bold**, no # headings, no tables). Write maths with simple LaTeX inside $...$ (\\frac{a}{b}, \\sqrt{x}, x^{2}). Use "\\n" for line breaks and "• " for bullet points. For diagrams, describe what to draw and the labels.
@@ -79,6 +79,18 @@ export function stripMarkdown(text: string): string {
     .replace(/(^|\n)(\s*)[*-]\s+/g, '$1$2• ')
     .replace(/(^|[\s(])\*([^*\n]+?)\*(?=[\s).,;:!?]|$)/g, '$1$2')
     .replace(/`([^`\n]+)`/g, '$1');
+}
+
+/**
+ * When the options were extracted into `choices`, drop the inline copy from the question text
+ * ("... is: (a) 46 (b) 23 (c) 44 (d) 22") so they are not printed twice. Only lowercase "(a)"
+ * followed later by "(b)" counts, so "Assertion (A)" / "Reason (R)" labels are kept.
+ */
+export function stripInlineOptions(text: string, choices: unknown): string {
+  if (!Array.isArray(choices) || choices.length < 2) return text;
+  const m = text.match(/\s*\(a\)\s[\s\S]*\(b\)\s[\s\S]*$/);
+  if (!m || m.index === undefined || m.index < 10) return text;
+  return text.slice(0, m.index).trimEnd();
 }
 
 const normForCompare = (t: unknown) => String(t || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim().slice(0, 80);
@@ -155,7 +167,7 @@ export function normalizeAnswerKey(parsed: any, input: AnswerKeyInput) {
         number,
         marks,
         type: q.type || (Array.isArray(q.choices) && q.choices.length ? 'mcq' : marks >= 4 ? 'la' : 'sa'),
-        text: format(String(q.text || '')),
+        text: format(stripInlineOptions(String(q.text || ''), q.choices)),
         choices: Array.isArray(q.choices) && q.choices.length > 0
           ? q.choices.map((c: unknown) => format(String(c ?? '')).replace(OPTION_LABEL, '').trim())
           : null,

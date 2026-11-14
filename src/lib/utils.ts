@@ -202,7 +202,24 @@ export function formatScientificText(
       /(?<=(?:^|[^A-Za-z0-9_])[A-Za-z0-9]{1,2})_(\d+|[+\-a-z](?![A-Za-z0-9_]))/g,
       (match, grp: string) => grp.split("").map((ch) => subscripts[ch] || ch).join("")
     );
+    // Chemistry: subscripts after an element symbol or closing bracket in formulas the rule above
+    // skips because the base is longer (NaHCO_3, CaOCl_2, Ca(OH)_2, Al_2O_3, K_{2}Cr_{2}O_{7}).
+    formatted = formatted.replace(
+      /(?<=[A-Z][a-z]?|\))_\{?(\d+)\}?/g,
+      (match, digits: string) => digits.split("").map((ch) => subscripts[ch] || ch).join("")
+    );
   }
+
+  // 8b. Reaction arrows with conditions: \xrightarrow{heat} -> —heat→, \xrightarrow[Δ]{Pt} -> —Pt, Δ→
+  const arrowLabel = (s?: string) =>
+    (s || "").replace(/\\(text|mathrm|mathbf)\{([^}]*)\}/g, "$2").replace(/[{}]/g, "").trim();
+  formatted = formatted.replace(
+    /\\x(right|left)arrow(?:\[([^\]]*)\])?\{([^{}]*(?:\{[^{}]*\}[^{}]*)*)\}/g,
+    (match, dir: string, below: string | undefined, above: string) => {
+      const label = [arrowLabel(above), arrowLabel(below)].filter(Boolean).join(", ");
+      return dir === "right" ? ` —${label}→ ` : ` ←${label}— `;
+    }
+  );
 
   // 9. Standard mathematical and Greek symbols
   const mathSymbols: Record<string, string> = {
@@ -219,6 +236,8 @@ export function formatScientificText(
     "\\subset": "⊂", "\\supset": "⊃", "\\subseteq": "⊆", "\\supseteq": "⊇",
     "\\in": "∈", "\\notin": "∉", "\\cup": "∪", "\\cap": "∩", "\\forall": "∀", "\\exists": "∃",
     "\\to": "→", "\\rightarrow": "→", "\\leftarrow": "←", "\\Rightarrow": "⇒", "\\Leftarrow": "⇐", "\\leftrightarrow": "↔",
+    "\\longrightarrow": "⟶", "\\longleftarrow": "⟵", "\\rightleftharpoons": "⇌", "\\leftrightharpoons": "⇌",
+    "\\rightleftarrows": "⇄", "\\uparrow": "↑", "\\downarrow": "↓", "\\triangle": "Δ", "\\therefore": "∴", "\\because": "∵",
     "\\circ": "°"
   };
 
