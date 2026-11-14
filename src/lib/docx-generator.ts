@@ -11,7 +11,7 @@ import {
 } from "docx";
 import { saveAs } from "file-saver";
 import { GeneratedPaper } from "@/types";
-import { cleanInstructionText } from "@/lib/utils";
+import { cleanInstructionText, exportFileBaseName } from "@/lib/utils";
 
 export async function generateDOCX(paper: GeneratedPaper) {
   // Check if subject is Hindi
@@ -406,6 +406,6 @@ export async function generateDOCX(paper: GeneratedPaper) {
   });
 
   const blob = await Packer.toBlob(doc);
-  const filename = `${paper.subject.replace(/\s+/g, "_")}_Class_${paper.classText.replace(/\s+/g, "")}_Exam.docx`;
+  const filename = `${exportFileBaseName(paper)}.docx`;
   saveAs(blob, filename);
 }

@@ -5,6 +5,8 @@ import { parseAiJson } from "@/lib/ai-json";
 import { requireUser, isUserThrottled, throttledResponse } from "@/lib/api-guard";
 import { generateContentResilient, AIOverloadedError, AI_BUSY_MESSAGE } from "@/lib/gemini-call";
 
+export const maxDuration = 300;
+
 const apiKey = process.env.GEMINI_API_KEY;
 const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
 

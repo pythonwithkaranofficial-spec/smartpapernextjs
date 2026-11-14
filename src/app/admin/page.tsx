@@ -43,8 +43,6 @@ export default function AdminDashboardPage() {
   const [processingUid, setProcessingUid] = useState<string | null>(null);
 
   const fetchAdminData = async () => {
-    // Defer the spinner update so it never runs synchronously inside an effect.
-    await Promise.resolve();
     setLoading(true);
     try {
       const token = await AuthService.getFirebaseToken();
@@ -71,9 +69,10 @@ export default function AdminDashboardPage() {
   const isAdminViewer = dbUser?.role === "ADMIN";
 
   useEffect(() => {
-    if (isAdminViewer) {
-      fetchAdminData();
-    }
+    if (!isAdminViewer) return;
+    // Start the load from a callback (not synchronously in the effect body) to avoid cascading renders.
+    const id = setTimeout(fetchAdminData, 0);
+    return () => clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAdminViewer]);
 

@@ -19,6 +19,8 @@ import {
 
 // Initialize Gemini Client
 // We use the official API key from env variable
+export const maxDuration = 300;
+
 const apiKey = process.env.GEMINI_API_KEY;
 const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
 

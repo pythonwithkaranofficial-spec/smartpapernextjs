@@ -51,16 +51,30 @@ export default function GetAnswerKeyPage() {
   const [teacherName, setTeacherName] = useState("");
   const [showAdvancedHeaders, setShowAdvancedHeaders] = useState(false);
 
+  // Vercel rejects request bodies over 4.5 MB before they reach the API, so stay safely below it.
+  const MAX_UPLOAD_MB = 4;
+  const acceptFile = (file: File): boolean => {
+    const ext = file.name.split('.').pop()?.toLowerCase();
+    if (ext === 'doc') {
+      toast.error("Old .doc files can't be read. In Word use File > Save As > Word Document (.docx), or upload a PDF.");
+      return false;
+    }
+    if (!['pdf', 'docx', 'txt'].includes(ext || '')) {
+      toast.error("Unsupported file type. Please upload a .pdf, .docx or .txt file.");
+      return false;
+    }
+    if (file.size > MAX_UPLOAD_MB * 1024 * 1024) {
+      toast.error(`File is too large (${(file.size / 1024 / 1024).toFixed(1)} MB). The limit is ${MAX_UPLOAD_MB} MB: compress the PDF, upload it in two parts, or paste the questions as text.`);
+      return false;
+    }
+    return true;
+  };
+
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      const ext = file.name.split('.').pop()?.toLowerCase();
-      if (!['pdf', 'docx', 'doc', 'txt'].includes(ext || '')) {
-        toast.error("Unsupported file type. Please upload a .pdf, .docx, .doc, or .txt file.");
-        return;
-      }
-      if (file.size > 15 * 1024 * 1024) {
-        toast.error("File size too large. Maximum file size is 15MB.");
+      if (!acceptFile(file)) {
+        e.target.value = "";
         return;
       }
       setSelectedFile(file);
@@ -76,11 +90,7 @@ export default function GetAnswerKeyPage() {
     e.preventDefault();
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       const file = e.dataTransfer.files[0];
-      const ext = file.name.split('.').pop()?.toLowerCase();
-      if (!['pdf', 'docx', 'doc', 'txt'].includes(ext || '')) {
-        toast.error("Unsupported file type. Please upload a .pdf, .docx, .doc, or .txt file.");
-        return;
-      }
+      if (!acceptFile(file)) return;
       setSelectedFile(file);
       toast.success(`Uploaded: ${file.name}`);
     }
@@ -130,9 +140,13 @@ export default function GetAnswerKeyPage() {
       } catch {
         console.error("Non-JSON Server Response:", responseText);
         throw new Error(
-          !res.ok 
-            ? `Server error (${res.status}): Please check input or file formatting.` 
-            : "Server returned invalid data format."
+          res.status === 413
+            ? "The file is too large to upload. Compress the PDF, split it into two parts, or paste the questions as text."
+            : res.status === 504
+              ? "The answer key took too long to generate. Try splitting the paper into two parts."
+              : !res.ok
+                ? `Server error (${res.status}). Please try again.`
+                : "Server returned invalid data format."
         );
       }
 
@@ -277,7 +291,7 @@ export default function GetAnswerKeyPage() {
                         <input
                           ref={fileInputRef}
                           type="file"
-                          accept=".pdf,.docx,.doc,.txt"
+                          accept=".pdf,.docx,.txt"
                           onChange={handleFileSelect}
                           className="hidden"
                         />
@@ -317,7 +331,7 @@ export default function GetAnswerKeyPage() {
                                 Click or Drag & Drop your Question Paper file
                               </p>
                               <p className="text-xs text-muted-foreground mt-1">
-                                Supports PDF (.pdf), Word (.docx, .doc), or Text (.txt) up to 15MB
+                                Supports PDF (.pdf), Word (.docx) or Text (.txt) up to 4 MB
                               </p>
                             </div>
                           </>

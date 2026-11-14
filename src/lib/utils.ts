@@ -400,3 +400,14 @@ export async function syncLocalHistoryToCloud() {
     console.error("Failed to sync local history to cloud:", e);
   }
 }
+
+/** Download filename for an exported paper, e.g. "Maths_Class10_Exam" or "Science_Answer_Key". */
+export function exportFileBaseName(paper: { subject?: string; classText?: string; hasAnswerKey?: boolean }): string {
+  const clean = (s?: string) => (s || "").replace(/[^\p{L}\p{N}]+/gu, "_").replace(/^_+|_+$/g, "");
+  const parts = [
+    clean(paper.subject),
+    clean(paper.classText).replace(/^Class_?/i, "Class"),
+    paper.hasAnswerKey ? "Answer_Key" : "Exam",
+  ].filter(Boolean);
+  return parts.join("_") || "Question_Paper";
+}

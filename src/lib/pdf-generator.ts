@@ -1,3 +1,4 @@
+import { exportFileBaseName } from "@/lib/utils";
 import { jsPDF } from "jspdf";
 import html2canvas from "html2canvas-pro";
 import { GeneratedPaper } from "@/types";
@@ -410,37 +411,44 @@ export async function generatePDF(paper: GeneratedPaper) {
       doc.setFont("helvetica", "normal");
     }
 
-    // Capture visual layer using html2canvas
-    const canvas = await html2canvas(element, {
-      scale: 2, // High resolution
-      useCORS: true,
-      logging: false,
-      allowTaint: true,
-      onclone: (clonedDoc) => {
-        const clonedElement = clonedDoc.querySelector(".print-page") as HTMLElement;
-        if (clonedElement) {
-          // Remove all non-printing UI elements
-          clonedElement.querySelectorAll(".no-print").forEach((el) => el.remove());
+    // Capture the visual layer ONE PAGE AT A TIME. Rendering the whole paper into a single canvas
+    // breaks for long papers / answer keys: browsers cap canvas height (~32k px on desktop Chrome)
+    // and total area (~16.7M px on iOS Safari and many Android WebViews), producing blank or failed PDFs.
+    // In html2canvas-pro, `x`/`y` are offsets relative to the captured element.
+    const RENDER_SCALE = 2;
+    const capturePage = (start: number, height: number) =>
+      html2canvas(element, {
+        scale: RENDER_SCALE,
+        useCORS: true,
+        logging: false,
+        allowTaint: true,
+        x: 0,
+        y: start,
+        width: W_px,
+        height,
+        onclone: (clonedDoc) => {
+          const clonedElement = clonedDoc.querySelector(".print-page") as HTMLElement;
+          if (clonedElement) {
+            // Remove all non-printing UI elements
+            clonedElement.querySelectorAll(".no-print").forEach((el) => el.remove());
 
-          // Reset styling for clean printing
-          clonedElement.style.boxShadow = "none";
-          clonedElement.style.border = "none";
-          clonedElement.style.margin = "0";
-          clonedElement.style.transform = "none";
-          clonedElement.style.transition = "none";
-          clonedElement.style.width = `${W_px}px`;
-        }
-      },
-    });
+            // Reset styling for clean printing
+            clonedElement.style.boxShadow = "none";
+            clonedElement.style.border = "none";
+            clonedElement.style.margin = "0";
+            clonedElement.style.transform = "none";
+            clonedElement.style.transition = "none";
+            clonedElement.style.width = `${W_px}px`;
+          }
+        },
+      });
 
-    const canvasScale = canvas.width / W_px;
     const margin_px = 20 / scale;
-    const margin_canvas = margin_px * canvasScale;
 
-    // Create sliced pages in a loop
+    // One reusable A4-sized canvas (small enough for every mobile browser).
     const tempCanvas = document.createElement("canvas");
-    tempCanvas.width = canvas.width;
-    tempCanvas.height = canvas.width * (297 / 210); // A4 height in pixels
+    tempCanvas.width = Math.round(W_px * RENDER_SCALE);
+    tempCanvas.height = Math.round(tempCanvas.width * (297 / 210)); // A4 height in pixels
     const tempCtx = tempCanvas.getContext("2d");
 
     if (!tempCtx) {
@@ -458,20 +466,24 @@ export async function generatePDF(paper: GeneratedPaper) {
 
       const range = pageRanges[pageIdx];
       const sliceHeight_px = range.end - range.start;
-      const sliceHeight_canvas = sliceHeight_px * canvasScale;
+      const pageCanvas = await capturePage(range.start, sliceHeight_px);
+      const canvasScale = pageCanvas.width / W_px;
 
-      // Slice visual content from original canvas to temp canvas, shifting below top margin
+      // Place this page's slice below the top margin
       tempCtx.drawImage(
-        canvas,
+        pageCanvas,
         0,
-        range.start * canvasScale,
-        canvas.width,
-        sliceHeight_canvas,
         0,
-        margin_canvas,
+        pageCanvas.width,
+        pageCanvas.height,
+        0,
+        margin_px * canvasScale,
         tempCanvas.width,
-        sliceHeight_canvas
+        sliceHeight_px * canvasScale
       );
+      // Free the page canvas memory straight away (matters on phones).
+      pageCanvas.width = 0;
+      pageCanvas.height = 0;
 
       // Add visual background to PDF page from edge to edge
       const pageDataUrl = tempCanvas.toDataURL("image/jpeg", 0.95);
@@ -509,7 +521,7 @@ export async function generatePDF(paper: GeneratedPaper) {
     });
 
     // Save output PDF
-    const filename = `${paper.subject.replace(/\s+/g, "_")}_Class_${paper.classText.replace(/\s+/g, "")}_Exam.pdf`;
+    const filename = `${exportFileBaseName(paper)}.pdf`;
     doc.save(filename);
   } finally {
     // Restore transform/transition

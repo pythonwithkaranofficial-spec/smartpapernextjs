@@ -1,28 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenAI } from "@google/genai";
-import { formatScientificText } from "@/lib/utils";
-import { parseAiJson } from "@/lib/ai-json";
-import { isComputerSubjectKey } from "@/lib/subject-detection";
 import mammoth from "mammoth";
+import { extractDocxText } from "@/lib/docx-text";
 import { requireUser, isUserThrottled } from "@/lib/api-guard";
-import { generateContentResilient, AIOverloadedError, AI_BUSY_MESSAGE } from "@/lib/gemini-call";
+import { AIOverloadedError, AI_BUSY_MESSAGE } from "@/lib/gemini-call";
+import { generateAnswerKey, AnswerKeyTruncatedError } from "@/lib/answer-key";
+
+// Long answer keys can take a few minutes (Fluid Compute allows up to 300 s on Hobby).
+export const maxDuration = 300;
 
 const apiKey = process.env.GEMINI_API_KEY;
 const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
 
-const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // 10 MB
+const MAX_UPLOAD_BYTES = 4.4 * 1024 * 1024; // Vercel caps request bodies at 4.5 MB
 const MAX_TEXT_CHARS = 60_000;
-const ALLOWED_EXTENSIONS = [".pdf", ".docx", ".doc", ".txt"];
-
-/** Total of the (top-level) question marks in the generated key. */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function sumQuestionMarks(sections: any[]): number {
-  return sections.reduce(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (acc: number, sec: any) => acc + (sec.questions || []).reduce((s: number, q: any) => s + (Number(q.marks || sec.marksPerQuestion) || 1), 0),
-    0
-  );
-}
+const ALLOWED_EXTENSIONS = [".pdf", ".docx", ".txt"];
 
 export async function POST(request: NextRequest) {
   try {
@@ -67,32 +59,36 @@ export async function POST(request: NextRequest) {
       if (file && file.size > 0) {
         const fileName = file.name.toLowerCase();
         if (file.size > MAX_UPLOAD_BYTES) {
-          return NextResponse.json({ error: "File is too large. Maximum size is 10 MB." }, { status: 413 });
+          return NextResponse.json({ error: "File is too large. Maximum size is 4 MB: compress the PDF or split it." }, { status: 413 });
         }
         if (!ALLOWED_EXTENSIONS.some((ext) => fileName.endsWith(ext))) {
-          return NextResponse.json({ error: "Unsupported file type. Upload a PDF, DOCX or TXT file." }, { status: 415 });
+          return NextResponse.json({
+            error: fileName.endsWith(".doc")
+              ? "Old .doc files are not supported. In Word, use File > Save As > Word Document (.docx), or upload a PDF."
+              : "Unsupported file type. Upload a PDF, DOCX or TXT file.",
+          }, { status: 415 });
         }
         const fileBuffer = Buffer.from(await file.arrayBuffer());
 
         if (fileName.endsWith(".pdf")) {
+          // Gemini reads the PDF natively (text, equations, diagrams and scanned pages), which is far
+          // more faithful than plain-text extraction of math-heavy papers.
           fileBase64Pdf = fileBuffer.toString("base64");
+        } else if (fileName.endsWith(".docx")) {
           try {
-            // eslint-disable-next-line @typescript-eslint/no-require-imports
-            const pdfParse = require("pdf-parse");
-            const parsedPdf = await pdfParse(fileBuffer);
-            if (parsedPdf && parsedPdf.text && parsedPdf.text.trim()) {
-              rawQuestionsText = parsedPdf.text.trim();
+            // Keeps Word auto-numbering, option letters, equations and tables (mammoth drops them).
+            rawQuestionsText = await extractDocxText(fileBuffer);
+          } catch (e) {
+            console.error("DOCX extraction error, falling back to mammoth:", e);
+            try {
+              const parsedDoc = await mammoth.extractRawText({ buffer: fileBuffer });
+              rawQuestionsText = parsedDoc.value || "";
+            } catch {
+              return NextResponse.json({ error: "Could not read this Word file. Please re-save it as .docx or upload a PDF." }, { status: 422 });
             }
-          } catch (e) {
-            console.log("PDF parse fallback to Gemini native inline document reader:", e);
           }
-        } else if (fileName.endsWith(".docx") || fileName.endsWith(".doc")) {
-          try {
-            const parsedDoc = await mammoth.extractRawText({ buffer: fileBuffer });
-            rawQuestionsText = parsedDoc.value || "";
-          } catch (e) {
-            console.error("DOCX extraction error:", e);
-            rawQuestionsText = fileBuffer.toString("utf-8");
+          if (!rawQuestionsText.trim()) {
+            return NextResponse.json({ error: "No text was found in this Word file. If it only contains images, upload it as a PDF instead." }, { status: 422 });
           }
         } else {
           rawQuestionsText = fileBuffer.toString("utf-8");
@@ -130,140 +126,16 @@ export async function POST(request: NextRequest) {
     classText = classText.slice(0, 50);
     teacherName = teacherName.slice(0, 120);
 
-    const systemPrompt = `You are an expert CBSE & Academic Teacher and Exam Evaluator.
-Your task is to analyze the provided set of questions (typed text or uploaded question paper document) and generate complete, accurate, step-by-step answers and detailed marking schemes for EVERY single question.
-
-RULES FOR THE AI:
-1. Parse every question provided in the input text or document accurately.
-2. Group the questions into logical sections (e.g. "Section A - Objective & MCQs", "Section B - Short Answer Questions", "Section C - Long Answer & Detailed Solutions").
-3. For EVERY question, write a comprehensive, accurate, step-by-step solution ("solution") with full explanation and marking breakdown.
-4. If a question is an MCQ, extract all choices into the "choices" array and explicitly state the correct option + detailed reason in "solution".
-5. If a question contains internal choices ("OR"), include the secondary question in "orQuestion" and its solution in "orSolution".
-6. Format mathematical formulas using standard LaTeX notation ($...$ or \\(...\\)).
-
-Return strictly a JSON object matching this exact structure:
-
-{
-  "sections": [
-    {
-      "name": "SECTION A",
-      "description": "OBJECTIVE TYPE & SHORT QUESTIONS",
-      "marksPerQuestion": 1,
-      "questions": [
-        {
-          "id": "q1",
-          "number": 1,
-          "text": "Question text here...",
-          "marks": 1,
-          "type": "mcq",
-          "choices": ["(a) Option 1", "(b) Option 2", "(c) Option 3", "(d) Option 4"],
-          "solution": "Correct Answer: (a) Option 1\\nExplanation: Detailed step-by-step reason..."
-        }
-      ]
-    }
-  ]
-}
-
-Return raw JSON only. Do not wrap in markdown or introductory text outside JSON.`;
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const parts: any[] = [];
-    if (fileBase64Pdf) {
-      parts.push({
-        inlineData: {
-          mimeType: "application/pdf",
-          data: fileBase64Pdf,
-        },
-      });
-    }
-    parts.push({
-      text: `${systemPrompt}\n\nUSER PROVIDED QUESTIONS DATA:\n${rawQuestionsText || "Please read the attached PDF document and generate complete answers and marking scheme for all questions contained within it."}`,
+    const finalPaper = await generateAnswerKey(ai, {
+      rawQuestionsText,
+      pdfBase64: fileBase64Pdf,
+      outputMode,
+      schoolName,
+      examName,
+      subject,
+      classText,
+      teacherName,
     });
-
-    let finalPaper: Record<string, unknown> | null = null;
-    let lastError: Error | null = null;
-
-    for (let attempt = 1; attempt <= 3; attempt++) {
-      try {
-        const response = await generateContentResilient(ai, {
-          model: "gemini-2.5-flash",
-          contents: [{ role: "user", parts }],
-          config: {
-            responseMimeType: "application/json",
-            temperature: 0.2,
-          },
-        });
-
-        const responseText = response.text;
-        if (!responseText) throw new Error("Empty response from AI model.");
-
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const parsedPaper = parseAiJson<any>(responseText);
-        const format = (text: string) => formatScientificText(text, { codeSafe: isComputerSubjectKey(subject) });
-
-        if (!parsedPaper || !parsedPaper.sections || !Array.isArray(parsedPaper.sections) || parsedPaper.sections.length === 0) {
-          throw new Error("Invalid paper structure generated by AI.");
-        }
-
-        let questionCounter = 1;
-
-        const cleanSubject = (subject && subject !== "General / Custom") ? subject : "";
-        const cleanClass = (classText && classText !== "Class X") ? (classText.toLowerCase().startsWith("class") ? classText : `Class ${classText}`) : "";
-        const finalExamName = examName ? examName.toUpperCase() : "ANSWER KEY & SOLUTIONS";
-
-        finalPaper = {
-          schoolName: schoolName ? schoolName.toUpperCase() : undefined,
-          teacherName: teacherName ? teacherName : undefined,
-          examName: finalExamName,
-          subject: cleanSubject,
-          classText: cleanClass,
-          timeText: "",
-          maxMarksText: "",
-          instructions: [],
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          sections: parsedPaper.sections.map((section: any) => {
-            return {
-              ...section,
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              questions: (section.questions || []).map((q: any) => {
-                const qNum = questionCounter++;
-                return {
-                  ...q,
-                  id: q.id || `q_ans_${Math.random().toString(36).substr(2, 9)}`,
-                  number: qNum,
-                  text: format(q.text || ""),
-                  marks: q.marks || section.marksPerQuestion || 1,
-                  orQuestion: q.orQuestion ? format(q.orQuestion) : null,
-                  choices: (q.choices && q.choices.length > 0)
-                    ? q.choices.map((choice: string) => format(choice || ""))
-                    : null,
-                  solution: q.solution ? format(q.solution) : "Solution provided above.",
-                  orSolution: q.orSolution ? format(q.orSolution) : null,
-                };
-              }),
-            };
-          }),
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          totalQuestions: parsedPaper.sections.reduce((acc: number, sec: any) => acc + (sec.questions || []).length, 0),
-          totalMarks: sumQuestionMarks(parsedPaper.sections),
-          hasAnswerKey: true,
-          outputMode: outputMode,
-        };
-
-        break;
-      } catch (err: unknown) {
-        if (err instanceof AIOverloadedError) throw err;
-        lastError = err instanceof Error ? err : new Error(String(err));
-        console.error(`Get Answer Key Attempt ${attempt} failed:`, lastError.message);
-        if (attempt < 3) {
-          await new Promise((resolve) => setTimeout(resolve, 500));
-        }
-      }
-    }
-
-    if (!finalPaper) {
-      throw new Error(lastError?.message || "Failed to generate answer key after multiple AI attempts.");
-    }
 
     return NextResponse.json(finalPaper);
   } catch (error: unknown) {
@@ -271,6 +143,12 @@ Return raw JSON only. Do not wrap in markdown or introductory text outside JSON.
     console.error("Get Answer Key API Error:", err);
     if (error instanceof AIOverloadedError) {
       return NextResponse.json({ error: AI_BUSY_MESSAGE, code: "AI_BUSY" }, { status: 503 });
+    }
+    if (error instanceof AnswerKeyTruncatedError) {
+      return NextResponse.json({
+        error: "This paper is too long to solve in one go. Please split it into two parts (for example Sections A-C, then D-E) and generate each separately.",
+        code: "TOO_LONG",
+      }, { status: 413 });
     }
     return NextResponse.json(
       { error: "Failed to generate answer key. Please try again." },
