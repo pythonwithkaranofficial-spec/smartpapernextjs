@@ -66,6 +66,9 @@ interface RazorpayOptions {
   theme?: {
     color?: string;
   };
+  modal?: {
+    ondismiss?: () => void;
+  };
 }
 
 declare global {
@@ -517,6 +520,10 @@ export default function ProfilePage() {
         },
         theme: {
           color: newPlan === "PRO" ? "#f59e0b" : "#3b82f6",
+        },
+        modal: {
+          // Reset the button spinner when the user closes checkout without paying.
+          ondismiss: () => setUpdatingPlan(null),
         },
         config: {
           display: {
