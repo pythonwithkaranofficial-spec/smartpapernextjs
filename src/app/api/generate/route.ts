@@ -5,6 +5,8 @@ import { paperConfigSchema } from "@/lib/validations";
 import { formatScientificText, cleanInstructionText } from "@/lib/utils";
 import { EXAM_TYPES } from "@/lib/exam-types";
 import { requireUser, consumePaperQuota, quotaExceededResponse, QuotaTicket } from "@/lib/api-guard";
+import { generateContentResilient, AIOverloadedError, AI_BUSY_MESSAGE } from "@/lib/gemini-call";
+import { AppError, DatabaseError } from "@/lib/errors";
 import { parseAiJson } from "@/lib/ai-json";
 import { DEFAULT_MARKS_PER_TYPE, resolveMarksPerType } from "@/lib/marks";
 import {
@@ -273,7 +275,7 @@ export async function POST(request: NextRequest) {
 
     // 3b. Atomically consume one generation from the user's daily plan quota
     //     (refunded below if generation fails).
-    quota = await consumePaperQuota(auth.ctx.uid);
+    quota = await consumePaperQuota(auth.ctx.uid, auth.ctx);
     if (!quota) return quotaExceededResponse();
 
     // Force Hindi subject language internally to Hindi
@@ -300,7 +302,7 @@ export async function POST(request: NextRequest) {
         console.log(`Starting paper generation attempt ${attempt} of ${MAX_RETRIES}...`);
 
         // 5. Generate content using Gemini 2.5 Flash
-        const response = await ai.models.generateContent({
+        const response = await generateContentResilient(ai, {
           model: "gemini-2.5-flash",
           contents: prompt,
           config: {
@@ -472,6 +474,8 @@ export async function POST(request: NextRequest) {
 
         break;
       } catch (err: any) {
+        // Overload already had backoff + fallback inside generateContentResilient: stop retrying.
+        if (err instanceof AIOverloadedError) throw err;
         console.error(`Attempt ${attempt} failed:`, err.message || err);
         lastError = err;
         finalPaper = null;
@@ -489,6 +493,12 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("Silent generation error after retries:", error);
     if (quota) await quota.refund();
+    if (error instanceof AIOverloadedError) {
+      return NextResponse.json({ error: `${AI_BUSY_MESSAGE} This attempt was not counted against your daily limit.`, code: "AI_BUSY" }, { status: 503 });
+    }
+    if (error instanceof AppError && !(error instanceof DatabaseError)) {
+      return NextResponse.json({ error: error.message, code: error.code }, { status: error.statusCode });
+    }
     return NextResponse.json(
       { error: "Failed to generate the paper. Please try again — this attempt was not counted against your daily limit." },
       { status: 500 }

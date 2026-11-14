@@ -55,3 +55,36 @@ export function computeDistributionTotal(
     0
   );
 }
+
+/**
+ * Builds a question distribution whose marks sum exactly to `totalMarks`
+ * (presets for common totals, otherwise ~30% MCQ + short answers, remainder absorbed by MCQs).
+ */
+export function autoBalanceDistribution(
+  totalMarks: number,
+  overrides?: Partial<MarksPerType> | null
+): QuestionDistribution {
+  const weights = resolveMarksPerType(overrides);
+  let candidate: QuestionDistribution;
+  if (totalMarks === 40) {
+    candidate = { mcq: 10, assertionReason: 2, vsa: 4, sa: 4, caseStudy: 2, la: 0 };
+  } else if (totalMarks === 70) {
+    candidate = { mcq: 12, assertionReason: 4, vsa: 5, sa: 7, caseStudy: 2, la: 3 };
+  } else if (totalMarks === 80) {
+    candidate = { mcq: 18, assertionReason: 2, vsa: 5, sa: 6, caseStudy: 3, la: 4 };
+  } else {
+    const mcqCount = Math.floor(totalMarks * 0.3);
+    const remaining = totalMarks - mcqCount;
+    candidate = {
+      mcq: mcqCount,
+      assertionReason: 0,
+      vsa: 0,
+      sa: Math.floor(remaining / weights.sa),
+      caseStudy: 0,
+      la: 0,
+    };
+  }
+  const diff = totalMarks - computeDistributionTotal(candidate, overrides);
+  candidate.mcq = Math.max(0, candidate.mcq + Math.round(diff / weights.mcq));
+  return candidate;
+}

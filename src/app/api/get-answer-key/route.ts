@@ -5,6 +5,7 @@ import { parseAiJson } from "@/lib/ai-json";
 import { isComputerSubjectKey } from "@/lib/subject-detection";
 import mammoth from "mammoth";
 import { requireUser, isUserThrottled } from "@/lib/api-guard";
+import { generateContentResilient, AIOverloadedError, AI_BUSY_MESSAGE } from "@/lib/gemini-call";
 
 const apiKey = process.env.GEMINI_API_KEY;
 const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
@@ -184,7 +185,7 @@ Return raw JSON only. Do not wrap in markdown or introductory text outside JSON.
 
     for (let attempt = 1; attempt <= 3; attempt++) {
       try {
-        const response = await ai.models.generateContent({
+        const response = await generateContentResilient(ai, {
           model: "gemini-2.5-flash",
           contents: [{ role: "user", parts }],
           config: {
@@ -251,6 +252,7 @@ Return raw JSON only. Do not wrap in markdown or introductory text outside JSON.
 
         break;
       } catch (err: unknown) {
+        if (err instanceof AIOverloadedError) throw err;
         lastError = err instanceof Error ? err : new Error(String(err));
         console.error(`Get Answer Key Attempt ${attempt} failed:`, lastError.message);
         if (attempt < 3) {
@@ -267,6 +269,9 @@ Return raw JSON only. Do not wrap in markdown or introductory text outside JSON.
   } catch (error: unknown) {
     const err = error instanceof Error ? error : new Error(String(error));
     console.error("Get Answer Key API Error:", err);
+    if (error instanceof AIOverloadedError) {
+      return NextResponse.json({ error: AI_BUSY_MESSAGE, code: "AI_BUSY" }, { status: 503 });
+    }
     return NextResponse.json(
       { error: "Failed to generate answer key. Please try again." },
       { status: 500 }

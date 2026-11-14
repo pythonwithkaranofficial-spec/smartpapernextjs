@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { verifyAuthToken, AuthenticatedRequestContext } from './auth/middleware';
 import { DAILY_PAPER_LIMITS, getCurrentUser, isAdminUser } from './auth/helpers';
 import { UserRepository } from './db/user-repository';
+import { UserSyncService } from './auth/sync-service';
+import { AuthError } from './errors';
 
 /**
  * Shared guards for the AI (Gemini) routes. These routes return `{ error: string }`
@@ -34,8 +36,34 @@ export interface QuotaTicket {
  * Atomically consumes one paper generation from the user's daily plan quota.
  * Returns null when the quota is exhausted.
  */
-export async function consumePaperQuota(uid: string): Promise<QuotaTicket | null> {
-  const user = await getCurrentUser(uid);
+export async function consumePaperQuota(
+  uid: string,
+  authContext?: AuthenticatedRequestContext
+): Promise<QuotaTicket | null> {
+  let user = await getCurrentUser(uid);
+
+  // daily_usage has a foreign key to users: make sure the account row exists
+  // (e.g. the sign-in sync failed or has not run yet) using the VERIFIED token claims.
+  if (!user && authContext) {
+    try {
+      await UserSyncService.syncFirebaseUser({
+        uid: authContext.uid,
+        email: authContext.email || '',
+        displayName: authContext.token.name || null,
+        photoURL: authContext.token.picture || null,
+        emailVerified: authContext.emailVerified || false,
+        providerId: authContext.token.firebase?.sign_in_provider || 'email',
+      });
+    } catch (err) {
+      console.error('[consumePaperQuota] could not create missing user row:', err);
+      throw new AuthError(
+        'Your account is not fully set up yet. Please sign out and sign in again.',
+        409,
+        'ACCOUNT_NOT_SYNCED'
+      );
+    }
+    user = await getCurrentUser(uid);
+  }
   const admin = isAdminUser(user);
   const plan = user?.plan || 'FREE';
   const dailyLimit = admin ? Number.MAX_SAFE_INTEGER : DAILY_PAPER_LIMITS[plan] ?? DAILY_PAPER_LIMITS.FREE;

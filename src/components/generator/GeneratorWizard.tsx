@@ -1,5 +1,7 @@
 "use client";
 
+import { EXAM_TYPES } from "@/lib/exam-types";
+
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ProgressBar } from "./ProgressBar";
@@ -22,7 +24,7 @@ import { GeneratingOverlay } from "../preview/GeneratingOverlay";
 import { DailyLimitModal } from "../auth/DailyLimitModal";
 import { SyllabusModal } from "../syllabus/SyllabusModal";
 import { getOrGenerateBlueprint } from "@/lib/blueprints";
-import { computeDistributionTotal } from "@/lib/marks";
+import { computeDistributionTotal, autoBalanceDistribution } from "@/lib/marks";
 import { detectFullExamKind } from "@/lib/subject-detection";
 
 const LOCAL_STORAGE_KEY = "smart_paper_form_config";
@@ -412,6 +414,7 @@ export function GeneratorWizard() {
                     setStep(7);
                   } else {
                     // No blueprint for this exam type: drop every setting the previous blueprint applied.
+                    const examTypeDefaults = EXAM_TYPES.find((t) => t.id === examType);
                     updateConfig((prev) => {
                       const hadBlueprint = prev.isBlueprintMode || !!prev.blueprintId;
                       return {
@@ -421,11 +424,17 @@ export function GeneratorWizard() {
                         blueprintId: undefined,
                         unitWeightage: undefined,
                         marksPerType: undefined,
+                        // Apply the exam type's own defaults (e.g. Class Test = 20 marks / 45 min)
+                        // and a distribution that sums exactly to them.
+                        ...(examTypeDefaults
+                          ? {
+                              totalMarks: examTypeDefaults.defaultMarks,
+                              duration: examTypeDefaults.defaultDuration,
+                              questionDistribution: autoBalanceDistribution(examTypeDefaults.defaultMarks),
+                            }
+                          : {}),
                         ...(hadBlueprint
                           ? {
-                              totalMarks: initialConfig.totalMarks,
-                              duration: initialConfig.duration,
-                              questionDistribution: { ...initialConfig.questionDistribution },
                               options: {
                                 ...prev.options,
                                 instructionsText: initialConfig.options.instructionsText,

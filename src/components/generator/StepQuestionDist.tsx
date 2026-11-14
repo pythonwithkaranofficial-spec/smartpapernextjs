@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { QuestionDistribution } from "@/types";
 import { CheckCircle2, AlertTriangle, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { computeDistributionTotal, resolveMarksPerType, type MarksPerType } from "@/lib/marks";
+import { autoBalanceDistribution, computeDistributionTotal, resolveMarksPerType, type MarksPerType } from "@/lib/marks";
 
 interface StepQuestionDistProps {
   value?: QuestionDistribution;
@@ -59,31 +59,7 @@ export function StepQuestionDist({
   };
 
   const handleAutoBalance = () => {
-    // Presets that sum exactly with the generic weights (1/1/2/3/4/5).
-    let candidate: QuestionDistribution;
-    if (effectiveTotalMarks === 40) {
-      candidate = { mcq: 10, assertionReason: 2, vsa: 4, sa: 4, caseStudy: 2, la: 0 };
-    } else if (effectiveTotalMarks === 70) {
-      candidate = { mcq: 12, assertionReason: 4, vsa: 5, sa: 7, caseStudy: 2, la: 3 };
-    } else if (effectiveTotalMarks === 80) {
-      candidate = { mcq: 18, assertionReason: 2, vsa: 5, sa: 6, caseStudy: 3, la: 4 };
-    } else {
-      const mcqCount = Math.floor(effectiveTotalMarks * 0.3);
-      const remaining = effectiveTotalMarks - mcqCount;
-      candidate = {
-        mcq: mcqCount,
-        assertionReason: 0,
-        vsa: 0,
-        sa: Math.floor(remaining / weights.sa),
-        caseStudy: 0,
-        la: 0,
-      };
-    }
-    // Absorb any remainder (or blueprint weight overrides) in the 1-mark MCQ count so the
-    // result always matches the target exactly.
-    const diff = effectiveTotalMarks - computeDistributionTotal(candidate, marksPerType);
-    candidate.mcq = Math.max(0, candidate.mcq + Math.round(diff / weights.mcq));
-    updateDistribution(candidate);
+    updateDistribution(autoBalanceDistribution(effectiveTotalMarks, marksPerType));
   };
 
   const questionTypes: { field: keyof QuestionDistribution; title: string; marksEach: number; desc: string }[] = [

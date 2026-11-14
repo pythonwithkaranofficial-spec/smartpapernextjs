@@ -5,6 +5,7 @@ import { parseAiJson } from "@/lib/ai-json";
 import { isComputerSubjectKey, isHindiSubjectKey } from "@/lib/subject-detection";
 import { Question } from "@/types";
 import { requireUser, isUserThrottled, throttledResponse } from "@/lib/api-guard";
+import { generateContentResilient, AIOverloadedError, AI_BUSY_MESSAGE } from "@/lib/gemini-call";
 
 const apiKey = process.env.GEMINI_API_KEY;
 const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
@@ -88,7 +89,7 @@ JSON SCHEMA:
   "orSolution": null
 }`;
 
-    const response = await ai.models.generateContent({
+    const response = await generateContentResilient(ai, {
       model: "gemini-2.5-flash",
       contents: prompt,
       config: {
@@ -129,6 +130,9 @@ JSON SCHEMA:
 
   } catch (error: unknown) {
     console.error("Swap Question Error:", error);
+    if (error instanceof AIOverloadedError) {
+      return NextResponse.json({ error: AI_BUSY_MESSAGE, code: "AI_BUSY" }, { status: 503 });
+    }
     return NextResponse.json(
       { error: "Failed to swap the question. Please try again." },
       { status: 500 }

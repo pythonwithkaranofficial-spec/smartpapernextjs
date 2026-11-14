@@ -3,6 +3,7 @@ import { GoogleGenAI } from "@google/genai";
 import { CURRICULUM_DATA } from "@/lib/curriculum-data";
 import { parseAiJson } from "@/lib/ai-json";
 import { requireUser, isUserThrottled, throttledResponse } from "@/lib/api-guard";
+import { generateContentResilient, AIOverloadedError, AI_BUSY_MESSAGE } from "@/lib/gemini-call";
 
 const apiKey = process.env.GEMINI_API_KEY;
 const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
@@ -82,7 +83,7 @@ User Inputs to Normalize:
 - Chapters Input: "${chaptersText}"
 `;
 
-    const response = await ai.models.generateContent({
+    const response = await generateContentResilient(ai, {
       model: "gemini-2.5-flash",
       contents: userPrompt,
       config: {
@@ -122,6 +123,9 @@ User Inputs to Normalize:
 
   } catch (error: unknown) {
     console.error("Normalization error:", error);
+    if (error instanceof AIOverloadedError) {
+      return NextResponse.json({ error: AI_BUSY_MESSAGE, code: "AI_BUSY" }, { status: 503 });
+    }
     return NextResponse.json(
       { error: "Failed to normalize inputs using AI." },
       { status: 500 }
