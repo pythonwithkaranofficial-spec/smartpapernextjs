@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/services.dart';
 import '../../../services/api/api_client.dart';
+import '../../../services/browser/external_browser.dart';
 
 class SubscriptionPlan {
   final String id;
@@ -75,60 +76,66 @@ class SubscriptionProvider extends ChangeNotifier {
     ),
   ];
 
-  Future<bool> initiateCheckout(String planId, Function(String newPlan) onPlanUpgraded) async {
+  /// Web page where paid passes are purchased. Payments are created by
+  /// `/api/payment/checkout` and confirmed by `/api/payment/verify` on the
+  /// server (Razorpay signature checked there); the app never upgrades a plan
+  /// locally. Once the user returns to the app, the plan is re-read from
+  /// `/user/me` (see AuthProvider.didChangeAppLifecycleState).
+  static const String webCheckoutUrl = 'https://paperbykaran.vercel.app/profile';
+
+  bool _awaitingWebCheckout = false;
+
+  /// True after the browser checkout was opened and until the plan was refreshed.
+  bool get awaitingWebCheckout => _awaitingWebCheckout;
+
+  /// Opens the website checkout for a paid plan in the external browser.
+  /// Returns true if the browser was launched. If it could not be launched,
+  /// the checkout URL is copied to the clipboard and an error is shown.
+  Future<bool> openWebCheckout(String planId) async {
+    _isProcessing = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    final launched = await ExternalBrowser.open(webCheckoutUrl);
+    if (launched) {
+      _awaitingWebCheckout = true;
+    } else {
+      try {
+        await Clipboard.setData(const ClipboardData(text: webCheckoutUrl));
+      } catch (_) {}
+      _errorMessage =
+          'Could not open the browser. Visit $webCheckoutUrl (link copied) and sign in with the same account to purchase.';
+    }
+
+    _isProcessing = false;
+    notifyListeners();
+    return launched;
+  }
+
+  /// Called after the user's plan has been re-read from the server.
+  void markCheckoutRefreshed() {
+    if (_awaitingWebCheckout) {
+      _awaitingWebCheckout = false;
+      notifyListeners();
+    }
+  }
+
+  /// Switches back to the FREE plan (the only change the server allows
+  /// without a verified payment). Returns true on success.
+  Future<bool> downgradeToFree() async {
     _isProcessing = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      // 1. Refresh Firebase auth token to ensure active session and avoid 500
-      try {
-        final currentUser = FirebaseAuth.instance.currentUser;
-        if (currentUser != null) {
-          final freshToken = await currentUser.getIdToken(true);
-          if (freshToken != null && freshToken.isNotEmpty) {
-            _apiClient.setAuthToken(freshToken);
-          }
-
-          // 2. Synchronize user record in Turso DB to prevent 500 when updating plan
-          try {
-            await _apiClient.post('/auth/sync', body: {
-              'uid': currentUser.uid,
-              'email': currentUser.email ?? '',
-              'displayName': currentUser.displayName ?? (currentUser.email?.split('@').first ?? 'User'),
-              'provider': currentUser.providerData.isNotEmpty ? currentUser.providerData.first.providerId : 'password',
-            });
-          } catch (_) {}
-        }
-      } catch (_) {}
-
-      // 3. Attempt direct Plan Upgrade via /api/user/plan
-      try {
-        await _apiClient.post('/user/plan', body: {'plan': planId});
-      } catch (_) {
-        // Fallback to payment verify endpoint
-        try {
-          await _apiClient.post('/payment/verify', body: {
-            'razorpay_order_id': 'ord_${DateTime.now().millisecondsSinceEpoch}',
-            'razorpay_payment_id': 'pay_app_${DateTime.now().millisecondsSinceEpoch}',
-            'razorpay_signature': 'sig_verified_app',
-            'plan': planId,
-          });
-        } catch (_) {}
-      }
-
-      // Optimistically activate plan so user is not blocked even if server had temporary 500
-      onPlanUpgraded(planId);
-
-      _isProcessing = false;
-      notifyListeners();
+      await _apiClient.post('/user/plan', body: {'plan': 'FREE'});
       return true;
     } catch (e) {
-      // Even if unexpected error, activate plan locally for seamless experience
-      onPlanUpgraded(planId);
+      _errorMessage = e is ApiException ? e.message : 'Could not change plan. Please try again.';
+      return false;
+    } finally {
       _isProcessing = false;
       notifyListeners();
-      return true;
     }
   }
 }

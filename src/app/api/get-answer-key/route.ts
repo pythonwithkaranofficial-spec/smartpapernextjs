@@ -1,45 +1,33 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenAI } from "@google/genai";
 import { formatScientificText } from "@/lib/utils";
+import { parseAiJson } from "@/lib/ai-json";
+import { isComputerSubjectKey } from "@/lib/subject-detection";
 import mammoth from "mammoth";
+import { requireUser, isUserThrottled } from "@/lib/api-guard";
 
 const apiKey = process.env.GEMINI_API_KEY;
 const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
 
-// Server-side rate limiting
-const rateLimitMap = new Map<string, number[]>();
-const DAILY_LIMIT = 25;
-const DAY_MS = 24 * 60 * 60 * 1000;
+const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // 10 MB
+const MAX_TEXT_CHARS = 60_000;
+const ALLOWED_EXTENSIONS = [".pdf", ".docx", ".doc", ".txt"];
 
-function isRateLimited(ip: string): boolean {
-  const now = Date.now();
-  const timestamps = rateLimitMap.get(ip) || [];
-  const activeTimestamps = timestamps.filter(ts => now - ts < DAY_MS);
-  rateLimitMap.set(ip, activeTimestamps);
-  return activeTimestamps.length >= DAILY_LIMIT;
-}
-
-function recordRequest(ip: string) {
-  const now = Date.now();
-  const timestamps = rateLimitMap.get(ip) || [];
-  timestamps.push(now);
-  rateLimitMap.set(ip, timestamps);
-}
-
-function cleanJsonString(str: string): string {
-  let cleaned = str.trim();
-  if (cleaned.includes("```")) {
-    cleaned = cleaned.replace(/```json/g, "").replace(/```/g, "").trim();
-  }
-  cleaned = cleaned.replace(/(?<!\\)\\(?!["\\]|u[0-9a-fA-F]{4})/g, "\\\\");
-  cleaned = cleaned.replace(/,\s*([\]}])/g, "$1");
-  return cleaned;
+/** Total of the (top-level) question marks in the generated key. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function sumQuestionMarks(sections: any[]): number {
+  return sections.reduce(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (acc: number, sec: any) => acc + (sec.questions || []).reduce((s: number, q: any) => s + (Number(q.marks || sec.marksPerQuestion) || 1), 0),
+    0
+  );
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const ip = request.headers.get("x-forwarded-for") || "127.0.0.1";
-    if (isRateLimited(ip)) {
+    const auth = await requireUser(request);
+    if ("response" in auth) return auth.response;
+    if (isUserThrottled(`answerkey:${auth.ctx.uid}`, 25, 24 * 60 * 60 * 1000)) {
       return NextResponse.json(
         { error: "Daily limit reached. You can generate up to 25 answer keys per 24 hours." },
         { status: 429 }
@@ -76,8 +64,14 @@ export async function POST(request: NextRequest) {
 
       const file = formData.get("file") as File | null;
       if (file && file.size > 0) {
-        const fileBuffer = Buffer.from(await file.arrayBuffer());
         const fileName = file.name.toLowerCase();
+        if (file.size > MAX_UPLOAD_BYTES) {
+          return NextResponse.json({ error: "File is too large. Maximum size is 10 MB." }, { status: 413 });
+        }
+        if (!ALLOWED_EXTENSIONS.some((ext) => fileName.endsWith(ext))) {
+          return NextResponse.json({ error: "Unsupported file type. Upload a PDF, DOCX or TXT file." }, { status: 415 });
+        }
+        const fileBuffer = Buffer.from(await file.arrayBuffer());
 
         if (fileName.endsWith(".pdf")) {
           fileBase64Pdf = fileBuffer.toString("base64");
@@ -124,6 +118,16 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    if (rawQuestionsText.length > MAX_TEXT_CHARS) {
+      rawQuestionsText = rawQuestionsText.slice(0, MAX_TEXT_CHARS);
+    }
+    outputMode = outputMode === "answers_only" ? "answers_only" : "questions_and_answers";
+    schoolName = schoolName.slice(0, 150);
+    examName = examName.slice(0, 150);
+    subject = subject.slice(0, 120);
+    classText = classText.slice(0, 50);
+    teacherName = teacherName.slice(0, 120);
 
     const systemPrompt = `You are an expert CBSE & Academic Teacher and Exam Evaluator.
 Your task is to analyze the provided set of questions (typed text or uploaded question paper document) and generate complete, accurate, step-by-step answers and detailed marking schemes for EVERY single question.
@@ -192,8 +196,9 @@ Return raw JSON only. Do not wrap in markdown or introductory text outside JSON.
         const responseText = response.text;
         if (!responseText) throw new Error("Empty response from AI model.");
 
-        const cleanedJson = cleanJsonString(responseText);
-        const parsedPaper = JSON.parse(cleanedJson);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const parsedPaper = parseAiJson<any>(responseText);
+        const format = (text: string) => formatScientificText(text, { codeSafe: isComputerSubjectKey(subject) });
 
         if (!parsedPaper || !parsedPaper.sections || !Array.isArray(parsedPaper.sections) || parsedPaper.sections.length === 0) {
           throw new Error("Invalid paper structure generated by AI.");
@@ -225,21 +230,21 @@ Return raw JSON only. Do not wrap in markdown or introductory text outside JSON.
                   ...q,
                   id: q.id || `q_ans_${Math.random().toString(36).substr(2, 9)}`,
                   number: qNum,
-                  text: formatScientificText(q.text || ""),
+                  text: format(q.text || ""),
                   marks: q.marks || section.marksPerQuestion || 1,
-                  orQuestion: q.orQuestion ? formatScientificText(q.orQuestion) : null,
+                  orQuestion: q.orQuestion ? format(q.orQuestion) : null,
                   choices: (q.choices && q.choices.length > 0)
-                    ? q.choices.map((choice: string) => formatScientificText(choice || ""))
+                    ? q.choices.map((choice: string) => format(choice || ""))
                     : null,
-                  solution: q.solution ? formatScientificText(q.solution) : "Solution provided above.",
-                  orSolution: q.orSolution ? formatScientificText(q.orSolution) : null,
+                  solution: q.solution ? format(q.solution) : "Solution provided above.",
+                  orSolution: q.orSolution ? format(q.orSolution) : null,
                 };
               }),
             };
           }),
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           totalQuestions: parsedPaper.sections.reduce((acc: number, sec: any) => acc + (sec.questions || []).length, 0),
-          totalMarks: 100,
+          totalMarks: sumQuestionMarks(parsedPaper.sections),
           hasAnswerKey: true,
           outputMode: outputMode,
         };
@@ -258,13 +263,12 @@ Return raw JSON only. Do not wrap in markdown or introductory text outside JSON.
       throw new Error(lastError?.message || "Failed to generate answer key after multiple AI attempts.");
     }
 
-    recordRequest(ip);
     return NextResponse.json(finalPaper);
   } catch (error: unknown) {
     const err = error instanceof Error ? error : new Error(String(error));
     console.error("Get Answer Key API Error:", err);
     return NextResponse.json(
-      { error: "Failed to generate answer key.", details: err.message },
+      { error: "Failed to generate answer key. Please try again." },
       { status: 500 }
     );
   }

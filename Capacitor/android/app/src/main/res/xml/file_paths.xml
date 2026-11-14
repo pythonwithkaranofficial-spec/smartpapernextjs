@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <paths xmlns:android="http://schemas.android.com/apk/res/android">
-    <external-path name="my_images" path="." />
+    <!-- Public Download/ folder only (previously the whole external storage was exposed) -->
+    <external-path name="downloads" path="Download/" />
     <cache-path name="my_cache_images" path="." />
     <external-cache-path name="external_cache" path="." />
     <files-path name="my_files" path="." />
+    <!-- App-specific external files (MainActivity saves to its Download/ subfolder on Android 9 and below) -->
     <external-files-path name="my_external_files" path="." />
 </paths>

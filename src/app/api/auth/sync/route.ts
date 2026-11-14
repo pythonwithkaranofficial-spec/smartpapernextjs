@@ -10,11 +10,12 @@ export async function POST(req: NextRequest) {
 
     const syncedUser = await UserSyncService.syncFirebaseUser({
       uid: authContext.uid,
-      email: authContext.email || body.email || '',
-      displayName: body.displayName || authContext.token.name || null,
-      photoURL: body.photoURL || authContext.token.picture || null,
+      // Email ALWAYS comes from the verified token, never from the request body.
+      email: authContext.email || '',
+      displayName: (typeof body.displayName === 'string' ? body.displayName.slice(0, 120) : null) || authContext.token.name || null,
+      photoURL: (typeof body.photoURL === 'string' && body.photoURL.length <= 400_000 ? body.photoURL : null) || authContext.token.picture || null,
       emailVerified: authContext.emailVerified || false,
-      providerId: body.providerId || authContext.token.firebase?.sign_in_provider || 'email',
+      providerId: authContext.token.firebase?.sign_in_provider || 'email',
     });
 
     return NextResponse.json({

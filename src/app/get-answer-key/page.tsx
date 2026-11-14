@@ -1,5 +1,6 @@
 "use client";
 
+import { AuthService } from "@/lib/firebase/auth-service";
 import React, { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Navbar } from "@/components/shared/Navbar";
@@ -114,16 +115,19 @@ export default function GetAnswerKeyPage() {
 
       setLoadingStep("Generating step-by-step AI solutions...");
 
+      const token = await AuthService.getFirebaseToken();
+      if (!token) throw new Error("Please sign in to generate answer keys.");
       const res = await fetch("/api/get-answer-key", {
         method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
         body: formData,
       });
 
       const responseText = await res.text();
-      let data: any;
+      let data: { error?: string };
       try {
         data = JSON.parse(responseText);
-      } catch (parseErr) {
+      } catch {
         console.error("Non-JSON Server Response:", responseText);
         throw new Error(
           !res.ok 
@@ -140,16 +144,9 @@ export default function GetAnswerKeyPage() {
 
       // Store in sessionStorage so PreviewPage displays it seamlessly
       sessionStorage.setItem("generated_paper", JSON.stringify(data));
-      sessionStorage.setItem("last_paper_config", JSON.stringify({
-        subject: data.subject,
-        classId: data.classText,
-        examType: data.examName,
-        totalMarks: data.totalMarks,
-        duration: data.timeText,
-        options: {
-          includeAnswerKey: true,
-        }
-      }));
+      // An answer key is not produced from a wizard config, so there is nothing valid to
+      // "Re-generate" from; clear any stale config so the preview hides that button.
+      sessionStorage.removeItem("last_paper_config");
 
       toast.success("Answer Key Generated Successfully!");
       router.push("/preview?mode=solutions");

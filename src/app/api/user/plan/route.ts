@@ -1,21 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAuthToken } from '@/lib/auth/middleware';
 import { UserRepository } from '@/lib/db/user-repository';
-import { UserPlan } from '@/types/auth';
 import { handleApiError, ValidationError } from '@/lib/errors';
 
-const VALID_PLANS: UserPlan[] = ['FREE', 'PRO', 'PREMIUM', 'ENTERPRISE'];
-
+/**
+ * Self-service plan change. Users may only DOWNGRADE to FREE here.
+ * Paid plans are granted exclusively by /api/payment/verify after a verified Razorpay payment
+ * (or by an admin via /api/admin/users).
+ */
 export async function POST(req: NextRequest) {
   try {
     const authContext = await verifyAuthToken(req);
-    const body = await req.json();
+    const body = await req.json().catch(() => ({}));
 
-    if (!body.plan || !VALID_PLANS.includes(body.plan)) {
-      throw new ValidationError(`Invalid plan provided. Must be one of: ${VALID_PLANS.join(', ')}`);
+    if (body.plan !== 'FREE') {
+      throw new ValidationError(
+        'Paid plans can only be activated through a completed payment.',
+        403,
+        'PAYMENT_REQUIRED'
+      );
     }
 
-    await UserRepository.updatePlan(authContext.uid, body.plan as UserPlan);
+    await UserRepository.updatePlan(authContext.uid, 'FREE');
     const updatedUser = await UserRepository.findUserByFirebaseUid(authContext.uid);
 
     return NextResponse.json({

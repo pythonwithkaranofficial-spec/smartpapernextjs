@@ -16,12 +16,14 @@ import { AuthService } from "@/lib/firebase/auth-service";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight, Sparkles, BookOpen } from "lucide-react";
 import { clientRateLimiter } from "@/lib/rate-limiter";
-import { isSuperAdminEmail } from "@/lib/auth/helpers";
+import { isSuperAdminEmail } from "@/lib/auth/super-admin";
 import { toast } from "sonner";
 import { GeneratingOverlay } from "../preview/GeneratingOverlay";
 import { DailyLimitModal } from "../auth/DailyLimitModal";
 import { SyllabusModal } from "../syllabus/SyllabusModal";
-import { getBlueprint, getOrGenerateBlueprint } from "@/lib/blueprints";
+import { getOrGenerateBlueprint } from "@/lib/blueprints";
+import { computeDistributionTotal } from "@/lib/marks";
+import { detectFullExamKind } from "@/lib/subject-detection";
 
 const LOCAL_STORAGE_KEY = "smart_paper_form_config";
 
@@ -59,10 +61,48 @@ const initialConfig: PaperConfig = {
   selectedChapters: [],
 };
 
+/** Restores the auto-saved wizard config (an empty chapter list means "entire syllabus"). */
+function loadSavedConfig(): PaperConfig {
+  if (typeof window === "undefined") return initialConfig;
+  try {
+    const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (!saved) return initialConfig;
+    const parsed = JSON.parse(saved);
+    return {
+      ...parsed,
+      // Never keep the literal "all" marker as a chapter name.
+      selectedChapters: Array.isArray(parsed.selectedChapters)
+        ? parsed.selectedChapters.filter(
+            (c: unknown) => typeof c === "string" && c.toLowerCase() !== "all"
+          )
+        : [],
+    };
+  } catch (e) {
+    console.error("Failed to parse saved config", e);
+    return initialConfig;
+  }
+}
+
+function isBlueprintPresetRequested(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    const urlParams = new URLSearchParams(window.location.search);
+    return (
+      sessionStorage.getItem("preset_step") === "7" ||
+      urlParams.get("preset") === "blueprint" ||
+      urlParams.get("step") === "7"
+    );
+  } catch {
+    return false;
+  }
+}
+
 export function GeneratorWizard() {
-  const [step, setStep] = useState(1);
+  // Lazily initialised from storage. The wizard only mounts on the client (behind
+  // ProtectedRoute's auth check), so this does not cause a hydration mismatch.
+  const [step, setStep] = useState(() => (isBlueprintPresetRequested() ? 7 : 1));
   const [direction, setDirection] = useState(1); // 1 = forward, -1 = backward
-  const [config, setConfig] = useState<PaperConfig>(initialConfig);
+  const [config, setConfig] = useState<PaperConfig>(loadSavedConfig);
   const { generatePaper, loading } = useGeneratePaper();
 
   const [usageInfo, setUsageInfo] = useState<{ usedToday: number; dailyLimit: number; remainingToday: number; isAdmin?: boolean } | null>(null);
@@ -115,32 +155,12 @@ export function GeneratorWizard() {
   }, []);
 
 
-  // Load from localStorage on mount (Auto-save) & Check preset step
+  // Announce a blueprint preset handed over by the syllabus explorer (state itself is
+  // initialised lazily above, so no setState is needed here).
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          setConfig({
-            ...parsed,
-            selectedChapters:
-              parsed.selectedChapters && parsed.selectedChapters.length > 0
-                ? parsed.selectedChapters
-                : ["all"],
-          });
-        } catch (e) {
-          console.error("Failed to parse saved config", e);
-        }
-      }
-
-      const presetStep = sessionStorage.getItem("preset_step");
-      const urlParams = new URLSearchParams(window.location.search);
-      if (presetStep === "7" || urlParams.get("preset") === "blueprint" || urlParams.get("step") === "7") {
-        setStep(7);
-        sessionStorage.removeItem("preset_step");
-        toast.success("Loaded official CBSE blueprint preset! Review options below to generate paper.");
-      }
+    if (isBlueprintPresetRequested()) {
+      sessionStorage.removeItem("preset_step");
+      toast.success("Loaded official CBSE blueprint preset! Review options below to generate paper.");
     }
   }, []);
 
@@ -151,6 +171,20 @@ export function GeneratorWizard() {
       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updated));
       return updated;
     });
+  };
+
+  /**
+   * The question distribution (with any blueprint marks overrides) must add up to the target.
+   * Specialised full-exam prompts generate the official pattern and ignore the distribution.
+   */
+  const validateMarksSum = (): boolean => {
+    if (detectFullExamKind(config)) return true;
+    const currentMarks = computeDistributionTotal(config.questionDistribution, config.marksPerType);
+    if (currentMarks !== config.totalMarks) {
+      toast.error(`Marks mismatch! Your allocated questions total ${currentMarks} Marks, but your target is ${config.totalMarks} Marks. Adjust counts before continuing.`);
+      return false;
+    }
+    return true;
   };
 
   const handleNext = (
@@ -175,21 +209,8 @@ export function GeneratorWizard() {
       toast.error("Please choose an exam format to proceed.");
       return;
     }
-    if (step === 6) {
-      // Validate marks match
-      const dist = config.questionDistribution;
-      const currentMarks = 
-        (dist.mcq * 1) + 
-        (dist.assertionReason * 1) + 
-        (dist.vsa * 2) + 
-        (dist.sa * 3) + 
-        (dist.caseStudy * 4) + 
-        (dist.la * 5);
-      
-      if (currentMarks !== config.totalMarks) {
-        toast.error(`Marks mismatch! Your allocated questions total ${currentMarks} Marks, but your target is ${config.totalMarks} Marks. Adjust counts before continuing.`);
-        return;
-      }
+    if (step === 6 && !validateMarksSum()) {
+      return;
     }
 
     if (step < 7) {
@@ -213,6 +234,12 @@ export function GeneratorWizard() {
   const handleGenerate = () => {
     if (usageInfo && !usageInfo.isAdmin && usageInfo.remainingToday <= 0) {
       setShowLimitModal(true);
+      return;
+    }
+    // Blueprint presets and progress-bar jumps can bypass step 6, so always re-check here.
+    if (!validateMarksSum()) {
+      setDirection(-1);
+      setStep(6);
       return;
     }
     // Clean up selectedChapters in localStorage so next session starts with 0 selected
@@ -372,6 +399,7 @@ export function GeneratorWizard() {
                         ? prev.selectedChapters
                         : [],
                       unitWeightage: bp.unitWeightage,
+                      marksPerType: bp.marksPerType,
                       blueprintId: bp.id,
                       isBlueprintMode: true,
                       options: {
@@ -383,7 +411,29 @@ export function GeneratorWizard() {
                     setDirection(1);
                     setStep(7);
                   } else {
-                    updateConfig((prev) => ({ ...prev, examType, isBlueprintMode: false }));
+                    // No blueprint for this exam type: drop every setting the previous blueprint applied.
+                    updateConfig((prev) => {
+                      const hadBlueprint = prev.isBlueprintMode || !!prev.blueprintId;
+                      return {
+                        ...prev,
+                        examType,
+                        isBlueprintMode: false,
+                        blueprintId: undefined,
+                        unitWeightage: undefined,
+                        marksPerType: undefined,
+                        ...(hadBlueprint
+                          ? {
+                              totalMarks: initialConfig.totalMarks,
+                              duration: initialConfig.duration,
+                              questionDistribution: { ...initialConfig.questionDistribution },
+                              options: {
+                                ...prev.options,
+                                instructionsText: initialConfig.options.instructionsText,
+                              },
+                            }
+                          : {}),
+                      };
+                    });
                     handleNext(undefined, undefined, examType);
                   }
                 }}
@@ -418,6 +468,7 @@ export function GeneratorWizard() {
               <StepQuestionDist
                 totalMarks={config.totalMarks}
                 distribution={config.questionDistribution}
+                marksPerType={config.marksPerType}
                 onChangeDistribution={(questionDistribution) =>
                   updateConfig((prev) => ({ ...prev, questionDistribution }))
                 }

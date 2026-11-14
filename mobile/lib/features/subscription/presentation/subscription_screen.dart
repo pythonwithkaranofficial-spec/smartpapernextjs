@@ -84,6 +84,36 @@ class SubscriptionScreen extends StatelessWidget {
                   child: Text(subProvider.errorMessage!, style: const TextStyle(color: Colors.redAccent, fontSize: 13)),
                 ),
 
+              if (subProvider.awaitingWebCheckout)
+                Padding(
+                  padding: const EdgeInsets.only(top: 12.0),
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: cardBg,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: borderColor),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'Finished paying on the website? Refresh to load your updated plan.',
+                            style: TextStyle(color: subtextColor, fontSize: 12.5),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () async {
+                            await authProvider.refreshUser();
+                            subProvider.markCheckoutRefreshed();
+                          },
+                          child: Text('Refresh', style: TextStyle(color: textColor, fontWeight: FontWeight.bold)),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
               const SizedBox(height: 24),
               Text('Select Upgrade Plan:', style: TextStyle(color: textColor, fontSize: 17, fontWeight: FontWeight.bold)),
               const SizedBox(height: 12),
@@ -175,22 +205,46 @@ class SubscriptionScreen extends StatelessWidget {
                                     }
 
                                     final messenger = ScaffoldMessenger.of(context);
-                                    final success = await subProvider.initiateCheckout(
-                                      plan.id,
-                                      (newPlan) {
-                                        authProvider.updateUserPlan(newPlan);
-                                      },
-                                    );
-                                    if (success && context.mounted) {
+
+                                    if (plan.id == 'FREE') {
+                                      final confirmed = await showDialog<bool>(
+                                        context: context,
+                                        builder: (ctx) => AlertDialog(
+                                          title: const Text('Switch to Free plan?'),
+                                          content: const Text(
+                                              'Your current pass benefits will end immediately. This cannot be undone without purchasing again.'),
+                                          actions: [
+                                            TextButton(
+                                              onPressed: () => Navigator.pop(ctx, false),
+                                              child: const Text('Cancel'),
+                                            ),
+                                            TextButton(
+                                              onPressed: () => Navigator.pop(ctx, true),
+                                              child: const Text('Switch to Free'),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                      if (confirmed != true) return;
+                                      final ok = await subProvider.downgradeToFree();
+                                      await authProvider.refreshUser();
+                                      if (ok && context.mounted) {
+                                        messenger.showSnackBar(
+                                          const SnackBar(content: Text('You are now on the Free plan.')),
+                                        );
+                                      }
+                                      return;
+                                    }
+
+                                    // Paid passes are purchased on the website (Razorpay checkout is
+                                    // verified server-side). The plan is re-read from the server when
+                                    // the user returns to the app.
+                                    final launched = await subProvider.openWebCheckout(plan.id);
+                                    if (launched && context.mounted) {
                                       messenger.showSnackBar(
                                         SnackBar(
-                                          backgroundColor: isDark ? Colors.white : Colors.black,
                                           content: Text(
-                                            'Upgraded to ${plan.title} successfully!',
-                                            style: TextStyle(
-                                              color: isDark ? Colors.black : Colors.white,
-                                              fontWeight: FontWeight.bold,
-                                            ),
+                                            'Complete the ${plan.title} purchase in your browser (sign in with the same account). Your plan will update when you return.',
                                           ),
                                         ),
                                       );
@@ -207,7 +261,7 @@ class SubscriptionScreen extends StatelessWidget {
                                           strokeWidth: 2,
                                         ),
                                       )
-                                    : Text('Activate ${plan.title}', style: const TextStyle(fontWeight: FontWeight.bold))),
+                                    : Text(plan.id == 'FREE' ? 'Switch to ${plan.title}' : 'Buy ${plan.title} on Website', style: const TextStyle(fontWeight: FontWeight.bold))),
                           ),
                         ),
                       ],

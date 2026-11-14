@@ -1,4 +1,6 @@
-import { QuestionDistribution } from "@/types";
+import type { QuestionDistribution } from "@/types";
+import type { MarksPerType } from "@/lib/marks";
+import { MAJOR_EXAM_TYPES, normalizeClassId, normalizeSubjectKey } from "@/lib/subject-detection";
 
 export interface UnitWeightage {
   unit: string;
@@ -17,6 +19,14 @@ export interface Blueprint {
   totalMarks: number;
   duration: string;
   questionDistribution: QuestionDistribution;
+  /**
+   * Optional per-type marks overriding the generic weights
+   * (mcq 1, assertionReason 1, vsa 2, sa 3, caseStudy 4, la 5) for subjects whose
+   * official CBSE pattern differs, e.g. `{ caseStudy: 3 }` or `{ la: 6 }`.
+   * `computeDistributionTotal(questionDistribution, marksPerType)` must equal totalMarks
+   * (enforced by `npm run check:blueprints`).
+   */
+  marksPerType?: Partial<MarksPerType>;
   selectedChapters: string[];
   unitWeightage: UnitWeightage[];
   defaultInstructions: string;
@@ -190,6 +200,8 @@ export const BLUEPRINTS: Blueprint[] = [
       caseStudy: 2,
       la: 7,
     },
+    // Section B source-based Qs carry 3 marks; la = 5 LA (Section D) + 2 map Qs (Section E), all 5 marks
+    marksPerType: { caseStudy: 3 },
     selectedChapters: ["all"],
     unitWeightage: [
       { unit: "Fundamentals of Human Geography", topic: "Unit I: Human Geography (Nature and Scope)", marks: 3 },
@@ -225,13 +237,14 @@ export const BLUEPRINTS: Blueprint[] = [
     totalMarks: 80,
     duration: "3 Hours",
     questionDistribution: {
-      mcq: 16,
+      mcq: 38,
       assertionReason: 0,
       vsa: 7,
-      sa: 2,
+      sa: 0,
       la: 4,
       caseStudy: 2,
     },
+    // mcq = 22 reading items + 16 literature-extract items; caseStudy = notice + invitation (4 each); vsa = 5 Flamingo + 2 Vistas SAs; la = letter, article/report + 2 literature LAs
     selectedChapters: ["all"],
     unitWeightage: [
       { unit: "Section A", topic: "Reading Skills (Unseen Comprehension & Case-based Passages)", marks: 22 },
@@ -296,8 +309,8 @@ export const BLUEPRINTS: Blueprint[] = [
       mcq: 40,
       assertionReason: 0,
       vsa: 0,
-      sa: 4,
-      la: 4,
+      sa: 5,
+      la: 5,
       caseStudy: 0,
     },
     selectedChapters: ["all"],
@@ -329,6 +342,8 @@ export const BLUEPRINTS: Blueprint[] = [
       caseStudy: 6,
       la: 4,
     },
+    // caseStudy = 4-mark SA-II questions; la = 6-mark LA questions
+    marksPerType: { la: 6 },
     selectedChapters: ["all"],
     unitWeightage: [
       { unit: "Part A - Unit 1", topic: "National Income and Related Aggregates", marks: 10 },
@@ -367,6 +382,7 @@ export const BLUEPRINTS: Blueprint[] = [
       la: 4,
       caseStudy: 3,
     },
+    marksPerType: { sa: 4, la: 6 },
     selectedChapters: ["all"],
     unitWeightage: [
       { unit: "A1", topic: "The End of Bipolarity", marks: 6 },
@@ -410,6 +426,7 @@ export const BLUEPRINTS: Blueprint[] = [
       la: 4,
       caseStudy: 3,
     },
+    marksPerType: { sa: 4, la: 6 },
     selectedChapters: ["all"],
     unitWeightage: [
       { unit: "A1", topic: "Constitution: Why and How? & Rights in Indian Constitution", marks: 8 },
@@ -442,13 +459,15 @@ export const BLUEPRINTS: Blueprint[] = [
     totalMarks: 80,
     duration: "3 Hours",
     questionDistribution: {
-      mcq: 20,
+      mcq: 21,
       assertionReason: 0,
-      vsa: 0,
+      vsa: 1,
       sa: 6,
       la: 3,
       caseStudy: 3,
     },
+    // vsa slot carries the single 5-mark map question (Section E); la = 8-mark LA questions
+    marksPerType: { vsa: 5, la: 8 },
     selectedChapters: ["all"],
     unitWeightage: [
       { unit: "Part I", topic: "Themes in Indian History Part I (Ancient)", marks: 25 },
@@ -544,7 +563,7 @@ export const BLUEPRINTS: Blueprint[] = [
       mcq: 20,
       assertionReason: 0,
       vsa: 4,
-      sa: 6,
+      sa: 8,
       la: 4,
       caseStudy: 2,
     },
@@ -571,8 +590,8 @@ export const BLUEPRINTS: Blueprint[] = [
       mcq: 18,
       assertionReason: 0,
       vsa: 4,
-      sa: 5,
-      la: 4,
+      sa: 7,
+      la: 5,
       caseStudy: 2,
     },
     selectedChapters: ["all"],
@@ -631,9 +650,10 @@ export const BLUEPRINTS: Blueprint[] = [
       assertionReason: 0,
       vsa: 4,
       sa: 5,
-      la: 4,
+      la: 5,
       caseStudy: 3,
     },
+    // la = 4 LA questions (Section D) + 1 map question (Section F), all 5 marks
     selectedChapters: ["all"],
     unitWeightage: [
       { unit: "I", topic: "India and the Contemporary World - II (History: 18 Theory + 2 Map)", marks: 20 },
@@ -665,7 +685,7 @@ export const BLUEPRINTS: Blueprint[] = [
       mcq: 20,
       assertionReason: 0,
       vsa: 4,
-      sa: 7,
+      sa: 8,
       la: 4,
       caseStudy: 2,
     },
@@ -695,7 +715,7 @@ export const BLUEPRINTS: Blueprint[] = [
     questionDistribution: {
       mcq: 12,
       assertionReason: 0,
-      vsa: 6,
+      vsa: 4,
       sa: 4,
       la: 2,
       caseStudy: 2,
@@ -751,43 +771,6 @@ export const BLUEPRINTS: Blueprint[] = [
 7. Total marks for Theory Examination is 70 Marks (Practical Examination: 30 Marks). Time allowed is 3 Hours.`,
   },
   {
-    id: "cbse-12-physics-2026-alt",
-    classId: "12",
-    subject: "physics",
-    examType: ["annual_exam", "pre_board", "sample_paper", "half_yearly"],
-    title: "CBSE Class 12 Physics (Code 042) Official Blueprint 2025-26",
-    board: "CBSE",
-    year: 2026,
-    totalMarks: 70,
-    duration: "3 Hours",
-    questionDistribution: {
-      mcq: 12,
-      assertionReason: 4,
-      vsa: 5,
-      sa: 7,
-      caseStudy: 2,
-      la: 3,
-    },
-    selectedChapters: ["all"],
-    unitWeightage: [
-      { unit: "Unit I & II", topic: "Electrostatics & Current Electricity (Chapters 1, 2, 3)", marks: 16 },
-      { unit: "Unit III & IV", topic: "Magnetic Effects of Current, Magnetism, EMI & AC (Chapters 4, 5, 6, 7)", marks: 17 },
-      { unit: "Unit V & VI", topic: "Electromagnetic Waves & Optics (Chapters 8, 9, 10)", marks: 18 },
-      { unit: "Unit VII & VIII", topic: "Dual Nature of Radiation, Atoms & Nuclei (Chapters 11, 12, 13)", marks: 12 },
-      { unit: "Unit IX", topic: "Electronic Devices: Semiconductor Electronics (Chapter 14)", marks: 7 },
-    ],
-    defaultInstructions: `1. There are 33 questions in all. All questions are compulsory.
-2. This question paper has five sections: Section A, Section B, Section C, Section D and Section E.
-3. All the sections are compulsory.
-4. Section A contains sixteen questions: twelve MCQs and four Assertion-Reasoning questions of 1 mark each (Q1 to Q16).
-5. Section B contains five questions of 2 marks each (Q17 to Q21).
-6. Section C contains seven questions of 3 marks each (Q22 to Q28).
-7. Section D contains two case study based questions of 4 marks each with sub-parts (Q29 and Q30).
-8. Section E contains three long answer questions of 5 marks each (Q31 to Q33).
-9. There is no overall choice. However, an internal choice has been provided in one question in Section B, one question in Section C, one question in each CBQ in Section D and all three questions in Section E.
-10. Use of calculators is not permitted. You may use mathematical log tables if necessary.`,
-  },
-  {
     id: "cbse-11-phyedu-2026",
     classId: "11",
     subject: "phyedu",
@@ -806,17 +789,18 @@ export const BLUEPRINTS: Blueprint[] = [
       caseStudy: 3,
     },
     selectedChapters: ["all"],
+    // Unit marks rescaled (largest remainder) from an incomplete 58-mark table to the 70-mark theory paper; verify against the official CBSE syllabus.
     unitWeightage: [
-      { unit: "U1", topic: "Changing Trends & Career in Physical Education", marks: 4 },
-      { unit: "U2", topic: "Olympic Value Education", marks: 5 },
-      { unit: "U3", topic: "Yoga", marks: 6 },
-      { unit: "U4", topic: "Physical Education & Sports for CWSN", marks: 4 },
-      { unit: "U5", topic: "Physical Fitness, Wellness and Lifestyle", marks: 5 },
-      { unit: "U6", topic: "Test, Measurements & Evaluation", marks: 8 },
-      { unit: "U7", topic: "Fundamentals of Anatomy and Physiology in Sports", marks: 8 },
-      { unit: "U8", topic: "Fundamentals of Kinesiology and Biomechanics in Sports", marks: 4 },
-      { unit: "U9", topic: "Psychology and Sports", marks: 7 },
-      { unit: "U10", topic: "Training & Doping in Sports", marks: 7 },
+      { unit: "U1", topic: "Changing Trends & Career in Physical Education", marks: 5 },
+      { unit: "U2", topic: "Olympic Value Education", marks: 6 },
+      { unit: "U3", topic: "Yoga", marks: 7 },
+      { unit: "U4", topic: "Physical Education & Sports for CWSN", marks: 5 },
+      { unit: "U5", topic: "Physical Fitness, Wellness and Lifestyle", marks: 6 },
+      { unit: "U6", topic: "Test, Measurements & Evaluation", marks: 10 },
+      { unit: "U7", topic: "Fundamentals of Anatomy and Physiology in Sports", marks: 10 },
+      { unit: "U8", topic: "Fundamentals of Kinesiology and Biomechanics in Sports", marks: 5 },
+      { unit: "U9", topic: "Psychology and Sports", marks: 8 },
+      { unit: "U10", topic: "Training & Doping in Sports", marks: 8 },
     ],
     defaultInstructions: `1. The question paper consists of 34 questions divided into 5 Sections: A, B, C, D and E.
 2. Section A consists of Question 1 to 18 carrying 1 mark each and are Multiple Choice Questions.
@@ -838,23 +822,25 @@ export const BLUEPRINTS: Blueprint[] = [
     questionDistribution: {
       mcq: 18,
       assertionReason: 0,
-      vsa: 6,
-      sa: 6,
+      vsa: 5,
+      sa: 5,
       caseStudy: 3,
-      la: 4,
+      la: 3,
     },
+    // Counts are ATTEMPTED questions: Section B 5 of 6, Section C 5 of 6, Section E 3 of 4 (see instructions)
     selectedChapters: ["all"],
+    // Official table lists PRINTED marks incl. b* choice questions (80); rescaled (largest remainder) to the 70 marks actually attempted.
     unitWeightage: [
-      { unit: "U1", topic: "Management of Sporting Events (05 + 04 b*)", marks: 9 },
-      { unit: "U2", topic: "Children and Women in Sports", marks: 7 },
-      { unit: "U3", topic: "Yoga as Preventive measure for Lifestyle Disease (06 + 01 b*)", marks: 7 },
-      { unit: "U4", topic: "Physical Education and Sports for CWSN (04 + 04 b*)", marks: 8 },
-      { unit: "U5", topic: "Sports and Nutrition", marks: 7 },
-      { unit: "U6", topic: "Test and Measurement in Sports", marks: 8 },
-      { unit: "U7", topic: "Physiology and Injuries in Sport (04 + 04 b*)", marks: 8 },
-      { unit: "U8", topic: "Biomechanics and Sports", marks: 10 },
-      { unit: "U9", topic: "Psychology and Sports", marks: 7 },
-      { unit: "U10", topic: "Training in Sports", marks: 9 },
+      { unit: "U1", topic: "Management of Sporting Events", marks: 8 },
+      { unit: "U2", topic: "Children and Women in Sports", marks: 6 },
+      { unit: "U3", topic: "Yoga as Preventive measure for Lifestyle Disease", marks: 6 },
+      { unit: "U4", topic: "Physical Education and Sports for CWSN", marks: 7 },
+      { unit: "U5", topic: "Sports and Nutrition", marks: 6 },
+      { unit: "U6", topic: "Test and Measurement in Sports", marks: 7 },
+      { unit: "U7", topic: "Physiology and Injuries in Sport", marks: 7 },
+      { unit: "U8", topic: "Biomechanics and Sports", marks: 9 },
+      { unit: "U9", topic: "Psychology and Sports", marks: 6 },
+      { unit: "U10", topic: "Training in Sports", marks: 8 },
     ],
     defaultInstructions: `1. The question paper consists of 37 questions divided into 5 Sections: A, B, C, D and E.
 2. Section A consists of Questions 1 to 18 carrying 1 mark each and are Multiple Choice Questions. All questions are compulsory.
@@ -889,12 +875,12 @@ export const BLUEPRINTS: Blueprint[] = [
       { unit: "U3", topic: "Database Concepts and Structured Query Language (SQL)", marks: 30 },
       { unit: "U4", topic: "Introduction to Emerging Trends", marks: 5 },
     ],
-    defaultInstructions: `1. This Question Paper contains 35 questions divided into 5 Sections: A, B, C, D and E.
+    defaultInstructions: `1. This Question Paper contains 34 questions divided into 5 Sections: A, B, C, D and E.
 2. Section A contains 18 MCQs carrying 1 mark each.
 3. Section B contains 5 Very Short Answer Type questions carrying 2 marks each.
 4. Section C contains 5 Short Answer Type questions carrying 3 marks each.
 5. Section D contains 3 Case Study/Data-based questions carrying 4 marks each.
-6. Section E contains 4 Long Answer Type questions carrying 5 marks each. Total theory marks: 70.`,
+6. Section E contains 3 Long Answer Type questions carrying 5 marks each. Total theory marks: 70.`,
   },
   {
     id: "cbse-12-ip-2026",
@@ -921,12 +907,12 @@ export const BLUEPRINTS: Blueprint[] = [
       { unit: "U3", topic: "Introduction to Computer Networks", marks: 10 },
       { unit: "U4", topic: "Societal Impacts", marks: 10 },
     ],
-    defaultInstructions: `1. This Question Paper contains 35 questions divided into 5 Sections: A, B, C, D and E.
+    defaultInstructions: `1. This Question Paper contains 34 questions divided into 5 Sections: A, B, C, D and E.
 2. Section A contains 18 MCQs carrying 1 mark each.
 3. Section B contains 5 Very Short Answer Type questions carrying 2 marks each.
 4. Section C contains 5 Short Answer Type questions carrying 3 marks each.
 5. Section D contains 3 Case Study/Data-based questions carrying 4 marks each.
-6. Section E contains 4 Long Answer Type questions carrying 5 marks each. Total theory marks: 70.`,
+6. Section E contains 3 Long Answer Type questions carrying 5 marks each. Total theory marks: 70.`,
   },
   {
     id: "cbse-11-history-2026",
@@ -941,11 +927,13 @@ export const BLUEPRINTS: Blueprint[] = [
     questionDistribution: {
       mcq: 21,
       assertionReason: 0,
-      vsa: 6,
-      sa: 3,
+      vsa: 1,
+      sa: 6,
       la: 3,
-      caseStudy: 1,
+      caseStudy: 3,
     },
+    // vsa slot carries the single 5-mark map question (Section E); la = 8-mark LA questions
+    marksPerType: { vsa: 5, la: 8 },
     selectedChapters: ["all"],
     unitWeightage: [
       { unit: "Sec I", topic: "Early Societies (Theme 1: Writing and City Life)", marks: 10 },
@@ -974,11 +962,12 @@ export const BLUEPRINTS: Blueprint[] = [
     questionDistribution: {
       mcq: 17,
       assertionReason: 0,
-      vsa: 4,
-      sa: 5,
-      la: 4,
-      caseStudy: 2,
+      vsa: 0,
+      sa: 4,
+      la: 5,
+      caseStudy: 4,
     },
+    // la = 3 LA questions (Section D) + 2 map questions (Section E), all 5 marks
     selectedChapters: ["all"],
     unitWeightage: [
       { unit: "Part A", topic: "Fundamentals of Physical Geography (Units I-V & Map)", marks: 35 },
@@ -990,48 +979,6 @@ export const BLUEPRINTS: Blueprint[] = [
 4. Section C contains Question 22 to 25 Source/Case Based Questions carrying 4 marks each.
 5. Section D contains Question 26 to 28 Long Answer Type Questions carrying 5 marks each.
 6. Section E contains Question 29 & 30 Map-based questions carrying 5 marks each.`,
-  },
-  {
-    id: "cbse-12-geography-2026-alt",
-    classId: "12",
-    subject: "geography",
-    examType: ["annual_exam", "pre_board", "sample_paper", "half_yearly"],
-    title: "CBSE Class 12 Geography (Code 029) Official Blueprint 2025-26",
-    board: "CBSE",
-    year: 2026,
-    totalMarks: 70,
-    duration: "3 Hours",
-    questionDistribution: {
-      mcq: 17,
-      assertionReason: 0,
-      vsa: 0,
-      sa: 4,
-      caseStudy: 2,
-      la: 7,
-    },
-    selectedChapters: ["all"],
-    unitWeightage: [
-      { unit: "Fundamentals of Human Geography", topic: "Unit I: Human Geography (Nature and Scope)", marks: 3 },
-      { unit: "Fundamentals of Human Geography", topic: "Unit II: Population & Human Development (Chapters 2, 3)", marks: 8 },
-      { unit: "Fundamentals of Human Geography", topic: "Unit III: Human Activities, Transport, Trade (Chapters 4-8)", marks: 19 },
-      { unit: "Fundamentals of Human Geography", topic: "Map Work (World Political Map - Identification)", marks: 5 },
-      { unit: "India: People and Economy", topic: "Unit I: Population Distribution, Density, Growth & Composition", marks: 5 },
-      { unit: "India: People and Economy", topic: "Unit II: Human Settlements", marks: 3 },
-      { unit: "India: People and Economy", topic: "Unit III: Resources and Development (Chapters 3-6)", marks: 10 },
-      { unit: "India: People and Economy", topic: "Unit IV: Transport, Communication & International Trade (Chapters 7, 8)", marks: 7 },
-      { unit: "India: People and Economy", topic: "Unit V: Geographical Perspective on Selected Issues and Problems", marks: 5 },
-      { unit: "India: People and Economy", topic: "Map Work (India Political Map - Locating & Labelling)", marks: 5 },
-    ],
-    defaultInstructions: `1. This question paper contains 30 questions. All questions are compulsory.
-2. The question paper is divided into 5 Sections: Section A, Section B, Section C, Section D, and Section E.
-3. Section A comprises Questions 1 to 17, which are Multiple Choice Questions of 1 mark each.
-4. Section B comprises Questions 18 and 19, which are Source-based questions of 3 marks each.
-5. Section C comprises Questions 20 to 23, which are Short Answer Type questions of 3 marks each. Answers to these questions should normally not exceed 80 to 100 words.
-6. Section D comprises Questions 24 to 28, which are Long Answer Type questions of 5 marks each. Answers to these questions should normally not exceed 120 to 150 words.
-7. Section E comprises Questions 29 and 30, which are Map-based questions of 5 marks each:
-   - Question 29 is based on the outline physical/political map of the World (identification of features).
-   - Question 30 is based on the outline political map of India (locating and labelling of features).
-8. There is no overall choice. However, an internal choice has been provided in some questions. A student has to attempt only one of the alternatives in such questions.`,
   },
   {
     id: "cbse-11-finearts-2026",
@@ -1047,17 +994,18 @@ export const BLUEPRINTS: Blueprint[] = [
       mcq: 8,
       assertionReason: 0,
       vsa: 5,
-      sa: 4,
+      sa: 0,
       la: 2,
       caseStudy: 0,
     },
+    marksPerType: { la: 6 },
     selectedChapters: ["all"],
     unitWeightage: [
       { unit: "U1", topic: "Pre-Historic Rock Paintings & Art of Indus Valley", marks: 10 },
       { unit: "U2", topic: "Buddhist, Jain and Hindu Art", marks: 10 },
       { unit: "U3", topic: "Temple Sculptures, Bronzes and Indo-Islamic Architecture", marks: 10 },
     ],
-    defaultInstructions: `1. The Question Paper contains 19 questions divided into 3 Sections: A, B, and C.
+    defaultInstructions: `1. The Question Paper contains 15 questions divided into 3 Sections: A, B, and C.
 2. Section A contains 8 MCQs of 1 mark each.
 3. Section B contains 5 Short Answer Questions of 2 marks each.
 4. Section C contains 2 Long Answer Questions of 6 marks each. Total theory marks: 30 Marks (Practical: 70 Marks).`,
@@ -1076,17 +1024,18 @@ export const BLUEPRINTS: Blueprint[] = [
       mcq: 8,
       assertionReason: 0,
       vsa: 5,
-      sa: 4,
+      sa: 0,
       la: 2,
       caseStudy: 0,
     },
+    marksPerType: { la: 6 },
     selectedChapters: ["all"],
     unitWeightage: [
       { unit: "U1", topic: "Rajasthani and Pahari Schools of Miniature Painting", marks: 10 },
       { unit: "U2", topic: "Mughal and Deccan Schools of Miniature Painting", marks: 10 },
       { unit: "U3", topic: "The Bengal School of Painting & Modern Trends in Indian Art", marks: 10 },
     ],
-    defaultInstructions: `1. The Question Paper contains 19 questions divided into 3 Sections: A, B, and C.
+    defaultInstructions: `1. The Question Paper contains 15 questions divided into 3 Sections: A, B, and C.
 2. Section A contains 8 MCQs of 1 mark each.
 3. Section B contains 5 Short Answer Questions of 2 marks each.
 4. Section C contains 2 Long Answer Questions of 6 marks each. Total theory marks: 30 Marks (Practical: 70 Marks).`,
@@ -1162,46 +1111,6 @@ export const BLUEPRINTS: Blueprint[] = [
 6. Section E contains 3 Long Answer Type questions of 5 marks each. Total theory marks: 70.`,
   },
   {
-    id: "cbse-12-chemistry-2026",
-    classId: "12",
-    subject: "chemistry",
-    examType: ["annual_exam", "pre_board", "sample_paper", "half_yearly"],
-    title: "CBSE Class 12 Chemistry (Code 043) Official Blueprint 2025-26",
-    board: "CBSE",
-    year: 2026,
-    totalMarks: 70,
-    duration: "3 Hours",
-    questionDistribution: {
-      mcq: 12,
-      assertionReason: 4,
-      vsa: 5,
-      sa: 7,
-      caseStudy: 2,
-      la: 3,
-    },
-    selectedChapters: ["all"],
-    unitWeightage: [
-      { unit: "Unit 1", topic: "Physical Chemistry: Solutions", marks: 7 },
-      { unit: "Unit 2", topic: "Physical Chemistry: Electrochemistry", marks: 9 },
-      { unit: "Unit 3", topic: "Physical Chemistry: Chemical Kinetics", marks: 7 },
-      { unit: "Unit 4", topic: "Inorganic Chemistry: d- and f-Block Elements", marks: 7 },
-      { unit: "Unit 5", topic: "Inorganic Chemistry: Coordination Compounds", marks: 7 },
-      { unit: "Unit 6", topic: "Organic Chemistry: Haloalkanes and Haloarenes", marks: 6 },
-      { unit: "Unit 7", topic: "Organic Chemistry: Alcohols, Phenols and Ethers", marks: 6 },
-      { unit: "Unit 8", topic: "Organic Chemistry: Aldehydes, Ketones and Carboxylic Acids", marks: 8 },
-      { unit: "Unit 9", topic: "Organic Chemistry: Amines", marks: 6 },
-      { unit: "Unit 10", topic: "Organic Chemistry: Biomolecules", marks: 7 },
-    ],
-    defaultInstructions: `1. There are 33 questions in this question paper with internal choice.
-2. SECTION A consists of 16 multiple-choice questions carrying 1 mark each (Q1 to Q12 are MCQs, Q13 to Q16 are Assertion-Reason questions).
-3. SECTION B consists of 5 very short answer questions carrying 2 marks each (Q17 to Q21 - 30 to 50 words).
-4. SECTION C consists of 7 short answer questions carrying 3 marks each (Q22 to Q28 - 50 to 80 words).
-5. SECTION D consists of 2 case-based questions carrying 4 marks each (Q29 and Q30).
-6. SECTION E consists of 3 long answer questions carrying 5 marks each (Q31 to Q33 - 80 to 120 words).
-7. All questions are compulsory. Internal choices of approximately 33% are provided in Sections B, C, D and E.
-8. Use of log tables and calculators is not permitted.`,
-  },
-  {
     id: "cbse-11-business-2026",
     classId: "11",
     subject: "business",
@@ -1214,11 +1123,13 @@ export const BLUEPRINTS: Blueprint[] = [
     questionDistribution: {
       mcq: 20,
       assertionReason: 0,
-      vsa: 4,
-      sa: 6,
+      vsa: 0,
+      sa: 4,
       la: 4,
-      caseStudy: 3,
+      caseStudy: 6,
     },
+    // caseStudy = 4-mark SA questions (Section C); la = 6-mark LA questions
+    marksPerType: { la: 6 },
     selectedChapters: ["all"],
     unitWeightage: [
       { unit: "Part A1", topic: "Nature and Purpose of Business & Forms of Business Organisations", marks: 16 },
@@ -1227,7 +1138,7 @@ export const BLUEPRINTS: Blueprint[] = [
       { unit: "Part B1", topic: "Sources of Business Finance & Small Business", marks: 20 },
       { unit: "Part B2", topic: "Internal Trade & International Business", marks: 20 },
     ],
-    defaultInstructions: `1. This question paper contains 34 questions divided into 5 Sections: A, B, C, D and E.
+    defaultInstructions: `1. This question paper contains 34 questions divided into 4 Sections: A, B, C and D.
 2. Section A contains 20 MCQs of 1 mark each.
 3. Section B contains 4 Short Answer Questions of 3 marks each.
 4. Section C contains 6 Short Answer Questions of 4 marks each.
@@ -1246,11 +1157,13 @@ export const BLUEPRINTS: Blueprint[] = [
     questionDistribution: {
       mcq: 20,
       assertionReason: 0,
-      vsa: 4,
-      sa: 6,
+      vsa: 0,
+      sa: 4,
       la: 4,
-      caseStudy: 3,
+      caseStudy: 6,
     },
+    // caseStudy = 4-mark SA questions (Section C); la = 6-mark LA questions
+    marksPerType: { la: 6 },
     selectedChapters: ["all"],
     unitWeightage: [
       { unit: "Part A1", topic: "Nature of Management, Principles & Business Environment", marks: 16 },
@@ -1259,7 +1172,7 @@ export const BLUEPRINTS: Blueprint[] = [
       { unit: "Part B1", topic: "Financial Management & Financial Markets", marks: 15 },
       { unit: "Part B2", topic: "Marketing Management & Consumer Protection", marks: 15 },
     ],
-    defaultInstructions: `1. This question paper contains 34 questions divided into 5 Sections: A, B, C, D and E.
+    defaultInstructions: `1. This question paper contains 34 questions divided into 4 Sections: A, B, C and D.
 2. Section A contains 20 MCQs of 1 mark each.
 3. Section B contains 4 Short Answer Questions of 3 marks each.
 4. Section C contains 6 Short Answer Questions of 4 marks each.
@@ -1278,11 +1191,13 @@ export const BLUEPRINTS: Blueprint[] = [
     questionDistribution: {
       mcq: 20,
       assertionReason: 0,
-      vsa: 4,
-      sa: 6,
+      vsa: 0,
+      sa: 4,
       la: 4,
-      caseStudy: 3,
+      caseStudy: 6,
     },
+    // caseStudy = 4-mark SA questions (Section C); la = 6-mark LA questions
+    marksPerType: { la: 6 },
     selectedChapters: ["all"],
     unitWeightage: [
       { unit: "Part A", topic: "Statistics for Economics (Introduction, Collection, Statistical Tools)", marks: 40 },
@@ -1293,44 +1208,6 @@ export const BLUEPRINTS: Blueprint[] = [
 3. Section B contains 4 Short Answer Questions of 3 marks each.
 4. Section C contains 6 Short Answer Questions of 4 marks each.
 5. Section D contains 4 Long Answer Questions of 6 marks each. Total theory marks: 80.`,
-  },
-  {
-    id: "cbse-12-economics-2026-alt",
-    classId: "12",
-    subject: "economics",
-    examType: ["annual_exam", "pre_board", "sample_paper", "half_yearly"],
-    title: "CBSE Class 12 Economics (Code 030) Official Blueprint 2025-26",
-    board: "CBSE",
-    year: 2026,
-    totalMarks: 80,
-    duration: "3 Hours",
-    questionDistribution: {
-      mcq: 20,
-      assertionReason: 0,
-      vsa: 0,
-      sa: 4,
-      caseStudy: 6,
-      la: 4,
-    },
-    selectedChapters: ["all"],
-    unitWeightage: [
-      { unit: "Part A - Unit 1", topic: "National Income and Related Aggregates", marks: 10 },
-      { unit: "Part A - Unit 2", topic: "Money and Banking", marks: 6 },
-      { unit: "Part A - Unit 3", topic: "Determination of Income and Employment", marks: 12 },
-      { unit: "Part A - Unit 4", topic: "Government Budget and the Economy", marks: 6 },
-      { unit: "Part A - Unit 5", topic: "Balance of Payments and Foreign Exchange", marks: 6 },
-      { unit: "Part B - Unit 6", topic: "Development Experience (1947-90) & Economic Reforms since 1991", marks: 12 },
-      { unit: "Part B - Unit 7", topic: "Current Challenges facing Indian Economy", marks: 20 },
-      { unit: "Part B - Unit 8", topic: "Development Experience of India – A Comparison with Neighbours", marks: 8 },
-    ],
-    defaultInstructions: `1. This question paper contains 34 questions and two sections: Section A (Introductory Macroeconomics) and Section B (Indian Economic Development).
-2. All questions in both sections are compulsory.
-3. Questions 1-10 and 18-27 are Multiple Choice Questions carrying 1 mark each.
-4. Questions 11-12 and 28-29 are Short Answer Type I questions carrying 3 marks each. Answers should normally not exceed 60 to 80 words.
-5. Questions 13-15 and 30-32 are Short Answer Type II questions carrying 4 marks each. Answers should normally not exceed 80 to 100 words.
-6. Questions 16-17 and 33-34 are Long Answer Type questions carrying 6 marks each. Answers should normally not exceed 100 to 150 words.
-7. There is no overall choice. However, an internal choice has been provided in 2 questions of 3 marks, 2 questions of 4 marks, and 2 questions of 6 marks.
-8. Answers should be brief and to the point and the above word limit be adhered to as far as possible.`,
   },
   {
     id: "cbse-11-cs-2026",
@@ -1356,7 +1233,7 @@ export const BLUEPRINTS: Blueprint[] = [
       { unit: "U2", topic: "Computational Thinking and Programming - I", marks: 45 },
       { unit: "U3", topic: "Society, Law, and Ethics", marks: 15 },
     ],
-    defaultInstructions: "1. This Question Paper contains 35 questions divided into 5 Sections: A, B, C, D and E. Total theory marks: 70.",
+    defaultInstructions: "1. This Question Paper contains 34 questions divided into 5 Sections: A, B, C, D and E. Total theory marks: 70.",
   },
   {
     id: "cbse-12-cs-2026",
@@ -1422,42 +1299,6 @@ export const BLUEPRINTS: Blueprint[] = [
     defaultInstructions: "1. The Question Paper contains 33 questions divided into 5 Sections: A, B, C, D and E. Total theory marks: 70.",
   },
   {
-    id: "cbse-12-biology-2026-alt",
-    classId: "12",
-    subject: "biology",
-    examType: ["annual_exam", "pre_board", "sample_paper", "half_yearly"],
-    title: "CBSE Class 12 Biology (Code 044) Official Blueprint 2026-27",
-    board: "CBSE",
-    year: 2026,
-    totalMarks: 70,
-    duration: "3 Hours",
-    questionDistribution: {
-      mcq: 12,
-      assertionReason: 4,
-      vsa: 5,
-      sa: 7,
-      caseStudy: 2,
-      la: 3,
-    },
-    selectedChapters: ["all"],
-    unitWeightage: [
-      { unit: "Unit VI", topic: "Reproduction (Chapters 1, 2, 3)", marks: 16 },
-      { unit: "Unit VII", topic: "Genetics and Evolution (Chapters 4, 5, 6)", marks: 20 },
-      { unit: "Unit VIII", topic: "Biology and Human Welfare (Chapters 7, 8)", marks: 12 },
-      { unit: "Unit IX", topic: "Biotechnology and its Applications (Chapters 9, 10)", marks: 12 },
-      { unit: "Unit X", topic: "Ecology and Environment (Chapters 11, 12, 13)", marks: 10 },
-    ],
-    defaultInstructions: `1. All questions are compulsory.
-2. The question paper has five sections and 33 questions: Section A, Section B, Section C, Section D and Section E.
-3. Section A has 16 questions of 1 mark each: 12 MCQs and 4 Assertion-Reasoning questions (Q1 to Q16).
-4. Section B has 5 Very Short Answer (VSA) questions of 2 marks each (Q17 to Q21).
-5. Section C has 7 Short Answer (SA) questions of 3 marks each (Q22 to Q28).
-6. Section D has 2 Case-Based questions of 4 marks each with sub-parts (Q29 and Q30).
-7. Section E has 3 Long Answer (LA) questions of 5 marks each (Q31 to Q33).
-8. There is no overall choice. However, internal choices of approximately 33% have been provided in some questions. A student has to attempt only one of the alternatives in such questions.
-9. Wherever necessary, neat and properly labeled diagrams should be drawn.`,
-  },
-  {
     id: "cbse-11-accountancy-2026",
     classId: "11",
     subject: "accountancy",
@@ -1470,11 +1311,13 @@ export const BLUEPRINTS: Blueprint[] = [
     questionDistribution: {
       mcq: 20,
       assertionReason: 0,
-      vsa: 4,
+      vsa: 0,
       sa: 6,
-      la: 4,
+      la: 5,
       caseStudy: 3,
     },
+    // Same 34-question pattern as Class 12: 20 x 1, 6 x 3, 3 x 4, 5 x 6
+    marksPerType: { la: 6 },
     selectedChapters: ["all"],
     unitWeightage: [
       { unit: "Part A1", topic: "Theoretical Framework (Introduction & Theory Base)", marks: 12 },
@@ -1501,6 +1344,8 @@ export const BLUEPRINTS: Blueprint[] = [
       caseStudy: 3,
       la: 5,
     },
+    // caseStudy = 4-mark SA-II questions; la = 6-mark LA questions
+    marksPerType: { la: 6 },
     selectedChapters: ["all"],
     unitWeightage: [
       { unit: "Part A (Unit 1)", topic: "Accounting for Partnership Firms (Fundamentals, Reconstitution & Dissolution)", marks: 36 },
@@ -1533,8 +1378,8 @@ export const BLUEPRINTS: Blueprint[] = [
       mcq: 18,
       assertionReason: 0,
       vsa: 4,
-      sa: 5,
-      la: 4,
+      sa: 7,
+      la: 5,
       caseStudy: 2,
     },
     selectedChapters: ["all"],
@@ -1556,13 +1401,14 @@ export const BLUEPRINTS: Blueprint[] = [
     totalMarks: 80,
     duration: "3 Hours",
     questionDistribution: {
-      mcq: 16,
+      mcq: 38,
       assertionReason: 0,
-      vsa: 4,
-      sa: 7,
+      vsa: 7,
+      sa: 0,
       la: 4,
       caseStudy: 2,
     },
+    // Same paper as cbse-12-english-2026 (22 reading + 16 extract items, 2 x 4-mark writing, 7 x 2-mark SAs, 4 x 5-mark)
     selectedChapters: ["all"],
     unitWeightage: [
       { unit: "Sec A", topic: "Reading Skills (Discursive Passage & Case-based Factual Passage)", marks: 22 },
@@ -1585,8 +1431,8 @@ export const BLUEPRINTS: Blueprint[] = [
       mcq: 25,
       assertionReason: 0,
       vsa: 4,
-      sa: 5,
-      la: 4,
+      sa: 6,
+      la: 5,
       caseStudy: 1,
     },
     selectedChapters: ["all"],
@@ -1613,8 +1459,8 @@ export const BLUEPRINTS: Blueprint[] = [
       mcq: 20,
       assertionReason: 0,
       vsa: 4,
-      sa: 5,
-      la: 5,
+      sa: 6,
+      la: 6,
       caseStudy: 1,
     },
     selectedChapters: ["all"],
@@ -1642,7 +1488,7 @@ export const BLUEPRINTS: Blueprint[] = [
       assertionReason: 0,
       vsa: 4,
       sa: 6,
-      la: 4,
+      la: 6,
       caseStudy: 2,
     },
     selectedChapters: ["all"],
@@ -1668,7 +1514,7 @@ export const BLUEPRINTS: Blueprint[] = [
       assertionReason: 0,
       vsa: 4,
       sa: 6,
-      la: 4,
+      la: 6,
       caseStudy: 2,
     },
     selectedChapters: ["all"],
@@ -1693,7 +1539,7 @@ export const BLUEPRINTS: Blueprint[] = [
       mcq: 12,
       assertionReason: 0,
       vsa: 5,
-      sa: 4,
+      sa: 3,
       la: 3,
       caseStudy: 1,
     },
@@ -1722,7 +1568,7 @@ export const BLUEPRINTS: Blueprint[] = [
       mcq: 12,
       assertionReason: 0,
       vsa: 5,
-      sa: 4,
+      sa: 3,
       la: 3,
       caseStudy: 1,
     },
@@ -1751,7 +1597,7 @@ export const BLUEPRINTS: Blueprint[] = [
       mcq: 12,
       assertionReason: 0,
       vsa: 5,
-      sa: 4,
+      sa: 3,
       la: 3,
       caseStudy: 1,
     },
@@ -1778,9 +1624,10 @@ export const BLUEPRINTS: Blueprint[] = [
       assertionReason: 0,
       vsa: 4,
       sa: 5,
-      la: 4,
+      la: 5,
       caseStudy: 3,
     },
+    // Mirrors the Class 10 pattern: la = 4 LA questions + 1 map question, all 5 marks
     selectedChapters: ["all"],
     unitWeightage: [
       { unit: "Part 1", topic: "Understanding Social Science, Shaping of Earth, Atmosphere/Climate, Early Humans, State & Society, Democracy, Elections, Economics & Price", marks: 40 },
@@ -1802,7 +1649,7 @@ export const BLUEPRINTS: Blueprint[] = [
       mcq: 12,
       assertionReason: 0,
       vsa: 5,
-      sa: 4,
+      sa: 3,
       la: 3,
       caseStudy: 1,
     },
@@ -1817,7 +1664,21 @@ export const BLUEPRINTS: Blueprint[] = [
 ];
 
 /**
+ * When a subject has no blueprint of its own, these (precise, same-language) blueprint
+ * subjects are tried next. Deliberately no generic "core"/"elective" substring rules:
+ * Hindi Core must never resolve to English Core.
+ */
+const BLUEPRINT_SUBJECT_FALLBACKS: Record<string, string[]> = {
+  english: ["englishcore", "englishlanglit"],
+  englishcore: ["english"],
+  englishlanglit: ["english"],
+  // The Class 12 "hindi" blueprint is titled "Hindi Core / Elective".
+  hindi_core: ["hindi"],
+};
+
+/**
  * Finds a matching blueprint for the given class, subject, and exam type.
+ * Exact (canonicalised) subject key match first, then the explicit fallback table above.
  */
 export function getBlueprint(
   classId: string,
@@ -1826,38 +1687,19 @@ export function getBlueprint(
 ): Blueprint | null {
   if (!classId || !subject || !examType) return null;
 
-  const normalizedSubject = subject.toLowerCase().trim();
+  const subjectKey = normalizeSubjectKey(subject);
   const normalizedExamType = examType.toLowerCase().trim();
+  const normalizedClass = normalizeClassId(classId);
 
-  const match = BLUEPRINTS.find((bp) => {
-    const classMatch = bp.classId === classId;
-    const subjectMatch =
-      bp.subject === normalizedSubject ||
-      (normalizedSubject.includes("math") && bp.subject === "maths") ||
-      (normalizedSubject.includes("sci") && bp.subject === "science") ||
-      ((normalizedSubject.includes("soc") || normalizedSubject.includes("sst")) && bp.subject === "social") ||
-      (normalizedSubject.includes("eng") && (bp.subject === "english" || bp.subject === "englishcore" || bp.subject === "englishelective")) ||
-      (normalizedSubject.includes("core") && bp.subject === "englishcore") ||
-      (normalizedSubject.includes("elective") && bp.subject === "englishelective") ||
-      (normalizedSubject.includes("hindi") && bp.subject === "hindi") ||
-      (normalizedSubject.includes("econ") && bp.subject === "economics") ||
-      (normalizedSubject.includes("hist") && bp.subject === "history") ||
-      ((normalizedSubject.includes("pol") || normalizedSubject.includes("politics")) && bp.subject === "polscience") ||
-      ((normalizedSubject.includes("geo") || normalizedSubject.includes("geography")) && bp.subject === "geography") ||
-      ((normalizedSubject.includes("art") || normalizedSubject.includes("paint") || normalizedSubject.includes("fine")) && bp.subject === "finearts") ||
-      ((normalizedSubject.includes("chem") || normalizedSubject.includes("chemistry")) && bp.subject === "chemistry") ||
-      ((normalizedSubject.includes("bus") || normalizedSubject.includes("bst") || normalizedSubject.includes("business")) && bp.subject === "business") ||
-      ((normalizedSubject.includes("acc") || normalizedSubject.includes("account")) && bp.subject === "accountancy") ||
-      ((normalizedSubject.includes("bio") || normalizedSubject.includes("biology")) && bp.subject === "biology") ||
-      ((normalizedSubject.includes("comp") || normalizedSubject.includes("cs")) && bp.subject === "cs") ||
-      (normalizedSubject.includes("computer_applications") && bp.subject === "computer_applications") ||
-      (normalizedSubject.includes("ip") && bp.subject === "ip");
-    const examMatch = bp.examType.includes(normalizedExamType);
+  const candidates = BLUEPRINTS.filter(
+    (bp) => bp.classId === normalizedClass && bp.examType.includes(normalizedExamType)
+  );
 
-    return classMatch && subjectMatch && examMatch;
-  });
-
-  return match || null;
+  for (const key of [subjectKey, ...(BLUEPRINT_SUBJECT_FALLBACKS[subjectKey] || [])]) {
+    const match = candidates.find((bp) => normalizeSubjectKey(bp.subject) === key);
+    if (match) return match;
+  }
+  return null;
 }
 
 /**
@@ -1872,30 +1714,27 @@ export function getOrGenerateBlueprint(
   if (staticBp) return staticBp;
 
   const normalizedExamType = (examType || "").toLowerCase().trim();
-  const isMajorExam = [
-    "annual_exam",
-    "pre_board",
-    "sample_paper",
-    "half_yearly",
-  ].includes(normalizedExamType);
+  const isMajorExam = MAJOR_EXAM_TYPES.includes(normalizedExamType);
 
   if (!isMajorExam) return null;
 
-  const normSub = (subject || "").toLowerCase().trim();
+  const subjectKey = normalizeSubjectKey(subject);
+  const rawSubject = (subject || "").toLowerCase();
   const is50MarkSubject =
-    normSub.includes("it") ||
-    normSub.includes("ai") ||
-    normSub.includes("information") ||
-    normSub.includes("skill");
-  const is70MarkSubject =
-    normSub.includes("physics") ||
-    normSub.includes("chemistry") ||
-    normSub.includes("bio") ||
-    normSub.includes("geography") ||
-    normSub.includes("phyedu") ||
-    normSub.includes("finearts") ||
-    normSub === "cs" ||
-    normSub.includes("computer");
+    ["it", "ai", "computer_applications"].includes(subjectKey) ||
+    rawSubject.includes("information technology") ||
+    rawSubject.includes("artificial intelligence") ||
+    rawSubject.includes("skill");
+  const is70MarkSubject = [
+    "physics",
+    "chemistry",
+    "biology",
+    "geography",
+    "phyedu",
+    "finearts",
+    "cs",
+    "ip",
+  ].includes(subjectKey);
 
   let totalMarks = 80;
   let duration = "3 Hours";

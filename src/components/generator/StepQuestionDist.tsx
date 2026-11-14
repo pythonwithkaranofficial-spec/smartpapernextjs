@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { QuestionDistribution } from "@/types";
 import { CheckCircle2, AlertTriangle, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { computeDistributionTotal, resolveMarksPerType, type MarksPerType } from "@/lib/marks";
 
 interface StepQuestionDistProps {
   value?: QuestionDistribution;
@@ -15,6 +16,8 @@ interface StepQuestionDistProps {
   targetMarks?: number;
   totalMarks?: number;
   examType?: string;
+  /** Per-blueprint marks overrides (e.g. { caseStudy: 3 }) */
+  marksPerType?: Partial<MarksPerType>;
 }
 
 export function StepQuestionDist({
@@ -24,8 +27,9 @@ export function StepQuestionDist({
   onChangeDistribution,
   targetMarks,
   totalMarks,
-  examType: _examType,
+  marksPerType,
 }: StepQuestionDistProps) {
+  const weights = resolveMarksPerType(marksPerType);
   const currentDistribution = distribution || value || {
     mcq: 0,
     assertionReason: 0,
@@ -43,13 +47,7 @@ export function StepQuestionDist({
   };
 
   // Calculate current marks
-  const currentMarks = 
-    (currentDistribution.mcq * 1) + 
-    (currentDistribution.assertionReason * 1) + 
-    (currentDistribution.vsa * 2) + 
-    (currentDistribution.sa * 3) + 
-    (currentDistribution.caseStudy * 4) + 
-    (currentDistribution.la * 5);
+  const currentMarks = computeDistributionTotal(currentDistribution, marksPerType);
 
   const isBalanced = currentMarks === effectiveTotalMarks;
 
@@ -61,36 +59,40 @@ export function StepQuestionDist({
   };
 
   const handleAutoBalance = () => {
-    // Intelligent auto-balance strategy based on effectiveTotalMarks
+    // Presets that sum exactly with the generic weights (1/1/2/3/4/5).
+    let candidate: QuestionDistribution;
     if (effectiveTotalMarks === 40) {
-      updateDistribution({ mcq: 10, assertionReason: 2, vsa: 4, sa: 4, caseStudy: 2, la: 0 });
+      candidate = { mcq: 10, assertionReason: 2, vsa: 4, sa: 4, caseStudy: 2, la: 0 };
     } else if (effectiveTotalMarks === 70) {
-      updateDistribution({ mcq: 16, assertionReason: 4, vsa: 5, sa: 5, caseStudy: 2, la: 3 });
+      candidate = { mcq: 12, assertionReason: 4, vsa: 5, sa: 7, caseStudy: 2, la: 3 };
     } else if (effectiveTotalMarks === 80) {
-      updateDistribution({ mcq: 20, assertionReason: 4, vsa: 6, sa: 6, caseStudy: 3, la: 3 });
+      candidate = { mcq: 18, assertionReason: 2, vsa: 5, sa: 6, caseStudy: 3, la: 4 };
     } else {
       const mcqCount = Math.floor(effectiveTotalMarks * 0.3);
       const remaining = effectiveTotalMarks - mcqCount;
-      const saCount = Math.floor(remaining / 3);
-      const remAfterSa = remaining % 3;
-      updateDistribution({
+      candidate = {
         mcq: mcqCount,
         assertionReason: 0,
-        vsa: remAfterSa,
-        sa: saCount,
+        vsa: 0,
+        sa: Math.floor(remaining / weights.sa),
         caseStudy: 0,
         la: 0,
-      });
+      };
     }
+    // Absorb any remainder (or blueprint weight overrides) in the 1-mark MCQ count so the
+    // result always matches the target exactly.
+    const diff = effectiveTotalMarks - computeDistributionTotal(candidate, marksPerType);
+    candidate.mcq = Math.max(0, candidate.mcq + Math.round(diff / weights.mcq));
+    updateDistribution(candidate);
   };
 
   const questionTypes: { field: keyof QuestionDistribution; title: string; marksEach: number; desc: string }[] = [
-    { field: "mcq", title: "Multiple Choice (MCQ)", marksEach: 1, desc: "Single correct option out of four" },
-    { field: "assertionReason", title: "Assertion & Reason", marksEach: 1, desc: "Two statement logic questions" },
-    { field: "vsa", title: "Very Short Answer (VSA)", marksEach: 2, desc: "Brief 1-2 sentence answers" },
-    { field: "sa", title: "Short Answer (SA)", marksEach: 3, desc: "3-4 mark conceptual explanations" },
-    { field: "caseStudy", title: "Case Study / Passage", marksEach: 4, desc: "Contextual passage based questions" },
-    { field: "la", title: "Long Answer (LA)", marksEach: 5, desc: "Detailed step-by-step derivations / essays" },
+    { field: "mcq", title: "Multiple Choice (MCQ)", marksEach: weights.mcq, desc: "Single correct option out of four" },
+    { field: "assertionReason", title: "Assertion & Reason", marksEach: weights.assertionReason, desc: "Two statement logic questions" },
+    { field: "vsa", title: "Very Short Answer (VSA)", marksEach: weights.vsa, desc: "Brief 1-2 sentence answers" },
+    { field: "sa", title: "Short Answer (SA)", marksEach: weights.sa, desc: "Short conceptual explanations" },
+    { field: "caseStudy", title: "Case Study / Passage", marksEach: weights.caseStudy, desc: "Contextual passage based questions" },
+    { field: "la", title: "Long Answer (LA)", marksEach: weights.la, desc: "Detailed step-by-step derivations / essays" },
   ];
 
   return (

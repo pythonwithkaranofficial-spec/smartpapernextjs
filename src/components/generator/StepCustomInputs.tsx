@@ -22,15 +22,17 @@ export function StepCustomClass({ value, onChange }: StepCustomClassProps) {
     isPreset ? "" : value
   );
 
-  // Sync state if value changes externally
-  React.useEffect(() => {
+  // Sync state if value changes externally (adjust state during render, no effect needed)
+  const [prevValue, setPrevValue] = React.useState(value);
+  if (value !== prevValue) {
+    setPrevValue(value);
     if (presets.includes(value)) {
       setSelectedOption(value);
     } else if (value) {
       setSelectedOption("custom");
       setCustomText(value);
     }
-  }, [value]);
+  }
 
   const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const val = e.target.value;

@@ -1,15 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import Razorpay from "razorpay";
 import { verifyAuthToken } from "@/lib/auth/middleware";
 import { UserPlan } from "@/types/auth";
-import { handleApiError, ValidationError } from "@/lib/errors";
+import { AppError, handleApiError, ValidationError } from "@/lib/errors";
+import { PLAN_PRICES_INR } from "@/lib/auth/helpers";
+import { getRazorpayClient, getRazorpayCredentials } from "@/lib/razorpay";
 
-const PLAN_PRICES: Record<UserPlan, number> = {
-  FREE: 0,
-  PRO: 21, // ₹21 (1-Day Unlimited Pass)
-  PREMIUM: 399, // ₹399 (1-Year Educator Pass - 50 papers/day)
-  ENTERPRISE: 999, // ₹999
-};
+const PURCHASABLE_PLANS: UserPlan[] = ["PRO", "PREMIUM", "ENTERPRISE"];
 
 export async function POST(req: NextRequest) {
   try {
@@ -17,52 +13,42 @@ export async function POST(req: NextRequest) {
     const body = await req.json().catch(() => ({}));
     const { plan } = body as { plan: UserPlan };
 
-    if (!plan || PLAN_PRICES[plan] === undefined) {
+    if (!plan || !PURCHASABLE_PLANS.includes(plan)) {
       throw new ValidationError("Invalid subscription plan selected");
     }
 
-    const key_id = process.env.RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_live_TGd0ItjJBk6QgH";
-    const key_secret = process.env.RAZORPAY_KEY_SECRET || "jjTFV9nUT6Q7qkR3ZVE0b3wh";
-
-    const amountInINR = PLAN_PRICES[plan];
-    const amountInPaise = amountInINR * 100;
+    const { keyId } = getRazorpayCredentials();
+    const amountInPaise = PLAN_PRICES_INR[plan] * 100;
     const receipt = `rcpt_${authContext.uid.substring(0, 8)}_${Date.now()}`;
 
-    let orderId = `ord_${authContext.uid.substring(0, 8)}_${Date.now()}`;
-
+    let order;
     try {
-      if (key_id && key_secret) {
-        const razorpay = new Razorpay({
-          key_id,
-          key_secret,
-        });
-
-        const order = await razorpay.orders.create({
-          amount: amountInPaise,
-          currency: "INR",
-          receipt,
-          notes: {
-            firebase_uid: authContext.uid,
-            user_email: authContext.email || "",
-            target_plan: plan,
-          },
-        });
-
-        if (order && order.id) {
-          orderId = order.id;
-        }
-      }
+      order = await getRazorpayClient().orders.create({
+        amount: amountInPaise,
+        currency: "INR",
+        receipt,
+        notes: {
+          firebase_uid: authContext.uid,
+          user_email: authContext.email || "",
+          target_plan: plan,
+        },
+      });
     } catch (rzpError) {
-      console.warn("[Razorpay Order API Fallback]: Using client fallback order ID:", rzpError);
+      console.error("[Razorpay Order Create Error]:", rzpError);
+      throw new AppError("Could not start the payment. Please try again.", 502, "PAYMENT_GATEWAY_ERROR");
+    }
+
+    if (!order?.id) {
+      throw new AppError("Could not start the payment. Please try again.", 502, "PAYMENT_GATEWAY_ERROR");
     }
 
     return NextResponse.json({
       success: true,
       data: {
-        orderId,
+        orderId: order.id,
         amount: amountInPaise,
         currency: "INR",
-        keyId: key_id,
+        keyId,
         plan,
       },
     });

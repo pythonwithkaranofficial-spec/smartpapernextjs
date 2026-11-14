@@ -1,23 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenAI } from "@google/genai";
 import { formatScientificText } from "@/lib/utils";
+import { parseAiJson } from "@/lib/ai-json";
+import { isComputerSubjectKey, isHindiSubjectKey } from "@/lib/subject-detection";
 import { Question } from "@/types";
+import { requireUser, isUserThrottled, throttledResponse } from "@/lib/api-guard";
 
 const apiKey = process.env.GEMINI_API_KEY;
 const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
 
-function cleanJsonString(str: string): string {
-  let cleaned = str.trim();
-  if (cleaned.includes("```")) {
-    cleaned = cleaned.replace(/```json/g, "").replace(/```/g, "").trim();
-  }
-  cleaned = cleaned.replace(/(?<!\\)\\(?!["\\]|u[0-9a-fA-F]{4})/g, "\\\\");
-  cleaned = cleaned.replace(/,\s*([\]}])/g, "$1");
-  return cleaned;
-}
-
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireUser(request);
+    if ("response" in auth) return auth.response;
+    // 60 swaps per hour per user
+    if (isUserThrottled(`swap:${auth.ctx.uid}`, 60, 60 * 60 * 1000)) return throttledResponse();
+
     if (!ai) {
       return NextResponse.json(
         { error: "AI Service Error: GEMINI_API_KEY is missing." },
@@ -51,10 +49,12 @@ export async function POST(request: NextRequest) {
       ? excludeQuestionTexts.map(t => `- ${t}`).join("\n")
       : "- None";
 
-    const isHindi = language === "Hindi" || subject.includes("हिन्दी") || subject.toLowerCase().includes("hindi");
-    const langInstruction = isHindi 
+    const isHindi = language === "Hindi" || isHindiSubjectKey(subject) || subject.includes("हिन्दी");
+    const langInstruction = isHindi
       ? "Generate the entire question, choices, and solution strictly in HINDI language (Devanagari script)."
-      : "Generate the question, choices, and solution in ENGLISH language.";
+      : language === "Bilingual"
+        ? "Write the question and each choice bilingually: first the English version, then the Hindi translation (Devanagari script) directly below it, separated by a newline. The solution may be in English."
+        : "Generate the question, choices, and solution in ENGLISH language.";
 
     const prompt = `You are a senior CBSE examination paper author.
 Task: Create ONE SINGLE fresh replacement question for CBSE ${classText} ${subject}.
@@ -94,6 +94,8 @@ JSON SCHEMA:
       config: {
         responseMimeType: "application/json",
         temperature: 0.8,
+        // One question; generous enough for thinking tokens, bounded for cost.
+        maxOutputTokens: 16384,
       }
     });
 
@@ -102,21 +104,22 @@ JSON SCHEMA:
       throw new Error("Empty response from AI for question swap.");
     }
 
-    const jsonText = cleanJsonString(responseText);
-    const parsedNewQ = JSON.parse(jsonText);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const parsedNewQ = parseAiJson<any>(responseText);
+    const format = (text: string) => formatScientificText(text, { codeSafe: isComputerSubjectKey(subject) });
 
     const formattedQuestion: Question = {
       id: questionToReplace.id || `q_${Math.random().toString(36).substring(2, 9)}`,
       number: questionToReplace.number,
-      text: formatScientificText(parsedNewQ.text || ""),
+      text: format(parsedNewQ.text || ""),
       marks: questionToReplace.marks,
       type: questionToReplace.type,
       choices: (parsedNewQ.choices && Array.isArray(parsedNewQ.choices))
-        ? parsedNewQ.choices.map((c: string) => formatScientificText(c))
+        ? parsedNewQ.choices.map((c: string) => format(c))
         : undefined,
-      orQuestion: parsedNewQ.orQuestion ? formatScientificText(parsedNewQ.orQuestion) : undefined,
-      solution: parsedNewQ.solution ? formatScientificText(parsedNewQ.solution) : undefined,
-      orSolution: parsedNewQ.orSolution ? formatScientificText(parsedNewQ.orSolution) : undefined,
+      orQuestion: parsedNewQ.orQuestion ? format(parsedNewQ.orQuestion) : undefined,
+      solution: parsedNewQ.solution ? format(parsedNewQ.solution) : undefined,
+      orSolution: parsedNewQ.orSolution ? format(parsedNewQ.orSolution) : undefined,
     };
 
     return NextResponse.json({
@@ -125,10 +128,9 @@ JSON SCHEMA:
     });
 
   } catch (error: unknown) {
-    const errMessage = error instanceof Error ? error.message : "Failed to swap question.";
-    console.error("Swap Question Error:", errMessage);
+    console.error("Swap Question Error:", error);
     return NextResponse.json(
-      { error: errMessage },
+      { error: "Failed to swap the question. Please try again." },
       { status: 500 }
     );
   }

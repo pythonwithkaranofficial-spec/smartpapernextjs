@@ -43,32 +43,47 @@ export class NotFoundError extends AppError {
 export function handleApiError(error: unknown): NextResponse {
   console.error('[API Error]:', error);
 
-  if (error && typeof error === 'object' && ('statusCode' in error || 'code' in error)) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const appErr = error as any;
-    const statusCode = typeof appErr.statusCode === 'number' ? appErr.statusCode : 500;
-    const code = appErr.code || 'ERROR';
-    const message = appErr.message || 'An error occurred';
-
+  // Database errors carry raw SQL/driver messages: keep them in the logs only.
+  if (error instanceof DatabaseError) {
     return NextResponse.json(
       {
         success: false,
         error: {
-          code,
-          message,
+          code: error.code,
+          message: 'A database error occurred. Please try again.',
         },
       },
-      { status: statusCode }
+      { status: error.statusCode }
     );
   }
 
-  const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+  // Other AppError subclasses carry messages written for end users.
+  if (error instanceof AppError) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: {
+          code: error.code,
+          message: error.message,
+        },
+      },
+      { status: error.statusCode }
+    );
+  }
+
+  if (error instanceof SyntaxError) {
+    return NextResponse.json(
+      { success: false, error: { code: 'INVALID_JSON', message: 'Request body must be valid JSON' } },
+      { status: 400 }
+    );
+  }
+
   return NextResponse.json(
     {
       success: false,
       error: {
         code: 'INTERNAL_SERVER_ERROR',
-        message: errorMessage,
+        message: 'An unexpected error occurred. Please try again.',
       },
     },
     { status: 500 }

@@ -1,4 +1,4 @@
-import 'dart:convert';
+import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import '../../models/user_model.dart';
@@ -13,6 +13,7 @@ abstract class FirebaseAuthService {
   Future<void> signOut();
   Future<UserModel?> restoreSession();
   Future<void> updateProfile({String? displayName, String? preferredClass});
+  Future<UserModel?> refreshProfile();
   UserModel? get currentUser;
   String? get currentToken;
 }
@@ -28,8 +29,62 @@ class FirebaseAuthServiceImpl implements FirebaseAuthService {
     scopes: ['email', 'profile'],
   );
 
+  StreamSubscription<User?>? _idTokenSub;
+
+  static const String _networkErrorMessage =
+      'Unable to reach the sign-in service. Please check your internet connection and try again.';
+
   FirebaseAuthServiceImpl(this._apiClient, {FirebaseAuth? firebaseAuth})
-      : _customAuth = firebaseAuth;
+      : _customAuth = firebaseAuth {
+    // Every API request asks Firebase for the current ID token; getIdToken()
+    // refreshes it automatically once it is close to its 1h expiry.
+    _apiClient.setTokenProvider(_fetchIdToken);
+
+    // Keep the cached token in sync with Firebase (sign-in, sign-out, refresh).
+    final auth = _firebaseAuth;
+    if (auth != null) {
+      try {
+        _idTokenSub = auth.idTokenChanges().listen((user) async {
+          if (user == null) {
+            _authToken = null;
+            _apiClient.setAuthToken(null);
+            return;
+          }
+          try {
+            final token = await user.getIdToken();
+            _authToken = token;
+            _apiClient.setAuthToken(token);
+          } catch (_) {}
+        });
+      } catch (_) {}
+    }
+  }
+
+  Future<String?> _fetchIdToken({bool forceRefresh = false}) async {
+    final user = _firebaseAuth?.currentUser;
+    if (user == null) return null;
+    final token = await user.getIdToken(forceRefresh);
+    _authToken = token;
+    return token;
+  }
+
+  /// Fetches the latest profile (plan, role, usage limits) from the server.
+  @override
+  Future<UserModel?> refreshProfile() async {
+    if (_firebaseAuth?.currentUser == null) return null;
+    final profileRes = await _apiClient.get('/user/me');
+    final userData = profileRes['data'] ?? profileRes;
+    if (userData is Map<String, dynamic>) {
+      _currentUser = UserModel.fromJson(userData);
+      return _currentUser;
+    }
+    return _currentUser;
+  }
+
+  void dispose() {
+    _idTokenSub?.cancel();
+    _idTokenSub = null;
+  }
 
   @override
   UserModel? get currentUser {
@@ -176,10 +231,10 @@ class FirebaseAuthServiceImpl implements FirebaseAuthService {
         throw ApiException(_formatFirebaseError(e.code, e.message ?? 'Login failed'), statusCode: 400);
       } catch (e) {
         if (e is ApiException) rethrow;
-        return _fallbackSignIn(email);
+        throw ApiException(_networkErrorMessage, statusCode: 0);
       }
     }
-    return _fallbackSignIn(email);
+    throw ApiException('Firebase Authentication is not available on this platform.', statusCode: 0);
   }
 
   @override
@@ -236,10 +291,10 @@ class FirebaseAuthServiceImpl implements FirebaseAuthService {
         throw ApiException(_formatFirebaseError(e.code, e.message ?? 'Registration failed'), statusCode: 400);
       } catch (e) {
         if (e is ApiException) rethrow;
-        return _fallbackSignUp(email, displayName: displayName);
+        throw ApiException(_networkErrorMessage, statusCode: 0);
       }
     }
-    return _fallbackSignUp(email, displayName: displayName);
+    throw ApiException('Firebase Authentication is not available on this platform.', statusCode: 0);
   }
 
   @override
@@ -360,105 +415,6 @@ class FirebaseAuthServiceImpl implements FirebaseAuthService {
     _currentUser = null;
     _authToken = null;
     _apiClient.setAuthToken(null);
-  }
-
-  /// Fallback JWT builder for offline unit test execution
-  String _generateJwtToken(String uid, String email, String displayName) {
-    String base64UrlEncodeJson(Map<String, dynamic> jsonMap) {
-      final jsonStr = jsonEncode(jsonMap);
-      return base64Url.encode(utf8.encode(jsonStr)).replaceAll('=', '');
-    }
-
-    final header = base64UrlEncodeJson({'alg': 'HS256', 'typ': 'JWT'});
-    final payload = base64UrlEncodeJson({
-      'user_id': uid,
-      'sub': uid,
-      'email': email,
-      'name': displayName,
-      'email_verified': true,
-      'iat': DateTime.now().millisecondsSinceEpoch ~/ 1000,
-    });
-    return '$header.$payload.signature';
-  }
-
-  Future<UserModel> _fallbackSignIn(String email) async {
-    final cleanUid = 'uid_${email.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_')}';
-    final name = email.split('@').first;
-    final token = _generateJwtToken(cleanUid, email, name);
-
-    _authToken = token;
-    _apiClient.setAuthToken(token);
-
-    try {
-      final syncResponse = await _apiClient.post('/auth/sync', body: {
-        'uid': cleanUid,
-        'email': email,
-        'displayName': name,
-        'provider': 'email',
-      });
-      final userData = syncResponse['data'] ?? syncResponse['user'] ?? syncResponse;
-      if (userData is Map<String, dynamic>) {
-        _currentUser = UserModel.fromJson(userData);
-      } else {
-        _currentUser = UserModel(
-          uid: cleanUid,
-          email: email,
-          displayName: name,
-          plan: 'FREE',
-          role: 'USER',
-        );
-      }
-      return _currentUser!;
-    } catch (_) {
-      _currentUser = UserModel(
-        uid: cleanUid,
-        email: email,
-        displayName: name,
-        plan: 'FREE',
-        role: 'USER',
-      );
-      return _currentUser!;
-    }
-  }
-
-  Future<UserModel> _fallbackSignUp(String email, {String? displayName}) async {
-    final cleanUid = 'uid_${email.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_')}';
-    final name = (displayName != null && displayName.isNotEmpty) ? displayName : email.split('@').first;
-    final token = _generateJwtToken(cleanUid, email, name);
-
-    _authToken = token;
-    _apiClient.setAuthToken(token);
-
-    try {
-      final syncResponse = await _apiClient.post('/auth/sync', body: {
-        'uid': cleanUid,
-        'email': email,
-        'displayName': name,
-        'provider': 'email',
-      });
-      final userData = syncResponse['data'] ?? syncResponse['user'] ?? syncResponse;
-      if (userData is Map<String, dynamic>) {
-        _currentUser = UserModel.fromJson(userData);
-      } else {
-        _currentUser = UserModel(
-          uid: cleanUid,
-          email: email,
-          displayName: name,
-          plan: 'FREE',
-          role: 'USER',
-        );
-      }
-      return _currentUser!;
-    } catch (_) {
-      _currentUser = UserModel(
-        uid: cleanUid,
-        email: email,
-        displayName: name,
-        plan: 'FREE',
-        role: 'USER',
-      );
-      return _currentUser!;
-    }
   }
 
   @override

@@ -2,16 +2,9 @@ import { UserRepository } from '../db/user-repository';
 import { DatabaseUser } from '@/types/db';
 import { UserRole, UserPlan } from '@/types/auth';
 
-export const SUPER_ADMIN_EMAILS = [
-  'tpaofficial1999@gmail.com',
-  'officialworldwithtechnology@gmail.com',
-  'pythonwithkaran.official@gmail.com',
-];
+import { isTrustedSuperAdmin } from './super-admin';
 
-export function isSuperAdminEmail(email?: string | null): boolean {
-  if (!email) return false;
-  return SUPER_ADMIN_EMAILS.includes(email.toLowerCase().trim());
-}
+export { SUPER_ADMIN_EMAILS, isSuperAdminEmail, isTrustedSuperAdmin } from './super-admin';
 
 export const DAILY_PAPER_LIMITS: Record<UserPlan, number> = {
   FREE: 5,
@@ -20,11 +13,45 @@ export const DAILY_PAPER_LIMITS: Record<UserPlan, number> = {
   ENTERPRISE: 500,
 };
 
+/** How long each paid plan lasts after a successful payment. */
+export const PLAN_DURATION_DAYS: Record<UserPlan, number | null> = {
+  FREE: null,
+  PRO: 1, // 1-Day Pass
+  PREMIUM: 365, // 1-Year Educator Plan
+  ENTERPRISE: 365,
+};
+
+/** Price of each plan in INR (single source of truth for checkout + verification). */
+export const PLAN_PRICES_INR: Record<UserPlan, number> = {
+  FREE: 0,
+  PRO: 21,
+  PREMIUM: 399,
+  ENTERPRISE: 999,
+};
+
+export function computePlanExpiry(plan: UserPlan, from: Date = new Date()): string | null {
+  const days = PLAN_DURATION_DAYS[plan];
+  if (!days) return null;
+  return new Date(from.getTime() + days * 24 * 60 * 60 * 1000).toISOString();
+}
+
+/** True when the user's role (or verified super-admin email) grants admin rights. */
+export function isAdminUser(user: DatabaseUser | null | undefined): boolean {
+  if (!user) return false;
+  return user.role === 'ADMIN' || isTrustedSuperAdmin(user.email, user.email_verified);
+}
+
 /**
  * Get full user record from Turso DB by Firebase UID
  */
 export async function getCurrentUser(firebaseUid: string): Promise<DatabaseUser | null> {
-  return UserRepository.findUserByFirebaseUid(firebaseUid);
+  const user = await UserRepository.findUserByFirebaseUid(firebaseUid);
+  // Downgrade expired time-limited plans on read.
+  if (user && user.plan !== 'FREE' && user.plan_expires_at && new Date(user.plan_expires_at).getTime() <= Date.now()) {
+    await UserRepository.updatePlan(firebaseUid, 'FREE');
+    return { ...user, plan: 'FREE', plan_expires_at: null };
+  }
+  return user;
 }
 
 /**
@@ -40,10 +67,7 @@ export async function getCurrentPlan(firebaseUid: string): Promise<UserPlan> {
  */
 export async function getCurrentRole(firebaseUid: string): Promise<UserRole> {
   const user = await getCurrentUser(firebaseUid);
-  if (user && isSuperAdminEmail(user.email)) {
-    return 'ADMIN';
-  }
-  return user?.role || 'USER';
+  return isAdminUser(user) ? 'ADMIN' : 'USER';
 }
 
 /**
@@ -66,7 +90,7 @@ export async function getRemainingDailyPapers(firebaseUid: string): Promise<{
   isAdmin: boolean;
 }> {
   const user = await getCurrentUser(firebaseUid);
-  const role = (user && isSuperAdminEmail(user.email)) ? 'ADMIN' : (user?.role || 'USER');
+  const role = isAdminUser(user) ? 'ADMIN' : 'USER';
   const plan = user?.plan || 'FREE';
   const usedToday = await getCurrentDailyUsage(firebaseUid);
 
@@ -98,7 +122,7 @@ export async function getRemainingDailyPapers(firebaseUid: string): Promise<{
  */
 export async function isPremium(firebaseUid: string): Promise<boolean> {
   const user = await getCurrentUser(firebaseUid);
-  if (user && (user.role === 'ADMIN' || isSuperAdminEmail(user.email))) return true;
+  if (isAdminUser(user)) return true;
   return (user?.plan || 'FREE') !== 'FREE';
 }
 
@@ -106,8 +130,5 @@ export async function isPremium(firebaseUid: string): Promise<boolean> {
  * Check if user has administrator privileges
  */
 export async function isAdmin(firebaseUid: string): Promise<boolean> {
-  const user = await getCurrentUser(firebaseUid);
-  if (user && isSuperAdminEmail(user.email)) return true;
-  const role = await getCurrentRole(firebaseUid);
-  return role === 'ADMIN';
+  return isAdminUser(await getCurrentUser(firebaseUid));
 }

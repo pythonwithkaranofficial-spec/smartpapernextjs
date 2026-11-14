@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
@@ -14,24 +15,49 @@ class ApiException implements Exception {
   String toString() => 'ApiException [$statusCode]: $message';
 }
 
+/// Supplies a (possibly refreshed) Firebase ID token for outgoing requests.
+/// Return `null` when no user is signed in.
+typedef AuthTokenProvider = Future<String?> Function({bool forceRefresh});
+
 class ApiClient {
   final http.Client _client;
   String? _authToken;
+  AuthTokenProvider? _tokenProvider;
 
   ApiClient({http.Client? client}) : _client = client ?? http.Client();
 
+  /// Caches a token (e.g. pushed from `FirebaseAuth.idTokenChanges()`).
   void setAuthToken(String? token) {
     _authToken = token;
   }
 
-  Map<String, String> _buildHeaders({Map<String, String>? extraHeaders}) {
+  /// Registers a provider that is asked for a fresh ID token before every
+  /// request. Firebase's `getIdToken()` transparently refreshes expired tokens.
+  void setTokenProvider(AuthTokenProvider? provider) {
+    _tokenProvider = provider;
+  }
+
+  Future<String?> _resolveToken({bool forceRefresh = false}) async {
+    final provider = _tokenProvider;
+    if (provider != null) {
+      try {
+        final token = await provider(forceRefresh: forceRefresh);
+        _authToken = (token != null && token.isNotEmpty) ? token : null;
+      } catch (_) {
+        // Keep the cached token if the refresh itself failed (e.g. offline).
+      }
+    }
+    return _authToken;
+  }
+
+  Map<String, String> _buildHeaders(String? token, {Map<String, String>? extraHeaders}) {
     final headers = <String, String>{
       'Content-Type': 'application/json',
       'Accept': 'application/json',
     };
 
-    if (_authToken != null && _authToken!.isNotEmpty) {
-      headers['Authorization'] = 'Bearer $_authToken';
+    if (token != null && token.isNotEmpty) {
+      headers['Authorization'] = 'Bearer $token';
     }
 
     if (extraHeaders != null) {
@@ -41,20 +67,30 @@ class ApiClient {
     return headers;
   }
 
-  Future<Map<String, dynamic>> get(
-    String path, {
-    Map<String, String>? headers,
-    Map<String, String>? queryParameters,
+  /// Sends a request with a current ID token and retries exactly once with a
+  /// force-refreshed token if the server answers 401.
+  Future<Map<String, dynamic>> _send(
+    Future<http.Response> Function(Map<String, String> headers) send, {
+    Map<String, String>? extraHeaders,
+    required Duration timeout,
   }) async {
     try {
-      final uri = Uri.parse('${AppConfig.baseUrl}$path').replace(queryParameters: queryParameters);
-      final response = await _client
-          .get(uri, headers: _buildHeaders(extraHeaders: headers))
-          .timeout(const Duration(seconds: 45));
+      var token = await _resolveToken();
+      var response = await send(_buildHeaders(token, extraHeaders: extraHeaders)).timeout(timeout);
+
+      if (response.statusCode == 401 && _tokenProvider != null) {
+        final refreshed = await _resolveToken(forceRefresh: true);
+        if (refreshed != null && refreshed.isNotEmpty) {
+          token = refreshed;
+          response = await send(_buildHeaders(token, extraHeaders: extraHeaders)).timeout(timeout);
+        }
+      }
 
       return _processResponse(response);
     } on SocketException {
       throw ApiException('Network failure. Please check your internet connection.', statusCode: 0);
+    } on TimeoutException {
+      throw ApiException('The server took too long to respond. Please try again.', statusCode: 0);
     } on http.ClientException catch (e) {
       throw ApiException('HTTP client error: ${e.message}', statusCode: 0);
     } catch (e) {
@@ -63,71 +99,57 @@ class ApiClient {
     }
   }
 
+  Future<Map<String, dynamic>> get(
+    String path, {
+    Map<String, String>? headers,
+    Map<String, String>? queryParameters,
+  }) {
+    final uri = Uri.parse('${AppConfig.baseUrl}$path').replace(queryParameters: queryParameters);
+    return _send(
+      (h) => _client.get(uri, headers: h),
+      extraHeaders: headers,
+      timeout: const Duration(seconds: 45),
+    );
+  }
+
   Future<Map<String, dynamic>> post(
     String path, {
     dynamic body,
     Map<String, String>? headers,
-  }) async {
-    try {
-      final uri = Uri.parse('${AppConfig.baseUrl}$path');
-      final response = await _client
-          .post(
-            uri,
-            headers: _buildHeaders(extraHeaders: headers),
-            body: body != null ? jsonEncode(body) : null,
-          )
-          .timeout(const Duration(seconds: 120)); // Generous timeout for Gemini AI generation
-
-      return _processResponse(response);
-    } on SocketException {
-      throw ApiException('Network failure. Please check your internet connection.', statusCode: 0);
-    } catch (e) {
-      if (e is ApiException) rethrow;
-      throw ApiException('Unexpected network error: $e', statusCode: 0);
-    }
+  }) {
+    final uri = Uri.parse('${AppConfig.baseUrl}$path');
+    final encoded = body != null ? jsonEncode(body) : null;
+    return _send(
+      (h) => _client.post(uri, headers: h, body: encoded),
+      extraHeaders: headers,
+      timeout: const Duration(seconds: 120), // Generous timeout for Gemini AI generation
+    );
   }
 
   Future<Map<String, dynamic>> put(
     String path, {
     dynamic body,
     Map<String, String>? headers,
-  }) async {
-    try {
-      final uri = Uri.parse('${AppConfig.baseUrl}$path');
-      final response = await _client
-          .put(
-            uri,
-            headers: _buildHeaders(extraHeaders: headers),
-            body: body != null ? jsonEncode(body) : null,
-          )
-          .timeout(const Duration(seconds: 45));
-
-      return _processResponse(response);
-    } on SocketException {
-      throw ApiException('Network failure. Please check your internet connection.', statusCode: 0);
-    } catch (e) {
-      if (e is ApiException) rethrow;
-      throw ApiException('Unexpected network error: $e', statusCode: 0);
-    }
+  }) {
+    final uri = Uri.parse('${AppConfig.baseUrl}$path');
+    final encoded = body != null ? jsonEncode(body) : null;
+    return _send(
+      (h) => _client.put(uri, headers: h, body: encoded),
+      extraHeaders: headers,
+      timeout: const Duration(seconds: 45),
+    );
   }
 
   Future<Map<String, dynamic>> delete(
     String path, {
     Map<String, String>? headers,
-  }) async {
-    try {
-      final uri = Uri.parse('${AppConfig.baseUrl}$path');
-      final response = await _client
-          .delete(uri, headers: _buildHeaders(extraHeaders: headers))
-          .timeout(const Duration(seconds: 45));
-
-      return _processResponse(response);
-    } on SocketException {
-      throw ApiException('Network failure. Please check your internet connection.', statusCode: 0);
-    } catch (e) {
-      if (e is ApiException) rethrow;
-      throw ApiException('Unexpected network error: $e', statusCode: 0);
-    }
+  }) {
+    final uri = Uri.parse('${AppConfig.baseUrl}$path');
+    return _send(
+      (h) => _client.delete(uri, headers: h),
+      extraHeaders: headers,
+      timeout: const Duration(seconds: 45),
+    );
   }
 
   Map<String, dynamic> _processResponse(http.Response response) {

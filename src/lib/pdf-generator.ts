@@ -14,7 +14,7 @@ async function loadDejaVuFonts() {
       throw new Error("Failed to fetch DejaVuSans font from CDN");
     }
     const buffer = await res.arrayBuffer();
-    
+
     const toBase64 = (buf: ArrayBuffer): string => {
       let binary = "";
       const bytes = new Uint8Array(buf);
@@ -38,7 +38,7 @@ async function loadNotoDevanagariFonts() {
       throw new Error("Failed to fetch NotoSansDevanagari font from repo");
     }
     const buffer = await res.arrayBuffer();
-    
+
     const toBase64 = (buf: ArrayBuffer): string => {
       let binary = "";
       const bytes = new Uint8Array(buf);
@@ -59,6 +59,9 @@ interface TextItem {
   x: number;
   y: number;
   fontSize: number;
+  /** Line top / bottom relative to the container, in DOM pixels (used for page splitting). */
+  topPx: number;
+  bottomPx: number;
 }
 
 function extractTextItems(container: HTMLElement, scale: number): TextItem[] {
@@ -152,6 +155,8 @@ function extractTextItems(container: HTMLElement, scale: number): TextItem[] {
           x,
           y: y + height * 0.75, // Adjust baseline offset
           fontSize: fontSizePt,
+          topPx: firstWordRect.top - containerRect.top,
+          bottomPx: firstWordRect.bottom - containerRect.top,
         });
       });
     }
@@ -173,11 +178,49 @@ interface PageRange {
   end: number;   // in DOM pixels
 }
 
+const DEVANAGARI = /[\u0900-\u097F]/;
+
+/** True when the paper contains Hindi text: Hindi subject, Hindi/Bilingual language or Devanagari content. */
+function paperNeedsDevanagari(paper: GeneratedPaper): boolean {
+  if (paper.subject.includes("हिन्दी") || paper.subject.toLowerCase().includes("hindi")) return true;
+  if (paper.language === "Hindi" || paper.language === "Bilingual") return true;
+  return (
+    DEVANAGARI.test(`${paper.schoolName || ""}${paper.examName || ""}${paper.subject || ""}`) ||
+    paper.instructions.some((ins) => DEVANAGARI.test(ins)) ||
+    paper.sections.some((sec) =>
+      sec.questions.some(
+        (q) =>
+          DEVANAGARI.test(q.text || "") ||
+          DEVANAGARI.test(q.orQuestion || "") ||
+          DEVANAGARI.test(q.solution || "") ||
+          (q.choices || []).some((c) => DEVANAGARI.test(c))
+      )
+    )
+  );
+}
+
+/**
+ * Picks where to cut a block that is taller than a page: just above the last text line that
+ * starts inside the lower half of the available space, so no line is sliced in two. Falls
+ * back to a hard cut at the page limit.
+ */
+function findSplitPoint(start: number, limit: number, lines: TextItem[]): number {
+  const maxEnd = start + limit;
+  let best = -1;
+  for (const line of lines) {
+    if (line.topPx > start + limit * 0.5 && line.topPx <= maxEnd && line.bottomPx > maxEnd) {
+      // This line would straddle the cut: cut just above it.
+      best = Math.max(best, line.topPx - 1);
+    } else if (line.bottomPx <= maxEnd && line.bottomPx > start + limit * 0.5) {
+      best = Math.max(best, line.bottomPx + 1);
+    }
+  }
+  return best > start && best <= maxEnd ? best : maxEnd;
+}
+
 export async function generatePDF(paper: GeneratedPaper) {
-  // Check if subject is Hindi
-  const isHindiSubject = 
-    paper.subject.includes("हिन्दी") || 
-    paper.subject.toLowerCase().includes("hindi");
+  // Devanagari font for Hindi subjects AND Hindi/Bilingual papers in any subject
+  const isHindiSubject = paperNeedsDevanagari(paper);
 
   if (isHindiSubject) {
     await loadNotoDevanagariFonts();
@@ -196,7 +239,7 @@ export async function generatePDF(paper: GeneratedPaper) {
   // Preserve original inline style changes to prevent rendering artifacts
   const originalTransform = element.style.transform;
   const originalTransition = element.style.transition;
-  
+
   element.style.transform = "none";
   element.style.transition = "none";
 
@@ -205,7 +248,6 @@ export async function generatePDF(paper: GeneratedPaper) {
 
   try {
     const W_px = element.offsetWidth;
-    const H_px = element.offsetHeight;
     const scale = 210 / W_px; // Scale factor: pixels to mm
 
     const pageRect = element.getBoundingClientRect();
@@ -299,8 +341,11 @@ export async function generatePDF(paper: GeneratedPaper) {
 
     // 2. Pagination Algorithm (A4: 210mm x 297mm)
     // Content height limit is 257mm (leaves 20mm margin at top and bottom)
-    const H_page_px = (297 - 40) / scale; 
+    const H_page_px = (297 - 40) / scale;
     const topPadding_px = 20 / scale;
+
+    // Text lines (needed both for the selectable text layer and to split tall blocks cleanly)
+    const textItems = extractTextItems(element, scale);
 
     const pageRanges: PageRange[] = [];
     let Y_pageStart = topPadding_px;
@@ -324,9 +369,13 @@ export async function generatePDF(paper: GeneratedPaper) {
             end: block.top,
           });
           Y_pageStart = block.top;
-        } else {
-          // Block is larger than H_page_px and current page is already empty.
-          // Allow it to overflow.
+        }
+        // A block taller than a whole page (long case study / passage) is split across
+        // pages instead of being clipped at the bottom of one page.
+        while (block.bottom - Y_pageStart > H_page_px) {
+          const cut = findSplitPoint(Y_pageStart, H_page_px, textItems);
+          pageRanges.push({ start: Y_pageStart, end: cut });
+          Y_pageStart = cut;
         }
       }
       currentPageEnd = block.bottom;
@@ -340,9 +389,6 @@ export async function generatePDF(paper: GeneratedPaper) {
     }
 
     const numPages = pageRanges.length;
-
-    // Extract text items relative to container bounds before we clone or mutate
-    const textItems = extractTextItems(element, scale);
 
     // Create target PDF document
     const doc = new jsPDF({
@@ -375,7 +421,7 @@ export async function generatePDF(paper: GeneratedPaper) {
         if (clonedElement) {
           // Remove all non-printing UI elements
           clonedElement.querySelectorAll(".no-print").forEach((el) => el.remove());
-          
+
           // Reset styling for clean printing
           clonedElement.style.boxShadow = "none";
           clonedElement.style.border = "none";
@@ -435,8 +481,8 @@ export async function generatePDF(paper: GeneratedPaper) {
     // Overlay invisible selectable text on top of the visual layout
     textItems.forEach((item) => {
       // Find which page range contains this text item's y position
-      const itemY_px = item.y / scale; 
-      
+      const itemY_px = item.y / scale;
+
       let pageIdx = -1;
       for (let p = 0; p < numPages; p++) {
         const range = pageRanges[p];
@@ -452,7 +498,7 @@ export async function generatePDF(paper: GeneratedPaper) {
 
       if (pageIdx !== -1) {
         const range = pageRanges[pageIdx];
-        
+
         // Calculate y local to this page in mm: 20mm top margin + (itemY_px - range.start) * scale
         const yLocal = 20 + (itemY_px - range.start) * scale;
 

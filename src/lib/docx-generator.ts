@@ -38,6 +38,18 @@ export async function generateDOCX(paper: GeneratedPaper) {
   
   const docFont = hasDevanagari ? "Noto Sans Devanagari" : "Calibri";
 
+  /**
+   * Word ignores "\n" inside a run, so multi-line text (matrices, code, bilingual lines,
+   * step-by-step solutions) is split into runs joined by explicit line breaks.
+   */
+  const textRuns = (
+    text: string,
+    options: { bold?: boolean; italics?: boolean; size?: number; font?: string; color?: string }
+  ): TextRun[] =>
+    (text || "")
+      .split(/\r?\n/)
+      .map((line, i) => new TextRun({ ...options, text: line, ...(i > 0 ? { break: 1 } : {}) }));
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const children: any[] = [];
 
@@ -185,8 +197,7 @@ export async function generateDOCX(paper: GeneratedPaper) {
           spacing: { before: 30, after: 30 },
           indent: { left: 360, hanging: 360 },
           children: [
-            new TextRun({
-              text: `${idx + 1}.\t${cleanIns}`,
+            ...textRuns(`${idx + 1}.\t${cleanIns}`, {
               size: 18, // 9pt
               font: docFont,
             }),
@@ -238,8 +249,7 @@ export async function generateDOCX(paper: GeneratedPaper) {
             },
           ],
           children: [
-            new TextRun({
-              text: `${q.number}.\t${q.text}`,
+            ...textRuns(`${q.number}.\t${q.text}`, {
               size: 19, // 9.5pt
               font: docFont,
             }),
@@ -262,8 +272,7 @@ export async function generateDOCX(paper: GeneratedPaper) {
               spacing: { before: 40, after: 40 },
               indent: { left: 900 }, // clean indent for options
               children: [
-                new TextRun({
-                  text: `${optionLabel} ${choice}`,
+                ...textRuns(`${optionLabel} ${choice}`, {
                   size: 18,
                   font: docFont,
                 }),
@@ -298,8 +307,7 @@ export async function generateDOCX(paper: GeneratedPaper) {
               left: { color: "B0B0B0", space: 8, style: BorderStyle.SINGLE, size: 6 },
             },
             children: [
-              new TextRun({
-                text: q.orQuestion,
+              ...textRuns(q.orQuestion, {
                 italics: true,
                 size: 18,
                 font: docFont,
@@ -351,8 +359,7 @@ export async function generateDOCX(paper: GeneratedPaper) {
 
         if (q.solution) {
           solChildren.push(
-            new TextRun({
-              text: q.solution,
+            ...textRuns(q.solution, {
               size: 18,
               font: docFont,
             })
@@ -375,8 +382,7 @@ export async function generateDOCX(paper: GeneratedPaper) {
                 left: { color: "008080", space: 6, style: BorderStyle.SINGLE, size: 6 },
               },
               children: [
-                new TextRun({
-                  text: `OR Solution: ${q.orSolution}`,
+                ...textRuns(`OR Solution: ${q.orSolution}`, {
                   italics: true,
                   size: 18,
                   font: docFont,

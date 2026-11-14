@@ -37,6 +37,7 @@ const statements = [
     email_verified INTEGER NOT NULL DEFAULT 0,
     role TEXT NOT NULL DEFAULT 'USER',
     plan TEXT NOT NULL DEFAULT 'FREE',
+    plan_expires_at TEXT,
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
   );`,

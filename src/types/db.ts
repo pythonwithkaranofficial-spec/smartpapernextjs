@@ -10,6 +10,7 @@ export interface DatabaseUser {
   email_verified: number; // 0 or 1 in SQLite
   role: UserRole;
   plan: UserPlan;
+  plan_expires_at?: string | null; // ISO timestamp; NULL = no expiry
   created_at: string;
   updated_at: string;
 }

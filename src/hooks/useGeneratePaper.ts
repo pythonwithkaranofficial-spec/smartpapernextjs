@@ -2,9 +2,7 @@
 
 import { useState } from "react";
 import { PaperConfig } from "@/types";
-import { clientRateLimiter } from "@/lib/rate-limiter";
 import { AuthService } from "@/lib/firebase/auth-service";
-import { isSuperAdminEmail } from "@/lib/auth/helpers";
 import { saveLocalPaperHistory } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -15,35 +13,46 @@ export function useGeneratePaper() {
   const router = useRouter();
 
   const generatePaper = async (config: PaperConfig) => {
-    const user = AuthService.getCurrentUser();
-    const userEmail = user?.email || null;
-    const isSuperAdmin = isSuperAdminEmail(userEmail);
-
-    // 1. Client-side per-user rate limiting check
-    if (!isSuperAdmin && !clientRateLimiter.canGenerate(userEmail, isSuperAdmin)) {
-      const resetTime = clientRateLimiter.getResetTime();
-      toast.error(`Daily limit reached (5 papers/day). You can generate more papers in ${resetTime}.`);
-      setError("Daily limit reached");
-      return;
-    }
-
     setLoading(true);
     setError(null);
     const toastId = toast.loading("We are creating your paper with our AI...");
 
     try {
+      const firebaseToken = await AuthService.getFirebaseToken();
+      if (!firebaseToken) {
+        throw new Error("Please sign in to generate papers.");
+      }
+
+      // Daily limits are enforced on the server (per account, per plan).
       const response = await fetch("/api/generate", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${firebaseToken}`,
         },
         body: JSON.stringify(config),
       });
 
-      const data = await response.json();
+      const rawText = await response.text();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let data: any = null;
+      try {
+        data = JSON.parse(rawText);
+      } catch {
+        throw new Error(
+          response.status === 504
+            ? "The AI took too long to respond. Please try again."
+            : `Server error (${response.status}). Please try again.`
+        );
+      }
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to generate paper");
+        if (response.status === 429 && typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("paper_generated"));
+        }
+        // Surface the validation reason (e.g. a marks-distribution mismatch) when present.
+        const detail = data?.details?.questionDistribution?._errors?.[0];
+        throw new Error(detail || data?.error || "Failed to generate paper");
       }
 
       // Save to sessionStorage for preview page
@@ -53,57 +62,40 @@ export function useGeneratePaper() {
       sessionStorage.setItem("last_paper_config", JSON.stringify(config));
 
       // Save locally to browser paper history for lifetime offline/instant access
+      // The server reports the generated paper's real total (may differ from the request
+      // for official full-exam patterns).
+      const paperMarks = typeof data?.totalMarks === "number" ? data.totalMarks : config.totalMarks;
+
       saveLocalPaperHistory({
         class: config.isCustom && config.customClass ? config.customClass : config.classId,
         subject: config.isCustom && config.customSubject ? config.customSubject : config.subject,
         paper_type: config.examType,
-        marks: config.totalMarks,
+        marks: paperMarks,
         difficulty: config.difficulty,
         paper_json: data,
       });
-
-      // Record count in client rate limiter for this specific user
-      clientRateLimiter.recordGeneration(userEmail, isSuperAdmin);
 
       // Dispatch custom event for real-time profile & UI updates
       if (typeof window !== "undefined") {
         window.dispatchEvent(new CustomEvent("paper_generated"));
       }
 
-      // If user is authenticated, save paper to Turso DB history and increment usage count
-      const firebaseToken = await AuthService.getFirebaseToken();
-      if (firebaseToken) {
-        // Background DB history save
-        fetch("/api/user/history", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${firebaseToken}`,
-          },
-          body: JSON.stringify({
-            class: config.isCustom && config.customClass ? config.customClass : config.classId,
-            subject: config.isCustom && config.customSubject ? config.customSubject : config.subject,
-            paper_type: config.examType,
-            marks: config.totalMarks,
-            difficulty: config.difficulty,
-            paper_json: data,
-          }),
-        }).catch((err) => console.error("[History Save Error]:", err));
-
-        // Background usage increment
-        fetch("/api/user/usage/increment", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${firebaseToken}`,
-          },
-        })
-          .then(() => {
-            if (typeof window !== "undefined") {
-              window.dispatchEvent(new CustomEvent("paper_generated"));
-            }
-          })
-          .catch((err) => console.error("[Usage Increment Error]:", err));
-      }
+      // Background DB history save (usage was already counted by the server)
+      fetch("/api/user/history", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${firebaseToken}`,
+        },
+        body: JSON.stringify({
+          class: config.isCustom && config.customClass ? config.customClass : config.classId,
+          subject: config.isCustom && config.customSubject ? config.customSubject : config.subject,
+          paper_type: config.examType,
+          marks: paperMarks,
+          difficulty: config.difficulty,
+          paper_json: data,
+        }),
+      }).catch((err) => console.error("[History Save Error]:", err));
 
       toast.success("Question paper generated successfully!", { id: toastId });
       

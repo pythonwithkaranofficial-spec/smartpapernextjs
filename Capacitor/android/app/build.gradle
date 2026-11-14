@@ -37,14 +37,27 @@ android {
 
     buildTypes {
         release {
-            def keystorePropsFile = rootProject.file('keystore.properties')
-            if (keystorePropsFile.exists()) {
+            // Never fall back to the debug key for release builds: if
+            // keystore.properties is missing, preReleaseBuild fails below.
+            if (rootProject.file('keystore.properties').exists()) {
                 signingConfig signingConfigs.release
-            } else {
-                signingConfig signingConfigs.debug
             }
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+// Fail any release build (assembleRelease / bundleRelease) when the release
+// keystore is not configured, instead of silently producing a debug-signed app.
+// Run scripts/generate-keystore.ps1 (or .bat) to create android/keystore.properties.
+tasks.matching { it.name == 'preReleaseBuild' }.configureEach {
+    doFirst {
+        if (!rootProject.file('keystore.properties').exists()) {
+            throw new GradleException(
+                "Release signing is not configured: android/keystore.properties is missing. " +
+                "Run Capacitor/scripts/generate-keystore.ps1 (or .bat) or create it manually " +
+                "(storeFile, storePassword, keyAlias, keyPassword). Refusing to sign a release with the debug key.")
         }
     }
 }

@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { computeDistributionTotal } from "@/lib/marks";
+import { detectFullExamKind } from "@/lib/subject-detection";
 
 export const questionDistributionSchema = z.object({
   mcq: z.number().min(0, "Must be 0 or more"),
@@ -26,6 +28,19 @@ export const paperOptionsSchema = z.object({
   numberOfSets: z.number().min(1).max(3).default(1),
 });
 
+const positiveMarks = z.number().int().min(1).max(20).optional();
+
+export const marksPerTypeSchema = z
+  .object({
+    mcq: positiveMarks,
+    vsa: positiveMarks,
+    sa: positiveMarks,
+    la: positiveMarks,
+    caseStudy: positiveMarks,
+    assertionReason: positiveMarks,
+  })
+  .partial();
+
 export const paperConfigSchema = z.object({
   classId: z.string().min(1, "Please select a class"),
   subject: z.string().min(1, "Please select a subject"),
@@ -52,6 +67,19 @@ export const paperConfigSchema = z.object({
       })
     )
     .optional(),
+  marksPerType: marksPerTypeSchema.optional(),
+}).superRefine((config, ctx) => {
+  // Specialised full-exam prompts generate the official pattern and ignore the distribution,
+  // so only distribution-driven papers must add up to the requested total.
+  if (detectFullExamKind(config)) return;
+  const distributionTotal = computeDistributionTotal(config.questionDistribution, config.marksPerType);
+  if (distributionTotal !== config.totalMarks) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["questionDistribution"],
+      message: `Question distribution totals ${distributionTotal} marks but totalMarks is ${config.totalMarks}.`,
+    });
+  }
 });
 
 export type PaperConfigInput = z.infer<typeof paperConfigSchema>;

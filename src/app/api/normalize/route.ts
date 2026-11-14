@@ -1,12 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenAI } from "@google/genai";
 import { CURRICULUM_DATA } from "@/lib/curriculum-data";
+import { parseAiJson } from "@/lib/ai-json";
+import { requireUser, isUserThrottled, throttledResponse } from "@/lib/api-guard";
 
 const apiKey = process.env.GEMINI_API_KEY;
 const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireUser(request);
+    if ("response" in auth) return auth.response;
+    // 30 normalizations per hour per user
+    if (isUserThrottled(`normalize:${auth.ctx.uid}`, 30, 60 * 60 * 1000)) return throttledResponse();
+
     if (!ai) {
       return NextResponse.json(
         { error: "AI API key is not configured on the server." },
@@ -16,6 +23,17 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const { classText, subjectText, chaptersText } = body;
+
+    if (
+      (classText && typeof classText !== "string") ||
+      (subjectText && typeof subjectText !== "string") ||
+      (chaptersText && typeof chaptersText !== "string") ||
+      String(classText || "").length > 100 ||
+      String(subjectText || "").length > 200 ||
+      String(chaptersText || "").length > 4000
+    ) {
+      return NextResponse.json({ error: "Input is too long or invalid." }, { status: 400 });
+    }
 
     if (!classText || !classText.trim()) {
       return NextResponse.json({ error: "Class input is required." }, { status: 400 });
@@ -75,12 +93,8 @@ User Inputs to Normalize:
     });
 
     const responseText = response.text?.trim() || "";
-    let jsonText = responseText;
-    if (jsonText.includes("```")) {
-      jsonText = jsonText.replace(/```json/g, "").replace(/```/g, "").trim();
-    }
-
-    const parsed = JSON.parse(jsonText);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const parsed = parseAiJson<any>(responseText);
 
     // Final sanity validation: Make sure classId is one of 9, 10, 11, 12 and subject is valid
     const validClasses = ["9", "10", "11", "12"];
@@ -106,10 +120,10 @@ User Inputs to Normalize:
       selectedChapters: finalSelectedChapters
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Normalization error:", error);
     return NextResponse.json(
-      { error: "Failed to normalize inputs using AI.", details: error.message || error },
+      { error: "Failed to normalize inputs using AI." },
       { status: 500 }
     );
   }

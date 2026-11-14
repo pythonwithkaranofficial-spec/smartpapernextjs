@@ -5,14 +5,13 @@ import { GeneratedPaper } from "@/types";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { FileText, FileDown, Printer, Clipboard, Check, RotateCcw, Home } from "lucide-react";
 import { toast } from "sonner";
-import { generatePDF } from "@/lib/pdf-generator";
-import { generateDOCX } from "@/lib/docx-generator";
 import Link from "next/link";
 import { cn, cleanInstructionText } from "@/lib/utils";
 
 interface DownloadBarProps {
   paper: GeneratedPaper;
-  onRegenerate: () => void;
+  /** Omitted when no valid generation config exists for this paper (e.g. opened from history). */
+  onRegenerate?: () => void;
 }
 
 export function DownloadBar({ paper, onRegenerate }: DownloadBarProps) {
@@ -24,6 +23,8 @@ export function DownloadBar({ paper, onRegenerate }: DownloadBarProps) {
     setDownloadingPDF(true);
     const toastId = toast.loading("Creating PDF document...");
     try {
+      // Loaded on demand: jsPDF / html2canvas are large and only needed for downloads.
+      const { generatePDF } = await import("@/lib/pdf-generator");
       await generatePDF(paper);
       toast.success("PDF Downloaded Successfully", { id: toastId });
     } catch (e) {
@@ -38,6 +39,8 @@ export function DownloadBar({ paper, onRegenerate }: DownloadBarProps) {
     setDownloadingDOCX(true);
     const toastId = toast.loading("Compiling Word Document...");
     try {
+      // Loaded on demand: the docx library is large and only needed for downloads.
+      const { generateDOCX } = await import("@/lib/docx-generator");
       await generateDOCX(paper);
       toast.success("Word Downloaded Successfully", { id: toastId });
     } catch (e) {
@@ -102,7 +105,7 @@ export function DownloadBar({ paper, onRegenerate }: DownloadBarProps) {
       setCopied(true);
       toast.success("Questions copied to clipboard!");
       setTimeout(() => setCopied(false), 2000);
-    } catch (e) {
+    } catch {
       toast.error("Failed to copy. Please copy manually.");
     }
   };
@@ -178,15 +181,17 @@ export function DownloadBar({ paper, onRegenerate }: DownloadBarProps) {
 
           <div className="w-[1px] h-6 bg-border hidden sm:block mx-1" />
 
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onRegenerate}
-            className="rounded-full text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer h-9 px-3.5 text-xs font-heading font-medium"
-          >
-            <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
-            Re-generate
-          </Button>
+          {onRegenerate && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onRegenerate}
+              className="rounded-full text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer h-9 px-3.5 text-xs font-heading font-medium"
+            >
+              <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
+              Re-generate
+            </Button>
+          )}
 
           <Link
             href="/"

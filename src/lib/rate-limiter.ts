@@ -1,6 +1,6 @@
 "use client";
 
-import { isSuperAdminEmail } from "./auth/helpers";
+import { isSuperAdminEmail } from "./auth/super-admin";
 
 const LIMIT = 5;
 

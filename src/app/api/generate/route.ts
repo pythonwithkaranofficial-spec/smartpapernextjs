@@ -4,55 +4,33 @@ import { buildGeminiPrompt } from "@/lib/prompt-builder";
 import { paperConfigSchema } from "@/lib/validations";
 import { formatScientificText, cleanInstructionText } from "@/lib/utils";
 import { EXAM_TYPES } from "@/lib/exam-types";
+import { requireUser, consumePaperQuota, quotaExceededResponse, QuotaTicket } from "@/lib/api-guard";
+import { parseAiJson } from "@/lib/ai-json";
+import { DEFAULT_MARKS_PER_TYPE, resolveMarksPerType } from "@/lib/marks";
+import {
+  detectFullExamKind,
+  FULL_EXAM_SPECS,
+  getEffectiveSubjectKey,
+  isComputerSubjectKey,
+  isHindiSubjectKey,
+} from "@/lib/subject-detection";
 
 // Initialize Gemini Client
 // We use the official API key from env variable
 const apiKey = process.env.GEMINI_API_KEY;
 const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
 
-// Server-side in-memory rate limiter
-// Maps IP to array of request timestamps (ms)
-const rateLimitMap = new Map<string, number[]>();
-const DAILY_LIMIT = 5;
-const DAY_MS = 24 * 60 * 60 * 1000;
+/** Each attempt can take ~1 min for a full paper; 3 keeps cost and request time bounded. */
+const MAX_RETRIES = 3;
+/**
+ * Gemini 2.5 Flash's output ceiling. A full 80-mark paper with a detailed answer key
+ * (plus thinking tokens, which count towards this budget) can be long; a lower cap
+ * truncates the JSON and wastes the whole attempt.
+ */
+const MAX_OUTPUT_TOKENS = 65536;
 
-function isRateLimited(ip: string): boolean {
-  const now = Date.now();
-  const timestamps = rateLimitMap.get(ip) || [];
-  
-  // Filter out timestamps older than 24 hours
-  const activeTimestamps = timestamps.filter(ts => now - ts < DAY_MS);
-  rateLimitMap.set(ip, activeTimestamps);
+/* eslint-disable @typescript-eslint/no-explicit-any -- the model output is untyped JSON */
 
-  return activeTimestamps.length >= DAILY_LIMIT;
-}
-
-function recordRequest(ip: string) {
-  const now = Date.now();
-  const timestamps = rateLimitMap.get(ip) || [];
-  timestamps.push(now);
-  rateLimitMap.set(ip, timestamps);
-}
-
-function cleanJsonString(str: string): string {
-  let cleaned = str.trim();
-  
-  // 1. Remove markdown code blocks if present
-  if (cleaned.includes("```")) {
-    cleaned = cleaned.replace(/```json/g, "").replace(/```/g, "").trim();
-  }
-
-  // 2. Double-escape any backslashes that are not part of a double-backslash (\\),
-  // an escaped quote (\"), or a valid unicode escape sequence (\uXXXX)
-  cleaned = cleaned.replace(/(?<!\\)\\(?!["\\]|u[0-9a-fA-F]{4})/g, "\\\\");
-
-  // 3. Remove trailing commas in arrays/objects which break standard JSON.parse
-  cleaned = cleaned.replace(/,\s*([\]}])/g, "$1");
-
-  return cleaned;
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function shuffleArray<T>(array: T[], seed: number): T[] {
   const arr = [...array];
   let m = arr.length;
@@ -70,7 +48,59 @@ function shuffleArray<T>(array: T[], seed: number): T[] {
   return arr;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const LATIN_OPTION_LETTERS = ["A", "B", "C", "D"];
+const HINDI_OPTION_LETTERS = ["क", "ख", "ग", "घ"];
+
+/**
+ * Rewrites option references in an MCQ solution after its choices were shuffled.
+ * `newIndexOf[old]` is the new position of the option previously at index `old`.
+ *
+ * Always remapped: the leading answer token ("(B) ...", "B. ...", "Answer: (b)") and explicit
+ * "Option C" / "Answer: D" phrases. Other parenthesised letters ("hence (B) is correct") are
+ * remapped only when the question text itself does not use such labels (statement-based MCQs
+ * label statements "(a)", "(b)" … and those references must stay untouched).
+ */
+function remapOptionLetters(solution: string, newIndexOf: number[], questionText: string): string {
+  if (!solution) return solution;
+  const mapLetter = (letter: string) => {
+    const hindiIdx = HINDI_OPTION_LETTERS.indexOf(letter);
+    if (hindiIdx >= 0) {
+      return newIndexOf[hindiIdx] === undefined ? letter : HINDI_OPTION_LETTERS[newIndexOf[hindiIdx]];
+    }
+    const oldIdx = LATIN_OPTION_LETTERS.indexOf(letter.toUpperCase());
+    if (oldIdx < 0 || newIndexOf[oldIdx] === undefined) return letter;
+    const mapped = LATIN_OPTION_LETTERS[newIndexOf[oldIdx]];
+    return letter === letter.toLowerCase() ? mapped.toLowerCase() : mapped;
+  };
+
+  const MARKER = "\u0001"; // protects already-remapped letters from the later passes
+  const swap = (whole: string, letter: string) => whole.replace(letter, MARKER + mapLetter(letter));
+  // A letter reference: "(b)" / "(B)" / "(ख)" in any case, or a bare UPPERCASE "B" — a bare
+  // lowercase "a" is far too likely to be the English article.
+  const LETTER = String.raw`(?:\([A-Da-dकखगघ]\)|[A-Dकखगघ](?![A-Za-z0-9]))`;
+  const PHRASE = String.raw`(?:correct\s+)?(?:[Oo]ption|[Aa]nswer|[Aa]ns\.?)(?:\s+is)?\s*[:\-–]?\s*`;
+  const letterOf = (token: string) => token.replace(/[()]/g, "");
+
+  // 1. Explicit "Answer: (b)", "option C", "Correct answer is B" anywhere.
+  let result = solution.replace(new RegExp(`\\b${PHRASE}${LETTER}`, "g"), (m) => {
+    const token = m.match(new RegExp(`${LETTER}$`))?.[0] || "";
+    return token ? m.slice(0, m.length - token.length) + swap(token, letterOf(token)) : m;
+  });
+
+  // 2. Leading answer token without a phrase: "(B) text", "B) text", "B. text".
+  if (!result.includes(MARKER)) {
+    result = result.replace(/^(\s*)(\(?)([A-Da-dकखगघ])(?=\)|\.(?:\s|$))/, (_m, ws: string, paren: string, l: string) =>
+      `${ws}${paren}${MARKER}${mapLetter(l)}`
+    );
+  }
+
+  // 3. Other "(B)" references, unless the question labels statements that way.
+  if (!/\([A-Da-dकखगघ]\)/.test(questionText || "")) {
+    result = result.replace(/\(([A-Da-dकखगघ])\)/g, (_m, l: string) => `(${MARKER}${mapLetter(l)})`);
+  }
+  return result.split(MARKER).join("");
+}
+
 function generatePaperSets(basePaper: any, numberOfSets: number): any[] {
   const setNames = ["SET A", "SET B", "SET C"];
   const sets: any[] = [];
@@ -84,7 +114,6 @@ function generatePaperSets(basePaper: any, numberOfSets: number): any[] {
       : "EXAMINATION";
     const setExamName = numberOfSets > 1 ? `${baseExamName} (${setName})` : baseExamName;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const setSections = basePaper.sections.map((sec: any, secIdx: number) => {
       // Shuffle questions within section for Set B (seed=2) and Set C (seed=3)
       let questions = [...(sec.questions || [])];
@@ -113,20 +142,28 @@ function generatePaperSets(basePaper: any, numberOfSets: number): any[] {
         }
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const updatedQuestions = questions.map((q: any) => {
         const qNum = globalQNum++;
         let choices = q.choices ? [...q.choices] : null;
+        let solution = q.solution;
 
-        // Shuffle choices for MCQs in Set B and Set C
+        // Shuffle choices for MCQs in Set B and Set C, and keep the answer key pointing
+        // at the same option text.
         if (s > 0 && choices && choices.length === 4 && q.type === "mcq") {
-          choices = shuffleArray(choices, s * 50 + qNum);
+          const order = shuffleArray([0, 1, 2, 3], s * 50 + qNum); // order[newPos] = oldPos
+          const newIndexOf: number[] = [];
+          order.forEach((oldPos, newPos) => {
+            newIndexOf[oldPos] = newPos;
+          });
+          choices = order.map((oldPos) => q.choices[oldPos]);
+          if (typeof solution === "string") solution = remapOptionLetters(solution, newIndexOf, q.text || "");
         }
 
         return {
           ...q,
           number: qNum,
           choices,
+          solution,
         };
       });
 
@@ -147,16 +184,71 @@ function generatePaperSets(basePaper: any, numberOfSets: number): any[] {
   return sets;
 }
 
-export async function POST(request: NextRequest) {
-  try {
-    // 1. IP Rate Limiting Check
-    const ip = request.headers.get("x-forwarded-for") || "127.0.0.1";
-    if (isRateLimited(ip)) {
-      return NextResponse.json(
-        { error: "Daily generation limit reached. You can only generate 5 papers per 24 hours." },
-        { status: 429 }
-      );
+/** Official Class 10 Science slot layout per section, as marks multisets (sorted ascending). */
+const CLASS10_SCIENCE_SECTIONS = [
+  { name: "Section A", label: "Biology", marks: [1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 3, 3, 4, 5] }, // 16 Q, 30 M
+  { name: "Section B", label: "Chemistry", marks: [1, 1, 1, 1, 1, 1, 1, 1, 2, 3, 3, 4, 5] }, // 13 Q, 25 M
+  { name: "Section C", label: "Physics", marks: [1, 1, 1, 2, 2, 3, 3, 3, 4, 5] }, // 10 Q, 25 M
+];
+
+const sameMultiset = (a: number[], b: number[]) =>
+  a.length === b.length && [...a].sort((x, y) => x - y).every((v, i) => v === [...b].sort((x, y) => x - y)[i]);
+
+/**
+ * Validates and normalises the 3-section Class 10 Science paper. Marks are assigned from
+ * each question's TYPE (mcq/AR 1, vsa 2, sa 3, caseStudy 4, la 5) — never by position — and
+ * questions are then ordered into the official ascending-marks slots.
+ */
+function normaliseClass10SciencePaper(sections: any[]): void {
+  if (sections.length < 3) {
+    throw new Error(`Class 10 Science paper validation failed: Expected 3 sections (Biology, Chemistry, Physics), but received ${sections.length}.`);
+  }
+
+  let startNumber = 1;
+  CLASS10_SCIENCE_SECTIONS.forEach((spec, idx) => {
+    const section = sections[idx];
+    const questions: any[] = section.questions || [];
+    if (questions.length !== spec.marks.length) {
+      throw new Error(`Class 10 Science question count mismatch in ${spec.label}: expected ${spec.marks.length}, got ${questions.length}.`);
     }
+
+    const byType = questions.map((q) => DEFAULT_MARKS_PER_TYPE[q.type as keyof typeof DEFAULT_MARKS_PER_TYPE]);
+    const byModel = questions.map((q) => (typeof q.marks === "number" ? q.marks : NaN));
+
+    let assigned: number[];
+    if (byType.every((m) => typeof m === "number") && sameMultiset(byType, spec.marks)) {
+      assigned = byType;
+    } else if (sameMultiset(byModel, spec.marks)) {
+      // Types are off but the model's own marks match the official layout.
+      assigned = byModel;
+    } else {
+      throw new Error(`Class 10 Science marks mismatch in ${spec.label}: question types/marks do not match the official ${spec.marks.reduce((a, b) => a + b, 0)}-mark layout.`);
+    }
+
+    questions.forEach((q, i) => {
+      q.marks = assigned[i];
+    });
+    // Stable sort into the official ascending-marks slot order.
+    const ordered = questions
+      .map((q, i) => ({ q, i }))
+      .sort((a, b) => a.q.marks - b.q.marks || a.i - b.i)
+      .map((entry) => entry.q);
+
+    const total = spec.marks.reduce((a, b) => a + b, 0);
+    const endNumber = startNumber + ordered.length - 1;
+    section.name = spec.name;
+    section.description = `${spec.label}: Q${startNumber}–Q${endNumber} (${total} Marks)`;
+    section.questions = ordered;
+    startNumber = endNumber + 1;
+  });
+}
+
+export async function POST(request: NextRequest) {
+  let quota: QuotaTicket | null = null;
+  try {
+    // 1. Authentication (mandatory; the client pages are already sign-in only)
+    const auth = await requireUser(request);
+    if ("response" in auth) return auth.response;
 
     // 2. Validate Gemini Client
     if (!ai) {
@@ -179,27 +271,29 @@ export async function POST(request: NextRequest) {
 
     const config = validation.data;
 
+    // 3b. Atomically consume one generation from the user's daily plan quota
+    //     (refunded below if generation fails).
+    quota = await consumePaperQuota(auth.ctx.uid);
+    if (!quota) return quotaExceededResponse();
+
     // Force Hindi subject language internally to Hindi
-    const isHindiSubject = 
-      config.subject === "hindi" || 
-      config.subject === "hindi_core" || 
-      config.subject === "hindi_elective" || 
-      config.subject === "हिन्दी" || 
-      config.subject === "हिन्दी कोर" || 
-      config.subject === "हिन्दी ऐच्छिक";
-      
+    const isHindiSubject = isHindiSubjectKey(config.subject);
     if (isHindiSubject) {
       config.language = "Hindi";
     }
 
+    // Shared with the prompt builder so the specialised patterns can never drift apart.
+    const fullExamKind = detectFullExamKind(config);
+    const isFullClass10ScienceExam = fullExamKind === "class10Science";
+    const codeSafe = isComputerSubjectKey(getEffectiveSubjectKey(config));
+    const format = (text: string) => formatScientificText(text, { codeSafe });
+    const marksPerType = resolveMarksPerType(config.marksPerType);
+
     // 4. Construct prompt
     const prompt = buildGeminiPrompt(config);
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let finalPaper: any = null;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let lastError: any = null;
-    const MAX_RETRIES = 5;
 
     for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
       try {
@@ -212,117 +306,35 @@ export async function POST(request: NextRequest) {
           config: {
             // Enforce JSON response type
             responseMimeType: "application/json",
+            maxOutputTokens: MAX_OUTPUT_TOKENS,
             // Vary temperature slightly on retries to prompt different completions
             temperature: attempt > 1 ? 0.7 + (attempt * 0.05) : 0.7,
           }
         });
 
         const responseText = response.text;
-        console.log("DEBUG - Raw Model Response:", responseText);
+        if (process.env.NODE_ENV !== "production") {
+          console.log("DEBUG - Raw Model Response (first 500 chars):", responseText?.slice(0, 500));
+        }
         if (!responseText) {
           throw new Error("Empty response from AI.");
         }
-
-        // 6. Clean and parse JSON response
-        let jsonText = responseText.trim();
-        if (jsonText.includes("```")) {
-          jsonText = jsonText.replace(/```json/g, "").replace(/```/g, "").trim();
+        if (response.candidates?.[0]?.finishReason === "MAX_TOKENS") {
+          throw new Error("AI response was truncated (output token limit reached).");
         }
 
-        // Run custom backslash cleaner to ensure mathematical expressions don't break JSON.parse
-        jsonText = cleanJsonString(jsonText);
-
-        const parsedPaper = JSON.parse(jsonText);
+        // 6. Parse JSON (strict first; string-aware repair only if that fails)
+        const parsedPaper = parseAiJson<any>(responseText);
 
         if (!parsedPaper || !parsedPaper.sections || !Array.isArray(parsedPaper.sections) || parsedPaper.sections.length === 0) {
           throw new Error("Invalid paper structure returned: sections must be a non-empty array.");
         }
 
-        const rawSubject = (config.isCustom ? (config.customSubject || config.subject) : config.subject) || "";
-        const normSubject = rawSubject.toLowerCase().trim();
-        const classStr = ((config.isCustom ? (config.customClass || config.classId) : config.classId) || "").toString().trim();
-        const isClass10 = classStr === "10" || classStr.includes("10");
-        const isScience = normSubject === "science" || normSubject.includes("science") || normSubject === "sci";
-        const isClass10Science = isClass10 && isScience;
-        const isFullClass10ScienceExam = isClass10Science && (
-          config.totalMarks >= 70 ||
-          ((config.examType === "annual_exam" ||
-            config.examType === "pre_board" ||
-            config.examType === "sample_paper" ||
-            config.examType === "half_yearly") &&
-            (config.totalMarks >= 60 || !config.totalMarks))
-        );
-
         if (isFullClass10ScienceExam) {
-          if (parsedPaper.sections.length < 3) {
-            throw new Error(`Class 10 Science paper validation failed: Expected 3 sections (Biology, Chemistry, Physics), but received ${parsedPaper.sections.length}.`);
-          }
-
-          const bioSection = parsedPaper.sections[0];
-          const chemSection = parsedPaper.sections[1];
-          const phySection = parsedPaper.sections[2];
-
-          const bioCount = (bioSection.questions || []).length;
-          const chemCount = (chemSection.questions || []).length;
-          const phyCount = (phySection.questions || []).length;
-
-          if (bioCount !== 16 || chemCount !== 13 || phyCount !== 10) {
-            throw new Error(`Class 10 Science question count mismatch: Expected Biology: 16Q (got ${bioCount}), Chemistry: 13Q (got ${chemCount}), Physics: 10Q (got ${phyCount}). Total must be 39.`);
-          }
-
-          const EXPECTED_BIO_MARKS = [1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 3, 3, 4, 5]; // Sum: 30
-          const EXPECTED_CHEM_MARKS = [1, 1, 1, 1, 1, 1, 1, 1, 2, 3, 3, 4, 5]; // Sum: 25
-          const EXPECTED_PHY_MARKS = [1, 1, 1, 2, 2, 3, 3, 3, 4, 5]; // Sum: 25
-
-          const bioMarksActual = bioSection.questions.reduce((sum: number, q: any) => sum + (typeof q.marks === "number" ? q.marks : 0), 0);
-          const chemMarksActual = chemSection.questions.reduce((sum: number, q: any) => sum + (typeof q.marks === "number" ? q.marks : 0), 0);
-          const phyMarksActual = phySection.questions.reduce((sum: number, q: any) => sum + (typeof q.marks === "number" ? q.marks : 0), 0);
-          const totalMarksActual = bioMarksActual + chemMarksActual + phyMarksActual;
-
-          if (bioMarksActual > 0 && bioMarksActual !== 30) {
-            throw new Error(`Class 10 Science marks mismatch in Biology: Expected 30 marks, calculated ${bioMarksActual}.`);
-          }
-          if (chemMarksActual > 0 && chemMarksActual !== 25) {
-            throw new Error(`Class 10 Science marks mismatch in Chemistry: Expected 25 marks, calculated ${chemMarksActual}.`);
-          }
-          if (phyMarksActual > 0 && phyMarksActual !== 25) {
-            throw new Error(`Class 10 Science marks mismatch in Physics: Expected 25 marks, calculated ${phyMarksActual}.`);
-          }
-          if (totalMarksActual > 0 && totalMarksActual !== 80) {
-            throw new Error(`Class 10 Science total marks mismatch: Expected 80 marks, calculated ${totalMarksActual}.`);
-          }
-
-          bioSection.name = "Section A";
-          bioSection.description = "Biology: Q1–Q16 (30 Marks)";
-          bioSection.questions.forEach((q: any, idx: number) => {
-            q.number = idx + 1;
-            q.marks = EXPECTED_BIO_MARKS[idx];
-          });
-
-          chemSection.name = "Section B";
-          chemSection.description = "Chemistry: Q17–Q29 (25 Marks)";
-          chemSection.questions.forEach((q: any, idx: number) => {
-            q.number = 17 + idx;
-            q.marks = EXPECTED_CHEM_MARKS[idx];
-          });
-
-          phySection.name = "Section C";
-          phySection.description = "Physics: Q30–Q39 (25 Marks)";
-          phySection.questions.forEach((q: any, idx: number) => {
-            q.number = 30 + idx;
-            q.marks = EXPECTED_PHY_MARKS[idx];
-          });
+          normaliseClass10SciencePaper(parsedPaper.sections);
         }
 
         // 7. Structure final response
-        const isHindiSubject = 
-          config.subject === "hindi" || 
-          config.subject === "hindi_core" || 
-          config.subject === "hindi_elective" || 
-          config.subject === "हिन्दी" || 
-          config.subject === "हिन्दी कोर" || 
-          config.subject === "हिन्दी ऐच्छिक";
-
         let displaySubject = config.isCustom && config.customSubject ? config.customSubject : config.subject;
         if (config.subject === "hindi") displaySubject = "हिन्दी";
         if (config.subject === "hindi_core") displaySubject = "हिन्दी कोर";
@@ -333,11 +345,70 @@ export async function POST(request: NextRequest) {
           : `Class ${config.classId}`;
 
         const examTypeObj = EXAM_TYPES.find(e => e.id === config.examType);
-        const displayExamName = examTypeObj 
-          ? examTypeObj.name.toUpperCase() 
+        const displayExamName = examTypeObj
+          ? examTypeObj.name.toUpperCase()
           : (config.examType ? config.examType.replace(/_/g, " ").toUpperCase() : "EXAMINATION");
 
+        // Always number sequentially across sections; model-supplied numbers are ignored
+        // because partial numbering restarted or duplicated question numbers.
         let globalQNum = 1;
+
+        const sections = parsedPaper.sections.map((section: any) => {
+          return {
+            ...section,
+            questions: (section.questions || []).map((q: any) => {
+              const assignedNum = globalQNum++;
+
+              let cleanedText = format(q.text || "");
+              cleanedText = cleanedText.replace(/^\s*(?:Q\.?\s*)?\d+[\.\)\:\t]\s*/i, "").trim();
+
+              let cleanedOrQuestion = q.orQuestion ? format(q.orQuestion) : null;
+              if (cleanedOrQuestion) {
+                cleanedOrQuestion = cleanedOrQuestion.replace(/^\s*(?:Q\.?\s*)?\d+[\.\)\:\t]\s*/i, "").trim();
+              }
+
+              const cleanedChoices = (q.choices && q.choices.length > 0)
+                ? q.choices.map((choice: string) => {
+                    const text = format(choice || "");
+                    return text.replace(/^\s*(?:\([A-Da-d]\)|[A-Da-d][\.\)])\s*/, "").trim();
+                  })
+                : null;
+
+              // Missing/invalid marks fall back to the (blueprint-aware) weight of the type.
+              const typeMarks = marksPerType[q.type as keyof typeof marksPerType];
+              const marks = typeof q.marks === "number" && q.marks > 0 ? q.marks : typeMarks || 1;
+
+              return {
+                ...q,
+                id: q.id || `q_${Math.random().toString(36).slice(2, 11)}`,
+                number: assignedNum,
+                marks,
+                text: cleanedText,
+                orQuestion: cleanedOrQuestion,
+                choices: cleanedChoices,
+                solution: q.solution ? format(q.solution) : null,
+                orSolution: q.orSolution ? format(q.orSolution) : null,
+              };
+            })
+          };
+        });
+
+        // The header total reflects the generated paper, not the requested config: sum of
+        // question marks. Specialised full-exam prompts always produce the official paper
+        // (some, e.g. Physical Education, print extra "attempt any N" questions), so their
+        // official theory total is used.
+        const summedMarks = sections.reduce(
+          (acc: number, sec: any) => acc + sec.questions.reduce((s: number, q: any) => s + (Number(q.marks) || 0), 0),
+          0
+        );
+        const paperTotalMarks = fullExamKind
+          ? FULL_EXAM_SPECS[fullExamKind].officialTotal
+          : summedMarks > 0
+            ? summedMarks
+            : config.totalMarks;
+        if (!fullExamKind && summedMarks !== config.totalMarks) {
+          console.warn(`Generated paper totals ${summedMarks} marks (requested ${config.totalMarks}).`);
+        }
 
         finalPaper = {
           schoolName: config.options.includeSchoolName && config.options.schoolName ? config.options.schoolName.toUpperCase() : undefined,
@@ -346,7 +417,7 @@ export async function POST(request: NextRequest) {
           subject: displaySubject,
           classText: displayClassText,
           timeText: config.duration,
-          maxMarksText: isHindiSubject ? `${config.totalMarks} अंक` : `${config.totalMarks} Marks`,
+          maxMarksText: isHindiSubject ? `${paperTotalMarks} अंक` : `${paperTotalMarks} Marks`,
           instructions: config.options.includeInstructions
             ? (isFullClass10ScienceExam && (!config.options.instructionsText || config.options.instructionsText.includes("5 Sections") || config.options.instructionsText.includes("Section D") || config.options.instructionsText.includes("Section E")))
               ? [
@@ -381,51 +452,17 @@ export async function POST(request: NextRequest) {
                     ]
               ).map(line => cleanInstructionText(line))
             : [],
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          sections: parsedPaper.sections.map((section: any) => {
-            return {
-              ...section,
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              questions: (section.questions || []).map((q: any) => {
-                const assignedNum = typeof q.number === "number" && q.number > 0 ? q.number : globalQNum++;
-
-                let cleanedText = formatScientificText(q.text || "");
-                cleanedText = cleanedText.replace(/^\s*(?:Q\.?\s*)?\d+[\.\)\:\t]\s*/i, "").trim();
-
-                let cleanedOrQuestion = q.orQuestion ? formatScientificText(q.orQuestion) : null;
-                if (cleanedOrQuestion) {
-                  cleanedOrQuestion = cleanedOrQuestion.replace(/^\s*(?:Q\.?\s*)?\d+[\.\)\:\t]\s*/i, "").trim();
-                }
-
-                const cleanedChoices = (q.choices && q.choices.length > 0)
-                  ? q.choices.map((choice: string) => {
-                      const text = formatScientificText(choice || "");
-                      return text.replace(/^\s*(?:\([A-Da-d]\)|[A-Da-d][\.\)])\s*/, "").trim();
-                    })
-                  : null;
-
-                return {
-                  ...q,
-                  id: q.id || `q_${Math.random().toString(36).substr(2, 9)}`,
-                  number: assignedNum,
-                  text: cleanedText,
-                  orQuestion: cleanedOrQuestion,
-                  choices: cleanedChoices,
-                  solution: q.solution ? formatScientificText(q.solution) : null,
-                  orSolution: q.orSolution ? formatScientificText(q.orSolution) : null,
-                };
-              })
-            };
-          }),
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          totalQuestions: parsedPaper.sections.reduce((acc: number, sec: any) => acc + (sec.questions || []).length, 0),
-          totalMarks: config.totalMarks,
+          sections,
+          totalQuestions: sections.reduce((acc: number, sec: any) => acc + sec.questions.length, 0),
+          totalMarks: paperTotalMarks,
           hasAnswerKey: config.options.includeAnswerKey !== false,
+          // Recorded so question swaps can regenerate in the same language (incl. Bilingual).
+          language: config.language,
         };
 
         // If multi-set generation is requested (2 or 3 sets)
-        const requestedSets = config.options?.numberOfSets || (config as Record<string, unknown>).numberOfSets || 1;
-        if (typeof requestedSets === "number" && requestedSets > 1) {
+        const requestedSets = config.options?.numberOfSets || 1;
+        if (requestedSets > 1) {
           const generatedSets = generatePaperSets(finalPaper, requestedSets);
           finalPaper = {
             ...generatedSets[0],
@@ -434,10 +471,10 @@ export async function POST(request: NextRequest) {
         }
 
         break;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (err: any) {
         console.error(`Attempt ${attempt} failed:`, err.message || err);
         lastError = err;
+        finalPaper = null;
         if (attempt < MAX_RETRIES) {
           await new Promise((resolve) => setTimeout(resolve, 500));
         }
@@ -448,15 +485,12 @@ export async function POST(request: NextRequest) {
       throw new Error(lastError?.message || "Failed to generate valid paper layout after multiple retries.");
     }
 
-    // 8. Record request under rate limiter
-    recordRequest(ip);
-
     return NextResponse.json(finalPaper);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (error: any) {
+  } catch (error) {
     console.error("Silent generation error after retries:", error);
+    if (quota) await quota.refund();
     return NextResponse.json(
-      { error: "Failed to generate paper from AI.", details: error.message || error },
+      { error: "Failed to generate the paper. Please try again — this attempt was not counted against your daily limit." },
       { status: 500 }
     );
   }

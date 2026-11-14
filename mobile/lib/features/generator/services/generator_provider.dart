@@ -72,13 +72,11 @@ class GeneratorProvider extends ChangeNotifier {
       _generatedPaper = GeneratedPaperModel.fromJson(responseJson);
       _activeSetIndex = 0;
 
-      // 2. Increment daily usage & save to history in background
+      // 2. The server increments the daily usage counter as part of /generate;
+      //    show the change immediately, then re-sync the authoritative count.
       _papersGeneratedToday += 1;
       notifyListeners();
-      try {
-        await _apiClient.post('/user/usage/increment');
-        await fetchUserUsage();
-      } catch (_) {}
+      await fetchUserUsage();
 
       try {
         await _apiClient.post('/user/history', body: {

@@ -68,9 +68,26 @@ export function cleanInstructionText(text: string): string {
   return cleaned;
 }
 
-export function formatScientificText(text: string): string {
+export interface FormatScientificTextOptions {
+  /**
+   * Set for programming subjects (CS, IP, Computer Applications, IT, AI): skips the
+   * transforms that corrupt code — `_x` subscripts, `^` superscripts, `1/2` -> ½,
+   * chemical-formula subscripts and the `\\` -> newline conversion.
+   */
+  codeSafe?: boolean;
+}
+
+// ```fenced``` blocks and `inline code` spans are never transformed.
+const CODE_SPAN_REGEX = /```[\s\S]*?```|`[^`\n]+`/g;
+const CODE_PLACEHOLDER_REGEX = /\u0000(\d+)\u0000/g;
+
+export function formatScientificText(
+  text: string,
+  options: FormatScientificTextOptions = {}
+): string {
   if (!text) return "";
-  
+  const { codeSafe = false } = options;
+
   let formatted = text;
   
   // Helper to decode HTML entities
@@ -105,6 +122,13 @@ export function formatScientificText(text: string): string {
     }
   });
   
+  // 2b. Protect code spans from every transform below.
+  const protectedSpans: string[] = [];
+  formatted = formatted.replace(CODE_SPAN_REGEX, (span) => {
+    protectedSpans.push(span);
+    return `\u0000${protectedSpans.length - 1}\u0000`;
+  });
+
   // 3. Remove/replace backslashed underscores first
   formatted = formatted.replace(/\\_/g, "_");
 
@@ -156,20 +180,29 @@ export function formatScientificText(text: string): string {
     "0": "⁰", "1": "¹", "2": "²", "3": "³", "4": "⁴", "5": "⁵", "6": "⁶", "7": "⁷", "8": "⁸", "9": "⁹",
     "+": "⁺", "-": "⁻", "=": "⁼", "(": "⁽", ")": "⁾", "n": "ⁿ", "x": "ˣ"
   };
-  formatted = formatted.replace(/\^\{([^}]+)\}/g, (match, grp) => {
-    return grp.split("").map((ch: string) => superscripts[ch] || ch).join("");
-  });
-  formatted = formatted.replace(/\^([0-9+\-n])/g, (match, grp) => superscripts[grp] || grp);
+  if (!codeSafe) {
+    formatted = formatted.replace(/\^\{([^}]+)\}/g, (match, grp) => {
+      return grp.split("").map((ch: string) => superscripts[ch] || ch).join("");
+    });
+    formatted = formatted.replace(/\^([0-9+\-n])/g, (match, grp) => superscripts[grp] || grp);
+  }
 
   // 8. Subscripts (numbers, +/-, letters)
   const subscripts: Record<string, string> = {
     "0": "₀", "1": "₁", "2": "₂", "3": "₃", "4": "₄", "5": "₅", "6": "₆", "7": "₇", "8": "₈", "9": "₉",
     "+": "₊", "-": "₋", "=": "₌", "(": "₍", ")": "₎", "a": "ₐ", "e": "ₑ", "o": "ₒ", "x": "ₓ", "h": "ₕ", "k": "ₖ", "l": "ₗ", "m": "ₘ", "n": "ₙ", "p": "ₚ", "s": "ₛ", "t": "ₜ"
   };
-  formatted = formatted.replace(/_\{([^}]+)\}/g, (match, grp) => {
-    return grp.split("").map((ch: string) => subscripts[ch] || ch).join("");
-  });
-  formatted = formatted.replace(/_([0-9+\-a-z])/g, (match, grp) => subscripts[grp] || grp);
+  if (!codeSafe) {
+    formatted = formatted.replace(/_\{([^}]+)\}/g, (match, grp) => {
+      return grp.split("").map((ch: string) => subscripts[ch] || ch).join("");
+    });
+    // Only short math bases (x_1, v_0, a_n, H_2). Identifiers such as my_list, data_2 or
+    // __init__ (longer base, or several letters after the underscore) are left untouched.
+    formatted = formatted.replace(
+      /(?<=(?:^|[^A-Za-z0-9_])[A-Za-z0-9]{1,2})_(\d+|[+\-a-z](?![A-Za-z0-9_]))/g,
+      (match, grp: string) => grp.split("").map((ch) => subscripts[ch] || ch).join("")
+    );
+  }
 
   // 9. Standard mathematical and Greek symbols
   const mathSymbols: Record<string, string> = {
@@ -195,9 +228,11 @@ export function formatScientificText(text: string): string {
   });
 
   // 10. Simplify common chemical formulas formatting (e.g. H2O -> H₂O, CO2 -> CO₂)
-  formatted = formatted.replace(/\b(H|O|N|C|Cl|S|P|Na|K|Ca|Fe|Mg)(2|3|4|5|6|7|8|9)\b/g, (match, elem, num) => {
-    return elem + (subscripts[num] || num);
-  });
+  if (!codeSafe) {
+    formatted = formatted.replace(/\b(H|O|N|C|Cl|S|P|Na|K|Ca|Fe|Mg)(2|3|4|5|6|7|8|9)\b/g, (match, elem, num) => {
+      return elem + (subscripts[num] || num);
+    });
+  }
 
   // 11. Decode LaTeX text formatting commands \text{...}, \mathbf{...}, \mathrm{...}
   formatted = formatted.replace(/\\(text|mathbf|mathrm|mathit|mathsf|mathtt)\{([^}]+)\}/g, "$2");
@@ -226,10 +261,13 @@ export function formatScientificText(text: string): string {
     "1/9": "⅑",
     "1/10": "⅒",
   };
-  Object.entries(commonFractions).forEach(([frac, uni]) => {
-    const regex = new RegExp(`(?<![a-zA-Z0-9])${frac}(?![a-zA-Z0-9])`, "g");
-    formatted = formatted.replace(regex, uni);
-  });
+  if (!codeSafe) {
+    Object.entries(commonFractions).forEach(([frac, uni]) => {
+      // Skip paths, dates and longer expressions such as a/1/2, 1/2/2024 or 11/2.
+      const regex = new RegExp(`(?<![a-zA-Z0-9_/.])${frac}(?![a-zA-Z0-9_/.])`, "g");
+      formatted = formatted.replace(regex, uni);
+    });
+  }
 
   // 16. Remove remaining LaTeX formatting spaces and parameters
   formatted = formatted.replace(/\\(left|right|displaystyle|textstyle|limits|nolimits|rm|bf|it)(?![a-zA-Z])/g, "");
@@ -241,7 +279,9 @@ export function formatScientificText(text: string): string {
   formatted = formatted.replace(/\\(begin|end)\{[a-zA-Z*]+\}/g, "");
   
   // 18. Convert double backslash newline representation
-  formatted = formatted.replace(/\\\\/g, "\n");
+  if (!codeSafe) {
+    formatted = formatted.replace(/\\\\/g, "\n");
+  }
 
   // 19. Clean up any raw '\n' literal characters from text to actual line breaks
   formatted = formatted.replace(/\\n/g, "\n");
@@ -249,6 +289,9 @@ export function formatScientificText(text: string): string {
   // 20. Remove any remaining backslashes that are prefixing standard math/physics symbols or punctuation
   // E.g., \( or \) or \[ or \] -> just ( or ) or [ or ]
   formatted = formatted.replace(/\\([()\[\]{}])/g, "$1");
+
+  // Restore protected code spans verbatim.
+  formatted = formatted.replace(CODE_PLACEHOLDER_REGEX, (match, idx: string) => protectedSpans[Number(idx)] ?? match);
 
   return formatted;
 }
@@ -276,11 +319,34 @@ export function saveLocalPaperHistory(record: {
       paper_json: typeof record.paper_json === "string" ? record.paper_json : JSON.stringify(record.paper_json),
       created_at: new Date().toISOString(),
     };
-    const updated = [newRecord, ...list].slice(0, 100);
-    localStorage.setItem("user_paper_history", JSON.stringify(updated));
+    let updated = [newRecord, ...list].slice(0, LOCAL_HISTORY_LIMIT);
+    // Full papers are large; when the browser quota is hit, drop the oldest entries and retry
+    // instead of silently losing the new paper.
+    while (updated.length > 0) {
+      try {
+        localStorage.setItem(LOCAL_HISTORY_KEY, JSON.stringify(updated));
+        return;
+      } catch (e) {
+        if (!isQuotaExceededError(e) || updated.length === 1) throw e;
+        updated = updated.slice(0, updated.length - 1);
+      }
+    }
   } catch (e) {
     console.error("Failed to save paper to local history:", e);
   }
+}
+
+const LOCAL_HISTORY_KEY = "user_paper_history";
+const LOCAL_HISTORY_LIMIT = 20;
+
+function isQuotaExceededError(e: unknown): boolean {
+  if (!(e instanceof DOMException)) return false;
+  return (
+    e.name === "QuotaExceededError" ||
+    e.name === "NS_ERROR_DOM_QUOTA_REACHED" ||
+    e.code === 22 ||
+    e.code === 1014
+  );
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

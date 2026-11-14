@@ -16,7 +16,7 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import { AuthService } from "@/lib/firebase/auth-service";
 import { compressImageToBase64, getLocalPaperHistory } from "@/lib/utils";
 import { clientRateLimiter } from "@/lib/rate-limiter";
-import { isSuperAdminEmail } from "@/lib/auth/helpers";
+import { isSuperAdminEmail } from "@/lib/auth/super-admin";
 import { UserPlan } from "@/types/auth";
 import { PaperHistoryRecord } from "@/types/db";
 import {
@@ -482,14 +482,33 @@ export default function ProfilePage() {
         return;
       }
 
-      const keyId = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_live_TGd0ItjJBk6QgH";
-      const amountInPaise = newPlan === "PRO" ? 2100 : 39900;
+      // 1. Create a server-side Razorpay order (amount + plan are decided by the server).
+      const checkoutRes = await fetch("/api/payment/checkout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ plan: newPlan }),
+      });
+      const checkoutJson = await safeParseJsonResponse(checkoutRes);
+      if (!checkoutRes.ok || !checkoutJson.success || !checkoutJson.data?.orderId) {
+        toast.error(checkoutJson.error?.message || "Could not start the payment. Please try again.");
+        setUpdatingPlan(null);
+        return;
+      }
+      const { orderId, keyId, amount: amountInPaise } = checkoutJson.data as {
+        orderId: string;
+        keyId: string;
+        amount: number;
+      };
       const planTitle = newPlan === "PRO" ? "₹21 1-Day Pass (Unlimited)" : "₹399 1-Year Educator Plan (50/day)";
 
       const options: RazorpayOptions = {
         key: keyId,
         amount: amountInPaise,
         currency: "INR",
+        order_id: orderId,
         name: "Smart Paper AI",
         description: `Upgrade to ${planTitle}`,
         prefill: {
@@ -528,17 +547,17 @@ export default function ProfilePage() {
         handler: async (response: RazorpayResponse) => {
           toast.loading("Verifying payment transaction...");
           try {
+            const freshToken = (await AuthService.getFirebaseToken()) || token;
             const verifyRes = await fetch("/api/payment/verify", {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
+                Authorization: `Bearer ${freshToken}`,
               },
               body: JSON.stringify({
-                razorpay_order_id: response.razorpay_order_id || `ord_${Date.now()}`,
+                razorpay_order_id: response.razorpay_order_id || orderId,
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature: response.razorpay_signature || "",
-                plan: newPlan,
               }),
             });
 

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Navbar } from "@/components/shared/Navbar";
 import { AnimatedBackground } from "@/components/shared/AnimatedBackground";
@@ -8,112 +8,116 @@ import { PaperPreview } from "@/components/preview/PaperPreview";
 import { DownloadBar } from "@/components/preview/DownloadBar";
 import { Footer } from "@/components/landing/Footer";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
-import { GeneratedPaper, PaperConfig } from "@/types";
+import { GeneratedPaper, PaperConfig, PaperSection } from "@/types";
 import { Button } from "@/components/ui/button";
 import { AlertCircle, ArrowLeft } from "lucide-react";
 import { useGeneratePaper } from "@/hooks/useGeneratePaper";
 import { GeneratingOverlay } from "@/components/preview/GeneratingOverlay";
 import { formatScientificText, cleanInstructionText } from "@/lib/utils";
+import { isComputerSubjectKey } from "@/lib/subject-detection";
+
+interface PreviewState {
+  paper: GeneratedPaper | null;
+  lastConfig: PaperConfig | null;
+  initialMode?: "paper" | "solutions";
+}
+
+/** A stored config is only usable for "Re-generate" if it is a complete wizard config. */
+function isRegenerableConfig(value: unknown): value is PaperConfig {
+  if (!value || typeof value !== "object") return false;
+  const c = value as Partial<PaperConfig>;
+  return (
+    typeof c.classId === "string" && c.classId.length > 0 &&
+    typeof c.subject === "string" && c.subject.length > 0 &&
+    typeof c.examType === "string" && c.examType.length > 0 &&
+    typeof c.totalMarks === "number" &&
+    typeof c.duration === "string" &&
+    !!c.questionDistribution && typeof c.questionDistribution === "object" &&
+    !!c.options && typeof c.options === "object"
+  );
+}
+
+type RawPaper = GeneratedPaper & { sections: PaperSection[] };
+
+/** Applies scientific symbol formatting (code-safe for programming subjects). */
+function formatPaperForDisplay<T extends RawPaper>(raw: T, codeSafe: boolean): T {
+  const format = (text: string) => formatScientificText(text, { codeSafe });
+  return {
+    ...raw,
+    instructions: (raw.instructions || []).map((ins) => cleanInstructionText(format(ins))),
+    sections: (raw.sections || []).map((section) => ({
+      ...section,
+      questions: (section.questions || []).map((q) => ({
+        ...q,
+        text: format(q.text || ""),
+        orQuestion: q.orQuestion ? format(q.orQuestion) : undefined,
+        choices: q.choices && q.choices.length > 0 ? q.choices.map((choice) => format(choice || "")) : undefined,
+      })),
+    })),
+  };
+}
+
+function loadPreviewState(): PreviewState {
+  if (typeof window === "undefined") return { paper: null, lastConfig: null };
+  const urlParams = new URLSearchParams(window.location.search);
+  const initialMode = urlParams.get("mode") === "solutions" ? "solutions" : undefined;
+
+  let paper: GeneratedPaper | null = null;
+  try {
+    const savedPaper = sessionStorage.getItem("generated_paper");
+    const parsed = savedPaper ? JSON.parse(savedPaper) : null;
+    if (parsed && parsed.sections) {
+      const codeSafe = isComputerSubjectKey(parsed.subject);
+      const base: RawPaper = {
+        ...parsed,
+        schoolName: parsed.schoolName ? parsed.schoolName.toUpperCase() : undefined,
+        examName: parsed.examName ? parsed.examName.replace(/_/g, " ").toUpperCase() : "EXAMINATION",
+        teacherName: parsed.teacherName ? parsed.teacherName : undefined,
+        subject: parsed.subject || "",
+        classText: parsed.classText || "",
+        timeText: parsed.timeText || "",
+        maxMarksText: parsed.maxMarksText || "",
+      };
+      paper = formatPaperForDisplay(base, codeSafe);
+      if (Array.isArray(parsed.sets)) {
+        paper.sets = parsed.sets.map((setObj: RawPaper) => formatPaperForDisplay(setObj, codeSafe));
+      }
+    } else if (parsed) {
+      paper = parsed;
+    }
+  } catch (e) {
+    console.error("Failed to parse generated paper", e);
+  }
+
+  let lastConfig: PaperConfig | null = null;
+  try {
+    const savedConfig = sessionStorage.getItem("last_paper_config");
+    const parsedConfig = savedConfig ? JSON.parse(savedConfig) : null;
+    lastConfig = isRegenerableConfig(parsedConfig) ? parsedConfig : null;
+  } catch (e) {
+    console.error("Failed to parse last config", e);
+  }
+
+  return { paper, lastConfig, initialMode };
+}
 
 export default function PreviewPage() {
   const router = useRouter();
-  const [paper, setPaper] = useState<GeneratedPaper | null>(null);
+  // Lazily read from sessionStorage. Content is rendered only after ProtectedRoute's client-side
+  // auth check, so this does not cause a hydration mismatch.
+  const [initialState] = useState(loadPreviewState);
+  const [paper, setPaper] = useState<GeneratedPaper | null>(initialState.paper);
   const [activeSetIdx, setActiveSetIdx] = useState<number>(0);
-  const [lastConfig, setLastConfig] = useState<PaperConfig | null>(null);
-  const [initialMode, setInitialMode] = useState<"paper" | "solutions" | undefined>(undefined);
+  const lastConfig = initialState.lastConfig;
+  const initialMode = initialState.initialMode;
   const { generatePaper, loading } = useGeneratePaper();
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.get("mode") === "solutions") {
-        setInitialMode("solutions");
-      }
-
-      const savedPaper = sessionStorage.getItem("generated_paper");
-      const savedConfig = sessionStorage.getItem("last_paper_config");
-
-      if (savedPaper) {
-        try {
-          const parsed = JSON.parse(savedPaper);
-          if (parsed && parsed.sections) {
-            // Apply scientific symbol formatting to questions, choices, and instructions
-            parsed.schoolName = parsed.schoolName ? parsed.schoolName.toUpperCase() : undefined;
-            parsed.examName = parsed.examName ? parsed.examName.replace(/_/g, " ").toUpperCase() : "EXAMINATION";
-            parsed.teacherName = parsed.teacherName ? parsed.teacherName : undefined;
-            parsed.subject = parsed.subject || "";
-            parsed.classText = parsed.classText || "";
-            parsed.timeText = parsed.timeText || "";
-            parsed.maxMarksText = parsed.maxMarksText || "";
-            
-            parsed.instructions = (parsed.instructions || []).map((ins: string) => cleanInstructionText(formatScientificText(ins)));
-            
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            parsed.sections = parsed.sections.map((section: any) => ({
-              ...section,
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              questions: (section.questions || []).map((q: any) => ({
-                ...q,
-                text: formatScientificText(q.text || ""),
-                orQuestion: q.orQuestion ? formatScientificText(q.orQuestion) : null,
-                choices: (q.choices && q.choices.length > 0)
-                  ? q.choices.map((choice: string) => formatScientificText(choice || ""))
-                  : null,
-              }))
-            }));
-
-            // Format multi-sets if present
-            if (parsed.sets && Array.isArray(parsed.sets)) {
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              parsed.sets = parsed.sets.map((setObj: any) => ({
-                ...setObj,
-                instructions: (setObj.instructions || []).map((ins: string) => cleanInstructionText(formatScientificText(ins))),
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                sections: (setObj.sections || []).map((section: any) => ({
-                  ...section,
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  questions: (section.questions || []).map((q: any) => ({
-                    ...q,
-                    text: formatScientificText(q.text || ""),
-                    orQuestion: q.orQuestion ? formatScientificText(q.orQuestion) : null,
-                    choices: (q.choices && q.choices.length > 0)
-                      ? q.choices.map((choice: string) => formatScientificText(choice || ""))
-                      : null,
-                  }))
-                }))
-              }));
-            }
-            
-            // eslint-disable-next-line react-hooks/set-state-in-effect
-            setPaper(parsed);
-          } else {
-            setPaper(parsed);
-          }
-        } catch (e) {
-          console.error("Failed to parse generated paper", e);
-        }
-      }
-
-      if (savedConfig) {
-        try {
-          setLastConfig(JSON.parse(savedConfig));
-        } catch (e) {
-          console.error("Failed to parse last config", e);
-        }
-      }
-    }
-  }, []);
 
   const handlePaperChange = (updatedPaper: GeneratedPaper) => {
     setPaper(updatedPaper);
     sessionStorage.setItem("generated_paper", JSON.stringify(updatedPaper));
   };
 
-  const handleRegenerate = () => {
-    if (lastConfig) {
-      generatePaper(lastConfig);
-    }
-  };
+  const handleRegenerate = lastConfig ? () => generatePaper(lastConfig) : undefined;
 
   if (loading) {
     return <GeneratingOverlay />;

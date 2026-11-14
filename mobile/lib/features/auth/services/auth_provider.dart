@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../models/user_model.dart';
 import '../../../services/firebase/firebase_auth_service.dart';
 
-class AuthProvider extends ChangeNotifier {
+class AuthProvider extends ChangeNotifier with WidgetsBindingObserver {
   final FirebaseAuthService _authService;
   UserModel? _user;
   bool _isLoading = false;
@@ -12,6 +12,22 @@ class AuthProvider extends ChangeNotifier {
     _user = _authService.currentUser;
     // Auto-restore token and backend session on startup
     restoreSession();
+    // Re-sync plan/profile from the server whenever the app returns to the
+    // foreground (e.g. after completing a purchase in the browser).
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && _user != null) {
+      refreshUser();
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
   }
 
   UserModel? get user => _user;
@@ -113,11 +129,16 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void updateUserPlan(String newPlan) {
-    if (_user != null) {
-      _user = _user!.copyWith(plan: newPlan);
-      notifyListeners();
-    }
+  /// Reloads the user (including the subscription plan) from `/user/me`.
+  /// The plan is only ever changed from server-confirmed data.
+  Future<void> refreshUser() async {
+    try {
+      final refreshed = await _authService.refreshProfile();
+      if (refreshed != null) {
+        _user = refreshed;
+        notifyListeners();
+      }
+    } catch (_) {}
   }
 
   Future<bool> updateProfile({String? displayName, String? preferredClass}) async {

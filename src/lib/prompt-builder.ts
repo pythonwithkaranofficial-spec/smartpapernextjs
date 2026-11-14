@@ -1,27 +1,50 @@
 import { PaperConfig } from "@/types";
 import { getCurriculumContext } from "./curriculum-data";
+import { computeDistributionTotal, resolveMarksPerType } from "./marks";
+import { detectFullExamKind, detectSubjectKind, isHindiSubjectKey } from "./subject-detection";
 
-export function buildGeminiPrompt(config: PaperConfig): string {
+/**
+ * The wizard / syllabus explorer use the marker ["all"] for "entire syllabus".
+ * Normalise it to an empty list, which every prompt below treats as full-syllabus
+ * coverage, so the literal word "all" never leaks into a prompt as a chapter name.
+ */
+export function normalizeSelectedChapters(chapters?: string[] | null): string[] {
+  const cleaned = (chapters || []).map((c) => (c || "").trim()).filter(Boolean);
+  if (cleaned.some((c) => c.toLowerCase() === "all")) return [];
+  return cleaned;
+}
+
+export function buildGeminiPrompt(inputConfig: PaperConfig): string {
+  const config: PaperConfig = {
+    ...inputConfig,
+    selectedChapters: normalizeSelectedChapters(inputConfig.selectedChapters),
+  };
   const curriculumContext = getCurriculumContext(config.classId, config.subject);
 
-  const isHindiSubject = 
-    config.subject === "hindi" || 
-    config.subject === "hindi_core" || 
-    config.subject === "hindi_elective" || 
-    config.subject === "हिन्दी" || 
-    config.subject === "हिन्दी कोर" || 
-    config.subject === "हिन्दी ऐच्छिक";
+  const isHindiSubject = isHindiSubjectKey(config.subject);
 
-  // Parse distribution counts
+  // Parse distribution counts (honouring per-blueprint marks overrides, e.g. 3-mark case studies)
   const dist = config.questionDistribution;
+  const marksPerType = resolveMarksPerType(config.marksPerType);
+  const markLabel = (n: number) => (n === 1 ? "1 mark each" : `${n} marks each`);
+  const distributionTotal = computeDistributionTotal(dist, config.marksPerType);
   const distributionDetails = `
-  - Multiple Choice Questions (MCQ): ${dist.mcq} questions (1 mark each)
-  - Assertion-Reason (AR): ${dist.assertionReason} questions (1 mark each)
-  - Very Short Answer (VSA): ${dist.vsa} questions (2 marks each)
-  - Short Answer (SA): ${dist.sa} questions (3 marks each)
-  - Case Study / Source-Based (CS): ${dist.caseStudy} questions (4 marks each)
-  - Long Answer (LA): ${dist.la} questions (5 marks each)
+  - Multiple Choice Questions (MCQ): ${dist.mcq} questions (${markLabel(marksPerType.mcq)})
+  - Assertion-Reason (AR): ${dist.assertionReason} questions (${markLabel(marksPerType.assertionReason)})
+  - Very Short Answer (VSA): ${dist.vsa} questions (${markLabel(marksPerType.vsa)})
+  - Short Answer (SA): ${dist.sa} questions (${markLabel(marksPerType.sa)})
+  - Case Study / Source-Based (CS): ${dist.caseStudy} questions (${markLabel(marksPerType.caseStudy)})
+  - Long Answer (LA): ${dist.la} questions (${markLabel(marksPerType.la)})
+  - TOTAL: ${distributionTotal} marks. Set every question's "marks" field to the value listed for its type.
   `;
+
+  // In blueprint mode the blueprint's own instructions describe the real CBSE section layout
+  // (map questions, 8-mark LAs, etc.); hand them to the model as the authoritative structure.
+  const blueprintStructurePrompt =
+    config.isBlueprintMode && config.options.instructionsText
+      ? `--- OFFICIAL SECTION STRUCTURE (authoritative; the distribution list above describes the same paper per question type) ---
+${config.options.instructionsText}`
+      : "";
 
   // Language instructions
   let languagePrompt = "";
@@ -47,167 +70,36 @@ ${config.unitWeightage.map((u) => `- Unit ${u.unit} (${u.topic}): ${u.marks} Mar
 Ensure the questions generated across all sections roughly total these exact mark weightages per unit topic!`
     : "";
 
-  const rawSubject = (config.isCustom ? (config.customSubject || config.subject) : config.subject) || "";
-  const normSubject = rawSubject.toLowerCase().trim();
-  const classStr = (config.isCustom ? (config.customClass || config.classId) : config.classId) || "";
-  const isClass12 = classStr === "12" || classStr.toLowerCase().includes("12");
-  const isEnglish = normSubject === "english" || normSubject === "englishcore" || normSubject.includes("english");
-  const isClass12English = isClass12 && isEnglish;
+  // Subject / class detection is shared with the generate route (src/lib/subject-detection.ts)
+  // so the specialised paper patterns can never drift between prompt and post-processing.
+  const subjectKind = detectSubjectKind(config);
+  const fullExamKind = detectFullExamKind(config);
 
-  const isFullClass12EnglishExam =
-    isClass12English &&
-    (config.examType === "annual_exam" ||
-      config.examType === "pre_board" ||
-      config.examType === "sample_paper" ||
-      config.examType === "half_yearly" ||
-      config.totalMarks >= 70);
+  const isClass12English = subjectKind === "class12English";
+  const isClass10Hindi = subjectKind === "class10Hindi";
+  const isClass12Physics = subjectKind === "class12Physics";
+  const isClass12CS = subjectKind === "class12CS";
+  const isClass12Biology = subjectKind === "class12Biology";
+  const isClass12Economics = subjectKind === "class12Economics";
+  const isClass12Geography = subjectKind === "class12Geography";
+  const isClass10Social = subjectKind === "class10Social";
+  const isClass12PhyEdu = subjectKind === "class12PhyEdu";
+  const isClass10Science = subjectKind === "class10Science";
+  const isClass12Chemistry = subjectKind === "class12Chemistry";
+  const isClass12Accounts = subjectKind === "class12Accounts";
 
-  const isClass10 = classStr === "10" || classStr.toLowerCase().includes("10");
-  const isHindi = normSubject === "hindi" || normSubject.includes("hindi") || normSubject.includes("हिन्दी");
-  const isClass10Hindi = isClass10 && isHindi;
-
-  const isFullClass10HindiExam =
-    isClass10Hindi &&
-    (config.examType === "annual_exam" ||
-      config.examType === "pre_board" ||
-      config.examType === "sample_paper" ||
-      config.examType === "half_yearly" ||
-      config.totalMarks >= 70);
-
-  const isPhysics = normSubject === "physics" || normSubject.includes("physics");
-  const isClass12Physics = isClass12 && isPhysics;
-
-  const isFullClass12PhysicsExam =
-    isClass12Physics &&
-    (config.examType === "annual_exam" ||
-      config.examType === "pre_board" ||
-      config.examType === "sample_paper" ||
-      config.examType === "half_yearly" ||
-      config.totalMarks >= 65);
-
-  const isCS = normSubject === "cs" || normSubject.includes("computer") || normSubject === "computerscience";
-  const isClass12CS = isClass12 && isCS;
-
-  const isFullClass12CSExam =
-    isClass12CS &&
-    (config.examType === "annual_exam" ||
-      config.examType === "pre_board" ||
-      config.examType === "sample_paper" ||
-      config.examType === "half_yearly" ||
-      config.totalMarks >= 65);
-
-  const isBiology = normSubject === "biology" || normSubject.includes("biology") || normSubject === "bio";
-  const isClass12Biology = isClass12 && isBiology;
-
-  const isFullClass12BiologyExam =
-    isClass12Biology &&
-    (config.examType === "annual_exam" ||
-      config.examType === "pre_board" ||
-      config.examType === "sample_paper" ||
-      config.examType === "half_yearly" ||
-      config.totalMarks >= 65);
-
-  const isEconomics =
-    normSubject === "economics" ||
-    normSubject.includes("economics") ||
-    normSubject === "eco";
-  const isClass12Economics = isClass12 && isEconomics;
-
-  const isFullClass12EconomicsExam =
-    isClass12Economics &&
-    (config.examType === "annual_exam" ||
-      config.examType === "pre_board" ||
-      config.examType === "sample_paper" ||
-      config.examType === "half_yearly" ||
-      config.totalMarks >= 70);
-
-  const isGeography =
-    normSubject === "geography" ||
-    normSubject.includes("geography") ||
-    normSubject === "geo";
-  const isClass12Geography = isClass12 && isGeography;
-
-  const isFullClass12GeographyExam =
-    isClass12Geography &&
-    (config.examType === "annual_exam" ||
-      config.examType === "pre_board" ||
-      config.examType === "sample_paper" ||
-      config.examType === "half_yearly" ||
-      config.totalMarks >= 65);
-
-  const isSocial =
-    normSubject === "social" ||
-    normSubject.includes("social") ||
-    normSubject.includes("sst") ||
-    normSubject === "socialscience";
-  const isClass10Social = isClass10 && isSocial;
-
-  const isFullClass10SocialExam =
-    isClass10Social &&
-    (config.examType === "annual_exam" ||
-      config.examType === "pre_board" ||
-      config.examType === "sample_paper" ||
-      config.examType === "half_yearly" ||
-      config.totalMarks >= 70);
-
-  const isPhyEdu =
-    normSubject === "phyedu" ||
-    normSubject.includes("physical") ||
-    normSubject.includes("phy edu") ||
-    normSubject.includes("sports");
-  const isClass12PhyEdu = isClass12 && isPhyEdu;
-
-  const isFullClass12PhyEduExam =
-    isClass12PhyEdu &&
-    (config.examType === "annual_exam" ||
-      config.examType === "pre_board" ||
-      config.examType === "sample_paper" ||
-      config.examType === "half_yearly" ||
-      config.totalMarks >= 65);
-
-  const isScience =
-    normSubject === "science" ||
-    normSubject.includes("science") ||
-    normSubject === "sci";
-  const isClass10Science = isClass10 && isScience;
-
-  const isFullClass10ScienceExam =
-    isClass10Science &&
-    (config.totalMarks >= 70 ||
-      ((config.examType === "annual_exam" ||
-        config.examType === "pre_board" ||
-        config.examType === "sample_paper" ||
-        config.examType === "half_yearly") &&
-        (config.totalMarks >= 60 || !config.totalMarks)));
-
-  const isChemistry =
-    normSubject === "chemistry" ||
-    normSubject.includes("chemistry") ||
-    normSubject === "chem";
-  const isClass12Chemistry = isClass12 && isChemistry;
-
-  const isFullClass12ChemistryExam =
-    isClass12Chemistry &&
-    (config.examType === "annual_exam" ||
-      config.examType === "pre_board" ||
-      config.examType === "sample_paper" ||
-      config.examType === "half_yearly" ||
-      config.totalMarks >= 65);
-
-  const isAccounts =
-    normSubject === "accounts" ||
-    normSubject === "accountancy" ||
-    normSubject.includes("account") ||
-    normSubject === "acc";
-  const isClass12Accounts = isClass12 && isAccounts;
-
-  const isFullClass12AccountsExam =
-    isClass12Accounts &&
-    (config.examType === "annual_exam" ||
-      config.examType === "pre_board" ||
-      config.examType === "sample_paper" ||
-      config.examType === "half_yearly" ||
-      config.totalMarks >= 70);
+  const isFullClass12EnglishExam = fullExamKind === "class12English";
+  const isFullClass10HindiExam = fullExamKind === "class10Hindi";
+  const isFullClass12PhysicsExam = fullExamKind === "class12Physics";
+  const isFullClass12CSExam = fullExamKind === "class12CS";
+  const isFullClass12BiologyExam = fullExamKind === "class12Biology";
+  const isFullClass12EconomicsExam = fullExamKind === "class12Economics";
+  const isFullClass12GeographyExam = fullExamKind === "class12Geography";
+  const isFullClass10SocialExam = fullExamKind === "class10Social";
+  const isFullClass12PhyEduExam = fullExamKind === "class12PhyEdu";
+  const isFullClass10ScienceExam = fullExamKind === "class10Science";
+  const isFullClass12ChemistryExam = fullExamKind === "class12Chemistry";
+  const isFullClass12AccountsExam = fullExamKind === "class12Accounts";
 
   const englishClass12Constraint = isClass12English
     ? `--- CBSE CLASS 12 ENGLISH CORE (SUBJECT CODE 301) PRESCRIBED BOOKS DIRECTIVE ---
@@ -1133,7 +1025,11 @@ CRITICAL ACCOUNTANCY ACCURACY & NUMERICAL INTEGRITY DIRECTIVE:
   if (config.isCustom) {
     const customClassStr = config.customClass || config.classId;
     const customSubjectStr = config.customSubject || config.subject;
-    const customChaptersStr = config.customChapters || (config.selectedChapters ? config.selectedChapters.join(", ") : "");
+    const customChaptersStr =
+      config.customChapters ||
+      (config.selectedChapters && config.selectedChapters.length > 0
+        ? config.selectedChapters.join(", ")
+        : "Entire prescribed syllabus for this class and subject");
     const totalQuestionsCount = dist.mcq + dist.assertionReason + dist.vsa + dist.sa + dist.caseStudy + dist.la;
 
     const selectedTypesList: string[] = [];
@@ -1261,6 +1157,7 @@ You are acting as a Senior Board Examination Paper Setter for CBSE Class ${confi
 
 --- QUESTION DISTRIBUTION LIST ---
 ${distributionDetails}
+${blueprintStructurePrompt}
 
 --- CURRICULUM SYLLABUS BACKGROUND ---
 ${curriculumContext}
@@ -1298,7 +1195,7 @@ ${accountancyClass12Constraint}
 2. UNIQUE QUESTIONS: There must be no repetition of concepts or questions across sections.
 3. ${solutionDirective}
 4. MCQ FORMAT: MCQs must have exactly 4 plausible choices. Only generate choices for MCQs (the "choices" array must be null or empty for all other types).
-5. CASE STUDY FORMAT: Case Study / Source-based questions must consist of a reading passage (or description) followed by 2 sub-questions (2 marks each, totaling 4 marks). Compile the sub-questions directly into the text field (e.g. "Read the passage and answer... \n\n(i) Subquestion 1 \n(ii) Subquestion 2").
+5. CASE STUDY FORMAT: Case Study / Source-based questions must consist of a reading passage (or description) followed by sub-questions totaling ${marksPerType.caseStudy} marks. Compile the sub-questions directly into the text field (e.g. "Read the passage and answer... \n\n(i) Subquestion 1 \n(ii) Subquestion 2").
 6. JSON ESCAPING: Every backslash character (\) in mathematical formulas, LaTeX, or other texts MUST be double-escaped as (\\\\). For example, write \\\\theta instead of \\theta, and \\\\Delta instead of \\Delta. Failure to double-escape backslashes will break JSON parsing. Do not output invalid escape sequences like \\u unless followed by 4 hexadecimal digits.
 6. ASSERTION REASON FORMAT: Assertion-Reason questions must follow the standard CBSE format with 4 options:
    (A) Both A and R are true and R is the correct explanation of A.

@@ -78,6 +78,9 @@ export default function HistoryPage() {
     try {
       const parsedPaper = JSON.parse(record.paper_json);
       sessionStorage.setItem("generated_paper", JSON.stringify(parsedPaper));
+      // History records do not carry the generation config; drop any config left over from
+      // a different paper so "Re-generate" cannot silently rebuild the wrong paper.
+      sessionStorage.removeItem("last_paper_config");
       toast.success(`Loaded ${record.subject} paper into previewer.`);
       router.push("/preview");
     } catch (e) {

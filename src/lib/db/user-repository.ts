@@ -2,11 +2,39 @@ import { executeSql, queryOne, queryRows } from '../turso';
 import { DatabaseUser, PaperHistoryRecord, CreatePaperHistoryInput } from '@/types/db';
 import { UserRole, UserPlan } from '@/types/auth';
 
+let schemaEnsured: Promise<void> | null = null;
+
+/**
+ * Lazily applies additive schema migrations to existing databases (idempotent).
+ * - users.plan_expires_at: expiry for time-limited paid plans (NULL = no expiry).
+ */
+export function ensureSchema(): Promise<void> {
+  if (!schemaEnsured) {
+    schemaEnsured = (async () => {
+      try {
+        await executeSql(`ALTER TABLE users ADD COLUMN plan_expires_at TEXT`);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        if (!/duplicate column/i.test(msg)) {
+          console.warn('[ensureSchema] plan_expires_at migration skipped:', msg);
+        }
+      }
+    })();
+  }
+  return schemaEnsured;
+}
+
+/** Placeholder email for accounts without one (phone/anonymous); keeps users.email UNIQUE NOT NULL satisfied. */
+export function placeholderEmailFor(firebaseUid: string): string {
+  return `no-email+${firebaseUid}@users.invalid`;
+}
+
 export class UserRepository {
   /**
    * Find a user record by Firebase UID
    */
   static async findUserByFirebaseUid(firebaseUid: string): Promise<DatabaseUser | null> {
+    await ensureSchema();
     return queryOne<DatabaseUser>({
       sql: `SELECT * FROM users WHERE firebase_uid = ? LIMIT 1`,
       args: [firebaseUid],
@@ -17,6 +45,7 @@ export class UserRepository {
    * Find a user record by Email Address
    */
   static async findUserByEmail(email: string): Promise<DatabaseUser | null> {
+    await ensureSchema();
     return queryOne<DatabaseUser>({
       sql: `SELECT * FROM users WHERE email = ? LIMIT 1`,
       args: [email],
@@ -27,7 +56,9 @@ export class UserRepository {
    * Insert new user record into Turso DB
    */
   static async createUser(user: Partial<DatabaseUser> & { firebase_uid: string; email: string }): Promise<DatabaseUser> {
+    await ensureSchema();
     const id = user.id || crypto.randomUUID();
+    const email = user.email?.trim() ? user.email.trim().toLowerCase() : placeholderEmailFor(user.firebase_uid);
     const name = user.name || null;
     const photoUrl = user.photo_url || null;
     const provider = user.provider || 'email';
@@ -39,7 +70,7 @@ export class UserRepository {
     await executeSql({
       sql: `INSERT INTO users (id, firebase_uid, name, email, photo_url, provider, email_verified, role, plan, created_at, updated_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      args: [id, user.firebase_uid, name, user.email, photoUrl, provider, emailVerified, role, plan, now, now],
+      args: [id, user.firebase_uid, name, email, photoUrl, provider, emailVerified, role, plan, now, now],
     });
 
     const created = await this.findUserByFirebaseUid(user.firebase_uid);
@@ -53,6 +84,7 @@ export class UserRepository {
    * Update existing user details
    */
   static async updateUser(firebaseUid: string, updates: Partial<DatabaseUser>): Promise<DatabaseUser | null> {
+    await ensureSchema();
     const fields: string[] = [];
     const args: (string | number | null)[] = [];
 
@@ -76,6 +108,14 @@ export class UserRepository {
       fields.push('plan = ?');
       args.push(updates.plan);
     }
+    if (updates.plan_expires_at !== undefined) {
+      fields.push('plan_expires_at = ?');
+      args.push(updates.plan_expires_at);
+    }
+    if (updates.email !== undefined && updates.email.trim()) {
+      fields.push('email = ?');
+      args.push(updates.email.trim().toLowerCase());
+    }
 
     if (fields.length === 0) {
       return this.findUserByFirebaseUid(firebaseUid);
@@ -95,10 +135,22 @@ export class UserRepository {
   }
 
   /**
+   * Move all rows owned by `oldUid` to `newUid` (Firebase account re-created with the same verified email).
+   */
+  static async relinkFirebaseUid(oldUid: string, newUid: string): Promise<void> {
+    for (const table of ['users', 'daily_usage', 'paper_history', 'subscriptions', 'payments']) {
+      await executeSql({
+        sql: `UPDATE ${table} SET firebase_uid = ? WHERE firebase_uid = ?`,
+        args: [newUid, oldUid],
+      });
+    }
+  }
+
+  /**
    * Update User Plan
    */
-  static async updatePlan(firebaseUid: string, plan: UserPlan): Promise<DatabaseUser | null> {
-    return this.updateUser(firebaseUid, { plan });
+  static async updatePlan(firebaseUid: string, plan: UserPlan, expiresAt: string | null = null): Promise<DatabaseUser | null> {
+    return this.updateUser(firebaseUid, { plan, plan_expires_at: plan === 'FREE' ? null : expiresAt });
   }
 
   /**
@@ -112,10 +164,12 @@ export class UserRepository {
    * Delete User record
    */
   static async deleteUser(firebaseUid: string): Promise<boolean> {
-    await executeSql({
-      sql: `DELETE FROM users WHERE firebase_uid = ?`,
-      args: [firebaseUid],
-    });
+    for (const table of ['daily_usage', 'paper_history', 'subscriptions', 'users']) {
+      await executeSql({
+        sql: `DELETE FROM ${table} WHERE firebase_uid = ?`,
+        args: [firebaseUid],
+      });
+    }
     return true;
   }
 
@@ -139,30 +193,45 @@ export class UserRepository {
   }
 
   /**
-   * Increment daily usage counter for user
+   * Atomically increment the daily usage counter (single upsert, no read-then-write race).
    */
   static async incrementDailyUsage(firebaseUid: string, date?: string): Promise<number> {
     const targetDate = date || this.getTodayDateString();
-    const existing = await queryOne<{ id: string; papers_generated: number }>({
-      sql: `SELECT id, papers_generated FROM daily_usage WHERE firebase_uid = ? AND date = ? LIMIT 1`,
+    const row = await queryOne<{ papers_generated: number }>({
+      sql: `INSERT INTO daily_usage (id, firebase_uid, date, papers_generated) VALUES (?, ?, ?, 1)
+            ON CONFLICT(firebase_uid, date) DO UPDATE SET papers_generated = papers_generated + 1
+            RETURNING papers_generated`,
+      args: [crypto.randomUUID(), firebaseUid, targetDate],
+    });
+    return row?.papers_generated ?? 1;
+  }
+
+  /**
+   * Atomically consume one generation from today's quota.
+   * Returns the new count, or null if the user has already reached `limit`.
+   */
+  static async tryConsumeDailyUsage(firebaseUid: string, limit: number, date?: string): Promise<number | null> {
+    const targetDate = date || this.getTodayDateString();
+    if (limit <= 0) return null;
+    const row = await queryOne<{ papers_generated: number }>({
+      sql: `INSERT INTO daily_usage (id, firebase_uid, date, papers_generated) VALUES (?, ?, ?, 1)
+            ON CONFLICT(firebase_uid, date) DO UPDATE SET papers_generated = papers_generated + 1
+            WHERE papers_generated < ?
+            RETURNING papers_generated`,
+      args: [crypto.randomUUID(), firebaseUid, targetDate, limit],
+    });
+    return row ? row.papers_generated : null;
+  }
+
+  /**
+   * Give back one generation (e.g. when the AI call failed after quota was consumed).
+   */
+  static async refundDailyUsage(firebaseUid: string, date?: string): Promise<void> {
+    const targetDate = date || this.getTodayDateString();
+    await executeSql({
+      sql: `UPDATE daily_usage SET papers_generated = MAX(papers_generated - 1, 0) WHERE firebase_uid = ? AND date = ?`,
       args: [firebaseUid, targetDate],
     });
-
-    if (existing) {
-      const newCount = existing.papers_generated + 1;
-      await executeSql({
-        sql: `UPDATE daily_usage SET papers_generated = ? WHERE id = ?`,
-        args: [newCount, existing.id],
-      });
-      return newCount;
-    } else {
-      const id = crypto.randomUUID();
-      await executeSql({
-        sql: `INSERT INTO daily_usage (id, firebase_uid, date, papers_generated) VALUES (?, ?, ?, 1)`,
-        args: [id, firebaseUid, targetDate],
-      });
-      return 1;
-    }
   }
 
   /**
@@ -219,9 +288,23 @@ export class UserRepository {
    * Fetch Paper History list for a user
    */
   static async fetchPaperHistory(firebaseUid: string, limit = 20, offset = 0): Promise<PaperHistoryRecord[]> {
+    const safeLimit = Number.isFinite(limit) ? Math.min(Math.max(Math.trunc(limit), 1), 100) : 20;
+    const safeOffset = Number.isFinite(offset) ? Math.max(Math.trunc(offset), 0) : 0;
+    limit = safeLimit;
+    offset = safeOffset;
     return queryRows<PaperHistoryRecord>({
       sql: `SELECT * FROM paper_history WHERE firebase_uid = ? ORDER BY created_at DESC LIMIT ? OFFSET ?`,
       args: [firebaseUid, limit, offset],
+    });
+  }
+
+  /**
+   * Find a payment by gateway transaction reference (used for idempotent verification)
+   */
+  static async findPaymentByReference(reference: string): Promise<{ firebase_uid: string; status: string } | null> {
+    return queryOne<{ firebase_uid: string; status: string }>({
+      sql: `SELECT firebase_uid, status FROM payments WHERE transaction_reference = ? LIMIT 1`,
+      args: [reference],
     });
   }
 

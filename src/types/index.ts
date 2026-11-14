@@ -42,6 +42,8 @@ export interface PaperConfig {
   blueprintId?: string;
   isBlueprintMode?: boolean;
   unitWeightage?: { unit: string; topic: string; marks: number }[];
+  /** Per-blueprint marks overrides for question types (e.g. { caseStudy: 3 }); see src/lib/marks.ts */
+  marksPerType?: Partial<Record<keyof QuestionDistribution, number>>;
   numberOfSets?: number;
 }
 
@@ -80,6 +82,7 @@ export interface GeneratedPaper {
   totalMarks: number;
   hasAnswerKey?: boolean;
   setName?: string; // e.g. "SET A", "SET B", "SET C"
+  language?: "English" | "Hindi" | "Bilingual"; // Language the paper was generated in (used by question swap)
   sets?: GeneratedPaper[]; // Array of parallel paper variants if multi-set is enabled
 }
 

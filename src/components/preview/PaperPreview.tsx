@@ -1,13 +1,15 @@
 "use client";
 
+import { AuthService } from "@/lib/firebase/auth-service";
 import React, { useState } from "react";
-import { GeneratedPaper } from "@/types";
+import { GeneratedPaper, PaperSection, Question } from "@/types";
 import { Trash2, Edit2, Check, ArrowUp, ArrowDown, ZoomIn, ZoomOut, Printer, Key, FileText, RefreshCw, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { formatScientificText, cleanInstructionText } from "@/lib/utils";
+import { isComputerSubjectKey } from "@/lib/subject-detection";
 import { toast } from "sonner";
 
 interface PaperPreviewProps {
@@ -29,8 +31,34 @@ export function PaperPreview({ paper, onChange, onSelectSet, activeSetIdx = 0, i
   const [swappingId, setSwappingId] = useState<string | null>(null);
 
   const activePaper = (paper.sets && paper.sets.length > 0 && paper.sets[activeSetIdx]) ? paper.sets[activeSetIdx] : paper;
+  const codeSafe = isComputerSubjectKey(activePaper.subject || paper.subject);
+  const format = (text: string) => formatScientificText(text, { codeSafe });
 
-  const handleSwapQuestion = async (qToSwap: any) => {
+  /**
+   * Commits an edited copy of the paper currently on screen. With multiple sets the edit goes
+   * to `sets[activeSetIdx]` (what the screen and downloads show); the top-level fields mirror
+   * SET A, so they are refreshed too when SET A is edited. Never mutates existing state.
+   */
+  const commitActivePaper = (updatedTarget: GeneratedPaper) => {
+    if (paper.sets && paper.sets.length > 0) {
+      const newSets = paper.sets.map((setObj, idx) => (idx === activeSetIdx ? updatedTarget : setObj));
+      const base = activeSetIdx === 0 ? { ...paper, ...updatedTarget } : paper;
+      onChange({ ...base, sets: newSets });
+    } else {
+      onChange(updatedTarget);
+    }
+  };
+
+  /** Renumbers questions sequentially across all sections (immutable). */
+  const renumber = (sections: PaperSection[]): PaperSection[] => {
+    let currentIdx = 1;
+    return sections.map((sec) => ({
+      ...sec,
+      questions: sec.questions.map((q) => ({ ...q, number: currentIdx++ })),
+    }));
+  };
+
+  const handleSwapQuestion = async (qToSwap: Question) => {
     setSwappingId(qToSwap.id);
     const toastId = toast.loading(`Generating replacement for Question #${qToSwap.number}...`);
 
@@ -42,13 +70,17 @@ export function PaperPreview({ paper, onChange, onSelectSet, activeSetIdx = 0, i
         });
       });
 
+      const token = await AuthService.getFirebaseToken();
+      if (!token) throw new Error("Please sign in to swap questions.");
       const res = await fetch("/api/swap-question", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({
           questionToReplace: qToSwap,
           subject: activePaper.subject,
           classText: activePaper.classText,
+          // Bilingual / Hindi papers must get a replacement in the same language.
+          language: activePaper.language || paper.language || "English",
           excludeQuestionTexts,
         }),
       });
@@ -58,27 +90,20 @@ export function PaperPreview({ paper, onChange, onSelectSet, activeSetIdx = 0, i
         throw new Error(data.error || "Failed to swap question.");
       }
 
-      const newQuestion = data.question;
+      const newQuestion: Question = data.question;
 
-      const updatedTarget = { ...activePaper };
-      updatedTarget.sections = updatedTarget.sections.map(sec => ({
-        ...sec,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        questions: sec.questions.map((q: any) => q.id === qToSwap.id ? newQuestion : q),
-      }));
-
-      if (paper.sets && paper.sets.length > 0) {
-        const newSets = [...paper.sets];
-        newSets[activeSetIdx] = updatedTarget;
-        onChange({ ...paper, sets: newSets });
-      } else {
-        onChange(updatedTarget);
-      }
+      commitActivePaper({
+        ...activePaper,
+        sections: activePaper.sections.map(sec => ({
+          ...sec,
+          questions: sec.questions.map((q) => q.id === qToSwap.id ? { ...newQuestion, number: q.number } : q),
+        })),
+      });
 
       toast.success(`Question #${qToSwap.number} replaced with new AI question!`, { id: toastId });
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Swap error:", err);
-      toast.error(err.message || "Could not replace question.", { id: toastId });
+      toast.error(err instanceof Error && err.message ? err.message : "Could not replace question.", { id: toastId });
     } finally {
       setSwappingId(null);
     }
@@ -93,8 +118,8 @@ export function PaperPreview({ paper, onChange, onSelectSet, activeSetIdx = 0, i
   const handleEditSave = () => {
     if (!editingField) return;
 
-    // Work on active paper
-    const updatedTarget = { ...activePaper };
+    // Work on a copy of the paper on screen
+    const updatedTarget: GeneratedPaper = { ...activePaper };
 
     if (editingField.type === "header") {
       if (editingField.id === "schoolName") updatedTarget.schoolName = editValue.toUpperCase();
@@ -105,18 +130,19 @@ export function PaperPreview({ paper, onChange, onSelectSet, activeSetIdx = 0, i
       if (editingField.id === "timeText") updatedTarget.timeText = editValue;
       if (editingField.id === "maxMarksText") updatedTarget.maxMarksText = editValue;
     } else if (editingField.type === "instruction" && typeof editingField.index === "number") {
-      updatedTarget.instructions[editingField.index] = formatScientificText(editValue);
+      const idx = editingField.index;
+      updatedTarget.instructions = activePaper.instructions.map((ins, i) => (i === idx ? format(editValue) : ins));
     } else if (editingField.type === "question" && editingField.id) {
-      updatedTarget.sections = updatedTarget.sections.map(section => ({
+      updatedTarget.sections = activePaper.sections.map(section => ({
         ...section,
         questions: section.questions.map(q => {
           if (q.id === editingField.id) {
-            return { 
-              ...q, 
-              text: formatScientificText(editValue), 
-              choices: q.choices && q.choices.length > 0 
-                ? editChoices.map(c => formatScientificText(c)) 
-                : undefined 
+            return {
+              ...q,
+              text: format(editValue),
+              choices: q.choices && q.choices.length > 0
+                ? editChoices.map(c => format(c))
+                : undefined
             };
           }
           return q;
@@ -126,14 +152,14 @@ export function PaperPreview({ paper, onChange, onSelectSet, activeSetIdx = 0, i
       const isOr = editingField.id.endsWith("_or");
       const targetId = isOr ? editingField.id.replace("_or", "") : editingField.id;
 
-      updatedTarget.sections = updatedTarget.sections.map(section => ({
+      updatedTarget.sections = activePaper.sections.map(section => ({
         ...section,
         questions: section.questions.map(q => {
           if (q.id === targetId) {
             if (isOr) {
-              return { ...q, orSolution: formatScientificText(editValue) };
+              return { ...q, orSolution: format(editValue) };
             } else {
-              return { ...q, solution: formatScientificText(editValue) };
+              return { ...q, solution: format(editValue) };
             }
           }
           return q;
@@ -141,63 +167,31 @@ export function PaperPreview({ paper, onChange, onSelectSet, activeSetIdx = 0, i
       }));
     }
 
-    if (paper.sets && paper.sets.length > 0) {
-      const newSets = [...paper.sets];
-      newSets[activeSetIdx] = updatedTarget;
-      onChange({ ...paper, sets: newSets });
-    } else {
-      onChange(updatedTarget);
-    }
-
+    commitActivePaper(updatedTarget);
     setEditingField(null);
   };
 
-  // Reorder questions or delete questions
+  // Reorder or delete questions on the paper / set currently on screen
   const handleDeleteQuestion = (sectionIndex: number, questionId: string) => {
-    const updated = { ...paper };
-    const section = updated.sections[sectionIndex];
-    section.questions = section.questions.filter(q => q.id !== questionId);
-    
-    // Re-index question numbers in this section
-    let currentIdx = 1;
-    updated.sections.forEach(sec => {
-      sec.questions = sec.questions.map(q => {
-        const num = currentIdx;
-        currentIdx++;
-        return { ...q, number: num };
-      });
+    const sections = activePaper.sections.map((sec, idx) =>
+      idx === sectionIndex ? { ...sec, questions: sec.questions.filter(q => q.id !== questionId) } : sec
+    );
+    const updatedSections = renumber(sections);
+    commitActivePaper({
+      ...activePaper,
+      sections: updatedSections,
+      totalQuestions: updatedSections.reduce((acc, sec) => acc + sec.questions.length, 0),
     });
-
-    onChange(updated);
   };
 
   const handleMoveQuestion = (sectionIndex: number, questionIndex: number, direction: "up" | "down") => {
-    const updated = { ...paper };
-    const questions = [...updated.sections[sectionIndex].questions];
-    
-    if (direction === "up" && questionIndex > 0) {
-      const temp = questions[questionIndex];
-      questions[questionIndex] = questions[questionIndex - 1];
-      questions[questionIndex - 1] = temp;
-    } else if (direction === "down" && questionIndex < questions.length - 1) {
-      const temp = questions[questionIndex];
-      questions[questionIndex] = questions[questionIndex + 1];
-      questions[questionIndex + 1] = temp;
-    }
+    const questions = [...activePaper.sections[sectionIndex].questions];
+    const target = direction === "up" ? questionIndex - 1 : questionIndex + 1;
+    if (target < 0 || target >= questions.length) return;
+    [questions[questionIndex], questions[target]] = [questions[target], questions[questionIndex]];
 
-    updated.sections[sectionIndex].questions = questions;
-    
-    // Re-index question numbers globally
-    let currentIdx = 1;
-    updated.sections.forEach(sec => {
-      sec.questions = sec.questions.map(q => {
-        const num = currentIdx;
-        currentIdx++;
-        return { ...q, number: num };
-      });
-    });
-
-    onChange(updated);
+    const sections = activePaper.sections.map((sec, idx) => (idx === sectionIndex ? { ...sec, questions } : sec));
+    commitActivePaper({ ...activePaper, sections: renumber(sections) });
   };
 
   const zoomStyle = {

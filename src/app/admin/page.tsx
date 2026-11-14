@@ -43,6 +43,8 @@ export default function AdminDashboardPage() {
   const [processingUid, setProcessingUid] = useState<string | null>(null);
 
   const fetchAdminData = async () => {
+    // Defer the spinner update so it never runs synchronously inside an effect.
+    await Promise.resolve();
     setLoading(true);
     try {
       const token = await AuthService.getFirebaseToken();
@@ -66,13 +68,17 @@ export default function AdminDashboardPage() {
     }
   };
 
+  const isAdminViewer = dbUser?.role === "ADMIN";
+
   useEffect(() => {
-    if (dbUser?.role === "ADMIN") {
+    if (isAdminViewer) {
       fetchAdminData();
-    } else {
-      setLoading(false);
     }
-  }, [dbUser]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAdminViewer]);
+
+  // Non-admins never fetch, so they should never see a spinner.
+  const showLoading = isAdminViewer && loading;
 
   const handleUpdateRole = async (targetUid: string, currentRole: UserRole) => {
     const newRole: UserRole = currentRole === "ADMIN" ? "USER" : "ADMIN";
@@ -222,10 +228,10 @@ export default function AdminDashboardPage() {
               <Button
                 variant="outline"
                 onClick={fetchAdminData}
-                disabled={loading}
+                disabled={showLoading}
                 className="rounded-xl border-border/60 text-xs flex items-center gap-2"
               >
-                <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
+                <RefreshCw className={`w-3.5 h-3.5 ${showLoading ? "animate-spin" : ""}`} />
                 Refresh Data
               </Button>
             </div>
@@ -289,7 +295,7 @@ export default function AdminDashboardPage() {
 
             {/* Users Management Table */}
             <GlassCard className="p-6 overflow-x-auto">
-              {loading ? (
+              {showLoading ? (
                 <div className="py-12 text-center space-y-2">
                   <Loader2 className="w-6 h-6 text-blue-500 animate-spin mx-auto" />
                   <p className="text-xs text-muted-foreground">Loading users database...</p>

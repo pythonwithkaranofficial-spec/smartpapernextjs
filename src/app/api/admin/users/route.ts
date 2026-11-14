@@ -1,30 +1,43 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAuthToken } from '@/lib/auth/middleware';
 import { UserRepository } from '@/lib/db/user-repository';
-import { isSuperAdminEmail } from '@/lib/auth/helpers';
+import { computePlanExpiry, isAdminUser, isSuperAdminEmail, isTrustedSuperAdmin } from '@/lib/auth/helpers';
+import { AuthenticatedRequestContext } from '@/lib/auth/middleware';
 import { queryRows } from '@/lib/turso';
 import { DatabaseUser } from '@/types/db';
 import { UserRole, UserPlan } from '@/types/auth';
 import { handleApiError, AuthError, ValidationError } from '@/lib/errors';
 
+const VALID_PLANS: UserPlan[] = ['FREE', 'PRO', 'PREMIUM', 'ENTERPRISE'];
+
+/**
+ * Resolve the caller and require admin rights. Super-admin status is derived from the
+ * Firebase-verified token email, never from an unverified DB value.
+ */
+async function requireAdmin(authContext: AuthenticatedRequestContext): Promise<{ caller: DatabaseUser; callerIsSuperAdmin: boolean }> {
+  let caller = await UserRepository.findUserByFirebaseUid(authContext.uid);
+  if (!caller) {
+    throw new AuthError('User account not found', 404, 'NOT_FOUND');
+  }
+
+  const callerIsSuperAdmin = isTrustedSuperAdmin(authContext.email, authContext.emailVerified);
+
+  // Auto-lock verified Super Admin accounts to ADMIN role
+  if (callerIsSuperAdmin && caller.role !== 'ADMIN') {
+    caller = (await UserRepository.updateRole(caller.firebase_uid, 'ADMIN')) || caller;
+  }
+
+  if (!callerIsSuperAdmin && !isAdminUser(caller)) {
+    throw new AuthError('Admin privileges required', 403, 'FORBIDDEN');
+  }
+
+  return { caller, callerIsSuperAdmin };
+}
+
 export async function GET(req: NextRequest) {
   try {
     const authContext = await verifyAuthToken(req);
-    let caller = await UserRepository.findUserByFirebaseUid(authContext.uid);
-
-    if (!caller) {
-      throw new AuthError('User account not found', 404, 'NOT_FOUND');
-    }
-
-    // Auto-lock Super Admin accounts to ADMIN role
-    if (isSuperAdminEmail(caller.email) && caller.role !== 'ADMIN') {
-      await UserRepository.updateRole(caller.firebase_uid, 'ADMIN');
-      caller = await UserRepository.findUserByFirebaseUid(caller.firebase_uid);
-    }
-
-    if (!caller || (caller.role !== 'ADMIN' && !isSuperAdminEmail(caller.email))) {
-      throw new AuthError('Admin privileges required to access this dashboard', 403, 'FORBIDDEN');
-    }
+    await requireAdmin(authContext);
 
     const users = await queryRows<DatabaseUser>({
       sql: `SELECT * FROM users ORDER BY created_at DESC`,
@@ -59,36 +72,29 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const authContext = await verifyAuthToken(req);
-    let caller = await UserRepository.findUserByFirebaseUid(authContext.uid);
-
-    if (!caller) {
-      throw new AuthError('User account not found', 404, 'NOT_FOUND');
-    }
-
-    // Auto-lock Super Admin accounts to ADMIN role
-    if (isSuperAdminEmail(caller.email) && caller.role !== 'ADMIN') {
-      await UserRepository.updateRole(caller.firebase_uid, 'ADMIN');
-      caller = await UserRepository.findUserByFirebaseUid(caller.firebase_uid);
-    }
-
-    if (!caller || (caller.role !== 'ADMIN' && !isSuperAdminEmail(caller.email))) {
-      throw new AuthError('Admin privileges required to manage users', 403, 'FORBIDDEN');
-    }
+    const { caller, callerIsSuperAdmin } = await requireAdmin(authContext);
 
     const body = await req.json();
     const { targetFirebaseUid, action, role, plan } = body;
 
-    if (!targetFirebaseUid || !action) {
+    if (typeof targetFirebaseUid !== 'string' || !targetFirebaseUid || typeof action !== 'string') {
       throw new ValidationError('Missing targetFirebaseUid or action');
     }
 
     const targetUser = await UserRepository.findUserByFirebaseUid(targetFirebaseUid);
+    if (!targetUser) {
+      throw new ValidationError('Target user not found', 404, 'NOT_FOUND');
+    }
+    // Regular admins cannot modify other admins or themselves; only verified super-admins can.
+    if (!callerIsSuperAdmin && (targetUser.role === 'ADMIN' || targetUser.firebase_uid === caller.firebase_uid)) {
+      throw new AuthError('Only Super-Admin accounts may modify admin accounts', 403, 'SUPER_ADMIN_REQUIRED');
+    }
 
     if (action === 'update_role') {
       // EXCLUSIVE RULE: Only Super Admin accounts can assign or remove ADMIN role
-      if (!isSuperAdminEmail(caller.email)) {
+      if (!callerIsSuperAdmin) {
         throw new AuthError(
-          'Permission Denied: Only Super-Admin accounts (tpaofficial1999@gmail.com, officialworldwithtechnology@gmail.com, pythonwithkaran.official@gmail.com) are permitted to promote or demote Admin accounts.',
+          'Permission Denied: Only Super-Admin accounts may promote or demote Admin accounts.',
           403,
           'SUPER_ADMIN_REQUIRED'
         );
@@ -105,10 +111,11 @@ export async function POST(req: NextRequest) {
 
       await UserRepository.updateRole(targetFirebaseUid, role as UserRole);
     } else if (action === 'update_plan') {
-      if (!plan) {
+      if (!VALID_PLANS.includes(plan)) {
         throw new ValidationError('Invalid plan specified');
       }
-      await UserRepository.updatePlan(targetFirebaseUid, plan as UserPlan);
+      // Admin-granted paid plans follow the normal plan duration.
+      await UserRepository.updatePlan(targetFirebaseUid, plan as UserPlan, computePlanExpiry(plan as UserPlan));
     } else if (action === 'delete_user') {
       if (targetUser && isSuperAdminEmail(targetUser.email)) {
         throw new ValidationError('Super-Admin accounts cannot be deleted.');

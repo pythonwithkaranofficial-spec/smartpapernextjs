@@ -18,12 +18,14 @@ import { AuthService } from "@/lib/firebase/auth-service";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight, Sparkles, BookOpen } from "lucide-react";
 import { clientRateLimiter } from "@/lib/rate-limiter";
-import { isSuperAdminEmail } from "@/lib/auth/helpers";
+import { isSuperAdminEmail } from "@/lib/auth/super-admin";
 import { toast } from "sonner";
 import { GeneratingOverlay } from "../preview/GeneratingOverlay";
 import { DailyLimitModal } from "../auth/DailyLimitModal";
 import { SyllabusModal } from "../syllabus/SyllabusModal";
 import { getOrGenerateBlueprint } from "@/lib/blueprints";
+import { computeDistributionTotal } from "@/lib/marks";
+import { detectFullExamKind } from "@/lib/subject-detection";
 
 // Separate storage key for custom wizard configurations
 const CUSTOM_LOCAL_STORAGE_KEY = "smart_paper_custom_form_config";
@@ -63,15 +65,37 @@ const initialConfig: PaperConfig = {
   selectedChapters: [],
 };
 
+interface CustomTextInputs {
+  classText: string;
+  subjectText: string;
+  chaptersText: string;
+}
+
+function readStoredJson<T>(key: string): T | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? (JSON.parse(raw) as T) : null;
+  } catch (e) {
+    console.error(`Failed to parse saved ${key}`, e);
+    return null;
+  }
+}
+
 export function CustomGeneratorWizard() {
   const [step, setStep] = useState(1);
   const [direction, setDirection] = useState(1); // 1 = forward, -1 = backward
-  const [config, setConfig] = useState<PaperConfig>(initialConfig);
-  
+  // Lazily restored from localStorage. The wizard only mounts on the client (behind
+  // ProtectedRoute's auth check), so this does not cause a hydration mismatch.
+  const [config, setConfig] = useState<PaperConfig>(
+    () => readStoredJson<PaperConfig>(CUSTOM_LOCAL_STORAGE_KEY) || initialConfig
+  );
+
   // Custom free-text states stored locally
-  const [classText, setClassText] = useState("");
-  const [subjectText, setSubjectText] = useState("");
-  const [chaptersText, setChaptersText] = useState("");
+  const [savedInputs] = useState(() => readStoredJson<Partial<CustomTextInputs>>(TEXT_INPUTS_STORAGE_KEY));
+  const [classText, setClassText] = useState(savedInputs?.classText || "");
+  const [subjectText, setSubjectText] = useState(savedInputs?.subjectText || "");
+  const [chaptersText, setChaptersText] = useState(savedInputs?.chaptersText || "");
   
   const { generatePaper, loading: generating } = useGeneratePaper();
   const [usageInfo, setUsageInfo] = useState<{ usedToday: number; dailyLimit: number; remainingToday: number; isAdmin?: boolean } | null>(null);
@@ -123,32 +147,6 @@ export function CustomGeneratorWizard() {
     checkUsage();
   }, []);
 
-  // Load from localStorage on mount
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const savedConfig = localStorage.getItem(CUSTOM_LOCAL_STORAGE_KEY);
-      if (savedConfig) {
-        try {
-          setConfig(JSON.parse(savedConfig));
-        } catch (e) {
-          console.error("Failed to parse saved custom config", e);
-        }
-      }
-
-      const savedInputs = localStorage.getItem(TEXT_INPUTS_STORAGE_KEY);
-      if (savedInputs) {
-        try {
-          const parsedInputs = JSON.parse(savedInputs);
-          setClassText(parsedInputs.classText || "");
-          setSubjectText(parsedInputs.subjectText || "");
-          setChaptersText(parsedInputs.chaptersText || "");
-        } catch (e) {
-          console.error("Failed to parse saved custom text inputs", e);
-        }
-      }
-    }
-  }, []);
-
   // Save to localStorage on change
   const updateConfig = (updater: (prev: PaperConfig) => PaperConfig) => {
     setConfig((prev) => {
@@ -163,6 +161,27 @@ export function CustomGeneratorWizard() {
       TEXT_INPUTS_STORAGE_KEY,
       JSON.stringify({ classText: cls, subjectText: sbj, chaptersText: chps })
     );
+  };
+
+  const buildFinalConfig = (): PaperConfig => ({
+    ...config,
+    isCustom: true,
+    classId: "custom",
+    subject: subjectText.trim(),
+    customClass: classText.trim(),
+    customSubject: subjectText.trim(),
+    customChapters: chaptersText.trim(),
+  });
+
+  /** Distribution (with blueprint marks overrides) must match the target unless a full-exam prompt applies. */
+  const validateMarksSum = (finalConfig: PaperConfig): boolean => {
+    if (detectFullExamKind(finalConfig)) return true;
+    const currentMarks = computeDistributionTotal(finalConfig.questionDistribution, finalConfig.marksPerType);
+    if (currentMarks !== finalConfig.totalMarks) {
+      toast.error(`Marks mismatch! Your allocated questions total ${currentMarks} Marks, but your target is ${finalConfig.totalMarks} Marks. Adjust counts before continuing.`);
+      return false;
+    }
+    return true;
   };
 
   const handleNext = () => {
@@ -183,21 +202,8 @@ export function CustomGeneratorWizard() {
       toast.error("Please choose an assessment format to proceed.");
       return;
     }
-    if (step === 6) {
-      // Validate marks match
-      const dist = config.questionDistribution;
-      const currentMarks = 
-        (dist.mcq * 1) + 
-        (dist.assertionReason * 1) + 
-        (dist.vsa * 2) + 
-        (dist.sa * 3) + 
-        (dist.caseStudy * 4) + 
-        (dist.la * 5);
-      
-      if (currentMarks !== config.totalMarks) {
-        toast.error(`Marks mismatch! Your allocated questions total ${currentMarks} Marks, but your target is ${config.totalMarks} Marks. Adjust counts before continuing.`);
-        return;
-      }
+    if (step === 6 && !validateMarksSum(buildFinalConfig())) {
+      return;
     }
 
     if (step < 7) {
@@ -225,15 +231,14 @@ export function CustomGeneratorWizard() {
     }
 
     // Construct final custom paper configuration
-    const finalCustomConfig: PaperConfig = {
-      ...config,
-      isCustom: true,
-      classId: "custom",
-      subject: subjectText.trim(),
-      customClass: classText.trim(),
-      customSubject: subjectText.trim(),
-      customChapters: chaptersText.trim(),
-    };
+    const finalCustomConfig = buildFinalConfig();
+
+    // Blueprint presets and progress-bar jumps can bypass step 6, so always re-check here.
+    if (!validateMarksSum(finalCustomConfig)) {
+      setDirection(-1);
+      setStep(6);
+      return;
+    }
 
     generatePaper(finalCustomConfig);
   };
@@ -378,6 +383,7 @@ export function CustomGeneratorWizard() {
                       questionDistribution: bp.questionDistribution,
                       selectedChapters: bp.selectedChapters,
                       unitWeightage: bp.unitWeightage,
+                      marksPerType: bp.marksPerType,
                       blueprintId: bp.id,
                       isBlueprintMode: true,
                       options: {
@@ -389,7 +395,30 @@ export function CustomGeneratorWizard() {
                     setDirection(1);
                     setStep(7);
                   } else {
-                    updateConfig((prev) => ({ ...prev, examType, isBlueprintMode: false }));
+                    // No blueprint: drop every setting a previous blueprint applied.
+                    updateConfig((prev) => {
+                      const hadBlueprint = prev.isBlueprintMode || !!prev.blueprintId;
+                      return {
+                        ...prev,
+                        examType,
+                        isBlueprintMode: false,
+                        blueprintId: undefined,
+                        unitWeightage: undefined,
+                        marksPerType: undefined,
+                        ...(hadBlueprint
+                          ? {
+                              totalMarks: initialConfig.totalMarks,
+                              duration: initialConfig.duration,
+                              questionDistribution: { ...initialConfig.questionDistribution },
+                              selectedChapters: [],
+                              options: {
+                                ...prev.options,
+                                instructionsText: initialConfig.options.instructionsText,
+                              },
+                            }
+                          : {}),
+                      };
+                    });
                     setDirection(1);
                     setStep(5);
                   }
@@ -424,6 +453,7 @@ export function CustomGeneratorWizard() {
               <StepQuestionDist
                 totalMarks={config.totalMarks}
                 distribution={config.questionDistribution}
+                marksPerType={config.marksPerType}
                 onChangeDistribution={(questionDistribution) =>
                   updateConfig((prev) => ({ ...prev, questionDistribution }))
                 }

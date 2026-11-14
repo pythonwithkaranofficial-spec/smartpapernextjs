@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
@@ -10,7 +10,6 @@ import {
   Sparkles,
   Search,
   CheckCircle2,
-  AlertCircle,
   ArrowRight,
   Layers,
   Award,
@@ -21,7 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { CURRICULUM_DATA } from "@/lib/curriculum-data";
-import { BLUEPRINTS, getOrGenerateBlueprint } from "@/lib/blueprints";
+import { getOrGenerateBlueprint } from "@/lib/blueprints";
 import { PaperConfig } from "@/types";
 import { toast } from "sonner";
 
@@ -107,10 +106,8 @@ export function SyllabusExplorer({
     : availableSubjects[0] || "maths";
 
   const currentCurriculum = classCurriculum[currentSubjectKey];
-  const blueprint = useMemo(
-    () => getOrGenerateBlueprint(selectedClass, currentSubjectKey, "annual_exam"),
-    [selectedClass, currentSubjectKey]
-  );
+  // Cheap static lookup; no memoisation needed.
+  const blueprint = getOrGenerateBlueprint(selectedClass, currentSubjectKey, "annual_exam");
 
   const router = useRouter();
 
@@ -126,16 +123,6 @@ export function SyllabusExplorer({
       currentSubjectKey.toLowerCase().includes("hindi") ||
       currentSubjectKey.includes("हिन्दी");
 
-    // Gather all chapters for this subject to ensure full coverage
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const allChapters =
-      currentCurriculum?.chapters && currentCurriculum.chapters.length > 0
-        ? currentCurriculum.chapters.map((ch: any) =>
-            typeof ch === "string" ? ch : ch.title
-          )
-        : active?.selectedChapters && active.selectedChapters.length > 0
-        ? active.selectedChapters
-        : ["all"];
 
     const prefilledConfig: PaperConfig = {
       classId: selectedClass,
@@ -146,6 +133,7 @@ export function SyllabusExplorer({
       totalMarks: active.totalMarks || 80,
       duration: active.duration || "3 Hours",
       questionDistribution: active.questionDistribution,
+      marksPerType: active.marksPerType,
       blueprintId: active.id,
       isBlueprintMode: true,
       unitWeightage: active.unitWeightage || [],
@@ -165,7 +153,8 @@ export function SyllabusExplorer({
         includeAnswerKey: false,
         numberOfSets: 1,
       },
-      selectedChapters: allChapters,
+      // Empty selection = entire syllabus (full-exam prompts then use the official unit weightage).
+      selectedChapters: [],
     };
 
     try {
@@ -201,11 +190,12 @@ export function SyllabusExplorer({
     }
   };
 
-  const [selectedCategory, setSelectedCategory] = useState<string>("All");
-
-  useEffect(() => {
-    setSelectedCategory("All");
-  }, [selectedClass, currentSubjectKey]);
+  // The category filter resets to "All" whenever class/subject changes: the state remembers
+  // which class/subject it was chosen for and is ignored once that scope changes.
+  const categoryScope = `${selectedClass}|${currentSubjectKey}`;
+  const [categoryState, setCategoryState] = useState({ scope: categoryScope, value: "All" });
+  const selectedCategory = categoryState.scope === categoryScope ? categoryState.value : "All";
+  const setSelectedCategory = (value: string) => setCategoryState({ scope: categoryScope, value });
 
   // Extract categories (e.g. History, Geography, Political Science, Economics)
   const categories = useMemo(() => {
