@@ -1,7 +1,7 @@
 "use client";
 
 import { AuthService } from "@/lib/firebase/auth-service";
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { GeneratedPaper, PaperSection, Question } from "@/types";
 import { Trash2, Edit2, Check, ArrowUp, ArrowDown, ZoomIn, ZoomOut, Printer, Key, FileText, RefreshCw, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -29,6 +29,12 @@ export function PaperPreview({ paper, onChange, onSelectSet, activeSetIdx = 0, i
   const [editValue, setEditValue] = useState("");
   const [editChoices, setEditChoices] = useState<string[]>([]);
   const [swappingId, setSwappingId] = useState<string | null>(null);
+
+  // Latest paper, read when an async swap finishes so it never overwrites edits made meanwhile.
+  const latestPaperRef = useRef(paper);
+  useEffect(() => {
+    latestPaperRef.current = paper;
+  }, [paper]);
 
   const activePaper = (paper.sets && paper.sets.length > 0 && paper.sets[activeSetIdx]) ? paper.sets[activeSetIdx] : paper;
   const codeSafe = isComputerSubjectKey(activePaper.subject || paper.subject);
@@ -59,6 +65,7 @@ export function PaperPreview({ paper, onChange, onSelectSet, activeSetIdx = 0, i
   };
 
   const handleSwapQuestion = async (qToSwap: Question) => {
+    const targetSetIdx = activeSetIdx;
     setSwappingId(qToSwap.id);
     const toastId = toast.loading(`Generating replacement for Question #${qToSwap.number}...`);
 
@@ -92,13 +99,32 @@ export function PaperPreview({ paper, onChange, onSelectSet, activeSetIdx = 0, i
 
       const newQuestion: Question = data.question;
 
-      commitActivePaper({
-        ...activePaper,
-        sections: activePaper.sections.map(sec => ({
+      // Apply to the LATEST paper (not the copy captured when the swap started), in the set
+      // that was on screen when the user clicked swap.
+      const latest = latestPaperRef.current;
+      const hasSets = !!(latest.sets && latest.sets.length > 0);
+      const target = hasSets ? latest.sets![targetSetIdx] : latest;
+      const stillThere = !!target && target.sections.some((sec) => sec.questions.some((q) => q.id === qToSwap.id));
+      if (!target || !stillThere) {
+        toast.info(`Question #${qToSwap.number} was removed before the replacement arrived.`, { id: toastId });
+        return;
+      }
+      const updatedTarget: GeneratedPaper = {
+        ...target,
+        sections: target.sections.map((sec) => ({
           ...sec,
-          questions: sec.questions.map((q) => q.id === qToSwap.id ? { ...newQuestion, number: q.number } : q),
+          questions: sec.questions.map((q) =>
+            q.id === qToSwap.id ? { ...newQuestion, id: newQuestion.id || q.id, number: q.number } : q
+          ),
         })),
-      });
+      };
+      if (hasSets) {
+        const newSets = latest.sets!.map((setObj, idx) => (idx === targetSetIdx ? updatedTarget : setObj));
+        const base = targetSetIdx === 0 ? { ...latest, ...updatedTarget } : latest;
+        onChange({ ...base, sets: newSets });
+      } else {
+        onChange(updatedTarget);
+      }
 
       toast.success(`Question #${qToSwap.number} replaced with new AI question!`, { id: toastId });
     } catch (err: unknown) {

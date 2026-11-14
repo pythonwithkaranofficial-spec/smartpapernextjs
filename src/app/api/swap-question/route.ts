@@ -116,7 +116,8 @@ JSON SCHEMA:
       marks: questionToReplace.marks,
       type: questionToReplace.type,
       choices: (parsedNewQ.choices && Array.isArray(parsedNewQ.choices))
-        ? parsedNewQ.choices.map((c: string) => format(c))
+        // Strip leading option labels ("A)", "(a)", "B.") — the preview adds its own (a)-(d).
+        ? parsedNewQ.choices.map((c: string) => format(c || "").replace(/^\s*(?:\([A-Da-d]\)|[A-Da-d][\.\)])\s*/, "").trim())
         : undefined,
       orQuestion: parsedNewQ.orQuestion ? format(parsedNewQ.orQuestion) : undefined,
       solution: parsedNewQ.solution ? format(parsedNewQ.solution) : undefined,
